@@ -1,0 +1,226 @@
+// Smart Education System - Prisma Schema (Member 1 Foundation + Library)
+// Database source of truth. Managed through Prisma migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum LibraryBookCopyStatus {
+  AVAILABLE
+  BORROWED
+  LOST
+  DAMAGED
+  ARCHIVED
+}
+
+enum LibraryBorrowRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LibraryLoanStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
+// ---------------------------------------------------------------
+// Identity / Foundation Models
+// ---------------------------------------------------------------
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  fullName     String     @map("full_name")
+  role         UserRole   @default(STUDENT)
+  status       UserStatus @default(ACTIVE)
+  phone        String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  student    Student?
+  teacher    Teacher?
+  auditLogs  AuditLog[]           @relation("ActorAuditLogs")
+  books      LibraryBook[]        @relation("CreatedBooks")
+  bookCopies LibraryBookCopy[]    @relation("CreatedCopies")
+  borrowRequestsDecided LibraryBorrowRequest[] @relation("BorrowRequestDecider")
+  loansIssued  LibraryLoan[]      @relation("LoanIssuedBy")
+  loansReturned LibraryLoan[]     @relation("LoanReturnedBy")
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model Student {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  studentCode  String   @unique @map("student_code")
+  gradeLevel   String   @map("grade_level")
+  section      String?
+  dateOfBirth  DateTime? @map("date_of_birth")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  borrowRequests LibraryBorrowRequest[]
+  loans         LibraryLoan[]
+
+  @@index([gradeLevel])
+  @@map("students")
+}
+
+model Teacher {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @unique @map("user_id") @db.Uuid
+  employeeCode String  @unique @map("employee_code")
+  subject     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@map("teachers")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  metadata  Json?
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------
+// Library Models
+// ---------------------------------------------------------------
+
+model LibraryBook {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String
+  author        String
+  isbn          String?  @unique
+  publisher     String?
+  publishedYear Int?     @map("published_year")
+  category      String?
+  description   String?
+  coverUrl      String?  @map("cover_url")
+  createdById   String   @map("created_by_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  createdBy User              @relation("CreatedBooks", fields: [createdById], references: [id], onDelete: Restrict)
+  copies    LibraryBookCopy[]
+
+  @@index([title])
+  @@index([author])
+  @@index([isbn])
+  @@map("library_books")
+}
+
+model LibraryBookCopy {
+  id         String                @id @default(uuid()) @db.Uuid
+  bookId     String                @map("book_id") @db.Uuid
+  copyNumber String                @map("copy_number")
+  status     LibraryBookCopyStatus @default(AVAILABLE)
+  condition  String?
+  location   String?
+  createdById String               @map("created_by_id") @db.Uuid
+  createdAt  DateTime              @default(now()) @map("created_at")
+  updatedAt  DateTime              @updatedAt @map("updated_at")
+
+  book           LibraryBook           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  createdBy      User                  @relation("CreatedCopies", fields: [createdById], references: [id], onDelete: Restrict)
+  loans          LibraryLoan[]
+  borrowRequests LibraryBorrowRequest[]
+
+  @@unique([bookId, copyNumber])
+  @@index([status])
+  @@map("library_book_copies")
+}
+
+model LibraryBorrowRequest {
+  id          String                       @id @default(uuid()) @db.Uuid
+  studentId   String                       @map("student_id") @db.Uuid
+  bookCopyId  String                       @map("book_copy_id") @db.Uuid
+  status      LibraryBorrowRequestStatus   @default(PENDING)
+  requestedAt DateTime                     @default(now()) @map("requested_at")
+  decidedById String?                      @map("decided_by_id") @db.Uuid
+  decidedAt   DateTime?                    @map("decided_at")
+  reason      String?
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @updatedAt @map("updated_at")
+
+  student   Student              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  bookCopy  LibraryBookCopy      @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
+  decidedBy User?                @relation("BorrowRequestDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  loan      LibraryLoan?
+
+  @@unique([studentId, bookCopyId, status])
+  @@index([studentId, status])
+  @@index([bookCopyId, status])
+  @@index([status, requestedAt])
+  @@map("library_borrow_requests")
+}
+
+model LibraryLoan {
+  id          String             @id @default(uuid()) @db.Uuid
+  borrowReqId String             @unique @map("borrow_request_id") @db.Uuid
+  studentId   String             @map("student_id") @db.Uuid
+  bookCopyId  String             @map("book_copy_id") @db.Uuid
+  status      LibraryLoanStatus  @default(ACTIVE)
+  issuedById  String             @map("issued_by_id") @db.Uuid
+  issuedAt    DateTime           @default(now()) @map("issued_at")
+  dueDate     DateTime           @map("due_date")
+  returnedAt  DateTime?          @map("returned_at")
+  returnedById String?           @map("returned_by_id") @db.Uuid
+  notes       String?
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  borrowRequest LibraryBorrowRequest @relation(fields: [borrowReqId], references: [id], onDelete: Restrict)
+  student       Student              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  bookCopy      LibraryBookCopy      @relation(fields: [bookCopyId], references: [id], onDelete: Restrict)
+  issuedBy      User                 @relation("LoanIssuedBy", fields: [issuedById], references: [id], onDelete: Restrict)
+  returnedBy    User?                @relation("LoanReturnedBy", fields: [returnedById], references: [id], onDelete: SetNull)
+
+  @@index([studentId, status])
+  @@index([bookCopyId, status])
+  @@index([status, dueDate])
+  @@map("library_loans")
+}

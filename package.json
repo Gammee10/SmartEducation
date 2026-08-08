@@ -1,0 +1,23 @@
+{
+  "name": "smart-education-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Education System - pilot-ready platform for Ethiopian high schools",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm run test --workspace backend",
+    "prisma:generate": "npm run prisma:generate --workspace backend",
+    "prisma:migrate": "npm run prisma:migrate --workspace backend",
+    "prisma:seed": "npm run prisma:seed --workspace backend"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
