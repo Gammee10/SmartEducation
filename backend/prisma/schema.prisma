@@ -71,6 +71,8 @@ model User {
   borrowRequestsDecided LibraryBorrowRequest[] @relation("BorrowRequestDecider")
   loansIssued  LibraryLoan[]      @relation("LoanIssuedBy")
   loansReturned LibraryLoan[]     @relation("LoanReturnedBy")
+  enrollments  CourseEnrollment[] @relation("EnrollmentActor")
+  uploads      ContentItem[]      @relation("ContentUploader")
 
   @@index([role, status])
   @@map("users")
@@ -89,6 +91,7 @@ model Student {
   user          User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
   borrowRequests LibraryBorrowRequest[]
   loans         LibraryLoan[]
+  enrollments   CourseEnrollment[]
 
   @@index([gradeLevel])
   @@map("students")
@@ -102,9 +105,100 @@ model Teacher {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courses   Course[]
 
   @@map("teachers")
+}
+
+// ---------------------------------------------------------------
+// LMS - Courses, Enrollment, Content
+// ---------------------------------------------------------------
+
+enum CourseStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+  COMPLETED
+}
+
+enum ContentType {
+  VIDEO
+  DOCUMENT
+  PDF
+  IMAGE
+  LINK
+  OTHER
+}
+
+model Course {
+  id            String        @id @default(uuid()) @db.Uuid
+  title         String
+  description   String?
+  subject       String
+  gradeLevel    String        @map("grade_level")
+  teacherId     String        @map("teacher_id") @db.Uuid
+  status        CourseStatus  @default(DRAFT)
+  coverUrl      String?       @map("cover_url")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  teacher      Teacher            @relation(fields: [teacherId], references: [id], onDelete: Restrict)
+  enrollments  CourseEnrollment[]
+  content      ContentItem[]
+
+  @@index([teacherId, status])
+  @@index([gradeLevel, status])
+  @@index([status])
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  id         String           @id @default(uuid()) @db.Uuid
+  courseId   String           @map("course_id") @db.Uuid
+  studentId  String           @map("student_id") @db.Uuid
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledById String         @map("enrolled_by_id") @db.Uuid
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student     Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrolledBy  User    @relation("EnrollmentActor", fields: [enrolledById], references: [id], onDelete: Restrict)
+
+  @@unique([courseId, studentId])
+  @@index([studentId, status])
+  @@index([courseId, status])
+  @@map("course_enrollments")
+}
+
+model ContentItem {
+  id          String      @id @default(uuid()) @db.Uuid
+  courseId    String      @map("course_id") @db.Uuid
+  title       String
+  description String?
+  type        ContentType @default(OTHER)
+  url         String
+  publicId    String?     @map("public_id")
+  mimeType    String?     @map("mime_type")
+  sizeBytes   Int?        @map("size_bytes")
+  uploadedById String     @map("uploaded_by_id") @db.Uuid
+  isArchived  Boolean     @default(false) @map("is_archived")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  course       Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  uploadedBy   User   @relation("ContentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([courseId, isArchived])
+  @@index([courseId, type])
+  @@index([uploadedById])
+  @@map("content_items")
 }
 
 model AuditLog {

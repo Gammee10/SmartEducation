@@ -4,6 +4,8 @@ import DashboardPage from './pages/DashboardPage';
 import LibraryCatalogPage from './pages/LibraryCatalogPage';
 import MyBorrowingPage from './pages/MyBorrowingPage';
 import AdminLibraryPage from './pages/AdminLibraryPage';
+import CoursesPage from './pages/CoursesPage';
+import CourseDetailPage from './pages/CourseDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -21,6 +23,8 @@ export default function App() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="courses" element={<CoursesPage />} />
+        <Route path="courses/:id" element={<CourseDetailPage />} />
         <Route path="library" element={<LibraryCatalogPage />} />
         <Route
           path="library/my-borrowing"

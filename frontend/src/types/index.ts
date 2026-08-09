@@ -102,3 +102,70 @@ export interface ApiResponse<T> {
   data: T;
   pagination?: Pagination;
 }
+
+// ---------------------------------------------------------------
+// LMS - Courses & Content
+// ---------------------------------------------------------------
+
+export type CourseStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
+export type ContentType = 'VIDEO' | 'DOCUMENT' | 'PDF' | 'IMAGE' | 'LINK' | 'OTHER';
+
+export interface Course {
+  id: string;
+  title: string;
+  description?: string | null;
+  subject: string;
+  gradeLevel: string;
+  status: CourseStatus;
+  coverUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  teacher?: {
+    id: string;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+  enrollments?: CourseEnrollment[];
+  _count?: {
+    enrollments: number;
+    content: number;
+  };
+}
+
+export interface CourseEnrollment {
+  id: string;
+  courseId: string;
+  studentId: string;
+  status: string;
+  createdAt: string;
+  student?: {
+    id: string;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+}
+
+export interface ContentItem {
+  id: string;
+  courseId: string;
+  title: string;
+  description?: string | null;
+  type: ContentType;
+  url: string;
+  publicId?: string | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  isArchived: boolean;
+  createdAt: string;
+  uploadedBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}

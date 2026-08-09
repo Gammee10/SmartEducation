@@ -9,6 +9,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', end: true },
+  { to: '/courses', label: 'Courses' },
   { to: '/library', label: 'Library Catalog' },
 ];
 

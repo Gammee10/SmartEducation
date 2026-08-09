@@ -4,6 +4,7 @@ import cors from 'cors';
 import env from './config/env';
 import authRoutes from './routes/authRoutes';
 import libraryRoutes from './routes/libraryRoutes';
+import courseRoutes from './routes/courseRoutes';
 import errorHandler from './middleware/errorHandler';
 
 const app = express();
@@ -34,6 +35,7 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/library', libraryRoutes);
+app.use('/api/courses', courseRoutes);
 
 // 404 handler
 app.use((req, res) => {
