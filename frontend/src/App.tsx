@@ -6,6 +6,7 @@ import MyBorrowingPage from './pages/MyBorrowingPage';
 import AdminLibraryPage from './pages/AdminLibraryPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import AssignmentDetailPage from './pages/AssignmentDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -25,6 +26,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
+        <Route path="courses/:id/assignments/:assignmentId" element={<AssignmentDetailPage />} />
         <Route path="library" element={<LibraryCatalogPage />} />
         <Route
           path="library/my-borrowing"

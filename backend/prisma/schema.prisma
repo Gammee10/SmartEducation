@@ -73,6 +73,9 @@ model User {
   loansReturned LibraryLoan[]     @relation("LoanReturnedBy")
   enrollments  CourseEnrollment[] @relation("EnrollmentActor")
   uploads      ContentItem[]      @relation("ContentUploader")
+  assignmentsCreated Assignment[]        @relation("AssignmentCreator")
+  submissionsGraded AssignmentSubmission[] @relation("SubmissionGrader")
+  notifications  Notification[]   @relation("UserNotifications")
 
   @@index([role, status])
   @@map("users")
@@ -92,6 +95,7 @@ model Student {
   borrowRequests LibraryBorrowRequest[]
   loans         LibraryLoan[]
   enrollments   CourseEnrollment[]
+  submissions   AssignmentSubmission[]
 
   @@index([gradeLevel])
   @@map("students")
@@ -136,6 +140,27 @@ enum ContentType {
   OTHER
 }
 
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+}
+
+enum NotificationType {
+  ASSIGNMENT
+  GRADE
+  QUIZ_RESULT
+  ANNOUNCEMENT
+  EVENT
+  GENERAL
+}
+
 model Course {
   id            String        @id @default(uuid()) @db.Uuid
   title         String
@@ -151,6 +176,7 @@ model Course {
   teacher      Teacher            @relation(fields: [teacherId], references: [id], onDelete: Restrict)
   enrollments  CourseEnrollment[]
   content      ContentItem[]
+  assignments  Assignment[]
 
   @@index([teacherId, status])
   @@index([gradeLevel, status])
@@ -199,6 +225,84 @@ model ContentItem {
   @@index([courseId, type])
   @@index([uploadedById])
   @@map("content_items")
+}
+
+// ---------------------------------------------------------------
+// LMS - Assignments, Submissions, Grading (Member 3)
+// ---------------------------------------------------------------
+
+model Assignment {
+  id           String           @id @default(uuid()) @db.Uuid
+  courseId     String           @map("course_id") @db.Uuid
+  title        String
+  instructions String?
+  maxScore     Int              @map("max_score")
+  dueDate      DateTime?        @map("due_date")
+  status       AssignmentStatus @default(DRAFT)
+  createdById  String           @map("created_by_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  course       Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy    User                   @relation("AssignmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  submissions  AssignmentSubmission[]
+
+  @@index([courseId, status])
+  @@index([courseId, dueDate])
+  @@index([status, dueDate])
+  @@index([createdById])
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id           String           @id @default(uuid()) @db.Uuid
+  assignmentId String           @map("assignment_id") @db.Uuid
+  studentId    String           @map("student_id") @db.Uuid
+  content      String?
+  fileUrl      String?          @map("file_url")
+  publicId     String?          @map("public_id")
+  mimeType     String?          @map("mime_type")
+  sizeBytes    Int?             @map("size_bytes")
+  status       SubmissionStatus @default(SUBMITTED)
+  isLate       Boolean          @default(false) @map("is_late")
+  score        Float?
+  feedback     String?
+  gradedById   String?          @map("graded_by_id") @db.Uuid
+  gradedAt     DateTime?        @map("graded_at")
+  submittedAt  DateTime         @default(now()) @map("submitted_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  gradedBy   User?      @relation("SubmissionGrader", fields: [gradedById], references: [id], onDelete: SetNull)
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId, status])
+  @@index([studentId, status])
+  @@index([status, submittedAt])
+  @@map("assignment_submissions")
+}
+
+// ---------------------------------------------------------------
+// Notifications - in-app notification contract (Member 6 extends)
+// ---------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  title     String
+  message   String
+  type      NotificationType @default(GENERAL)
+  isRead    Boolean          @default(false) @map("is_read")
+  metadata  Json?
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([type, createdAt])
+  @@map("notifications")
 }
 
 model AuditLog {

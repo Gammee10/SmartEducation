@@ -169,3 +169,66 @@ export interface ContentItem {
     email: string;
   };
 }
+
+// ---------------------------------------------------------------
+// LMS - Assignments, Submissions, Grading
+// ---------------------------------------------------------------
+
+export type AssignmentStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ARCHIVED';
+export type SubmissionStatus = 'SUBMITTED' | 'GRADED';
+
+export interface Assignment {
+  id: string;
+  courseId: string;
+  title: string;
+  instructions?: string | null;
+  maxScore: number;
+  dueDate?: string | null;
+  status: AssignmentStatus;
+  createdAt: string;
+  updatedAt: string;
+  course?: {
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+    teacher?: {
+      id: string;
+      user?: {
+        id: string;
+        fullName: string;
+        email: string;
+      };
+    };
+  };
+  submissions?: AssignmentSubmission[];
+  _count?: {
+    submissions: number;
+  };
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  content?: string | null;
+  fileUrl?: string | null;
+  publicId?: string | null;
+  mimeType?: string | null;
+  sizeBytes?: number | null;
+  status: SubmissionStatus;
+  isLate: boolean;
+  score?: number | null;
+  feedback?: string | null;
+  gradedById?: string | null;
+  gradedAt?: string | null;
+  submittedAt: string;
+  student?: {
+    id: string;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+}

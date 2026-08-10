@@ -2,13 +2,21 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import type { Course, ContentItem } from '../types';
+import type { Course, ContentItem, Assignment } from '../types';
 
 interface ContentForm {
   title: string;
   description: string;
   url: string;
   type: string;
+}
+
+interface AssignmentForm {
+  title: string;
+  instructions: string;
+  maxScore: string;
+  dueDate: string;
+  status: string;
 }
 
 const emptyForm: ContentForm = {
@@ -18,11 +26,20 @@ const emptyForm: ContentForm = {
   type: 'OTHER',
 };
 
+const emptyAssignmentForm: AssignmentForm = {
+  title: '',
+  instructions: '',
+  maxScore: '',
+  dueDate: '',
+  status: 'PUBLISHED',
+};
+
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isTeacher, isAdmin } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [content, setContent] = useState<ContentItem[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -30,17 +47,22 @@ export default function CourseDetailPage() {
   const [form, setForm] = useState<ContentForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [showCreateAssignment, setShowCreateAssignment] = useState(false);
+  const [assignmentForm, setAssignmentForm] = useState<AssignmentForm>(emptyAssignmentForm);
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [courseRes, contentRes] = await Promise.all([
+      const [courseRes, contentRes, assignmentsRes] = await Promise.all([
         api.get(`/courses/${id}`),
         api.get(`/courses/${id}/content`, { params: { pageSize: 100 } }),
+        api.get(`/courses/${id}/assignments`, { params: { pageSize: 100 } }),
       ]);
       setCourse(courseRes.data.data.course);
       setContent(contentRes.data.data);
+      setAssignments(assignmentsRes.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load course');
     } finally {
@@ -85,6 +107,30 @@ export default function CourseDetailPage() {
     }
   };
 
+  const handleCreateAssignment = async (e: FormEvent) => {
+    e.preventDefault();
+    setCreatingAssignment(true);
+    setError('');
+    setMessage('');
+    try {
+      await api.post(`/courses/${id}/assignments`, {
+        title: assignmentForm.title,
+        instructions: assignmentForm.instructions,
+        maxScore: Number(assignmentForm.maxScore),
+        dueDate: assignmentForm.dueDate || null,
+        status: assignmentForm.status,
+      });
+      setMessage('Assignment created successfully');
+      setShowCreateAssignment(false);
+      setAssignmentForm(emptyAssignmentForm);
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create assignment');
+    } finally {
+      setCreatingAssignment(false);
+    }
+  };
+
   const typeBadge = (type: string) => {
     const styles: Record<string, string> = {
       VIDEO: 'bg-purple-50 text-purple-700',
@@ -97,6 +143,20 @@ export default function CourseDetailPage() {
     return (
       <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[type] || 'bg-gray-100 text-gray-600'}`}>
         {type}
+      </span>
+    );
+  };
+
+  const assignmentStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      DRAFT: 'bg-yellow-50 text-yellow-700',
+      PUBLISHED: 'bg-green-50 text-green-700',
+      CLOSED: 'bg-gray-100 text-gray-600',
+      ARCHIVED: 'bg-gray-100 text-gray-500',
+    };
+    return (
+      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+        {status}
       </span>
     );
   };
@@ -271,6 +331,119 @@ export default function CourseDetailPage() {
                 )}
               </div>
             </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-10 flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Assignments</h2>
+        {isTeacher && (
+          <button
+            onClick={() => setShowCreateAssignment(!showCreateAssignment)}
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+          >
+            {showCreateAssignment ? 'Cancel' : '+ Create Assignment'}
+          </button>
+        )}
+      </div>
+
+      {showCreateAssignment && isTeacher && (
+        <form onSubmit={handleCreateAssignment} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <input
+              type="text"
+              required
+              value={assignmentForm.title}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              placeholder="e.g. Homework 1"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Instructions</label>
+            <textarea
+              value={assignmentForm.instructions}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, instructions: e.target.value })}
+              rows={3}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              placeholder="Describe what students should do..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Max Score *</label>
+            <input
+              type="number"
+              required
+              min={1}
+              value={assignmentForm.maxScore}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Due Date</label>
+            <input
+              type="datetime-local"
+              value={assignmentForm.dueDate}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <select
+              value={assignmentForm.status}
+              onChange={(e) => setAssignmentForm({ ...assignmentForm, status: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={creatingAssignment}
+              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+            >
+              {creatingAssignment ? 'Creating...' : 'Create Assignment'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {assignments.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">No assignments yet.</div>
+      ) : (
+        <div className="space-y-3">
+          {assignments.map((assignment) => (
+            <Link
+              key={assignment.id}
+              to={`/courses/${id}/assignments/${assignment.id}`}
+              className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-gray-900">{assignment.title}</h3>
+                    {assignmentStatusBadge(assignment.status)}
+                  </div>
+                  {assignment.instructions && (
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{assignment.instructions}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
+                <span>Max score: {assignment.maxScore}</span>
+                {assignment.dueDate && <span>Due: {formatDate(assignment.dueDate)}</span>}
+                <span>{assignment._count?.submissions || 0} submissions</span>
+                {assignment.submissions && assignment.submissions.length > 0 && (
+                  <span className="text-green-600 font-medium">Submitted</span>
+                )}
+              </div>
+            </Link>
           ))}
         </div>
       )}

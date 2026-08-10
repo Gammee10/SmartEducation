@@ -1,6 +1,7 @@
 // Course routes - courses, enrollment, and content.
 import { Router } from 'express';
 import * as courseController from '../controllers/courseController';
+import * as assignmentController from '../controllers/assignmentController';
 import authenticate from '../middleware/auth';
 import { requireAdmin, requireTeacher } from '../middleware/rbac';
 
@@ -31,5 +32,11 @@ router.post('/:id/unenroll', requireAdmin, courseController.unenrollStudent);
 router.get('/:id/content', courseController.listContent);
 router.post('/:courseId/content', requireTeacher, courseController.uploadContent);
 router.post('/content/:id/archive', requireTeacher, courseController.archiveContent);
+
+// ---------------------------------------------------------------
+// Assignments (course-scoped)
+// ---------------------------------------------------------------
+router.get('/:id/assignments', assignmentController.listCourseAssignments);
+router.post('/:id/assignments', requireTeacher, assignmentController.createAssignment);
 
 export default router;
