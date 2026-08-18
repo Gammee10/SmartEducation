@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import type { Course, ContentItem, Assignment } from '../types';
+import type { Course, ContentItem, Assignment, Quiz } from '../types';
 
 interface ContentForm {
   title: string;
@@ -16,6 +16,16 @@ interface AssignmentForm {
   instructions: string;
   maxScore: string;
   dueDate: string;
+  status: string;
+}
+
+interface QuizForm {
+  title: string;
+  description: string;
+  timeLimit: string;
+  maxAttempts: string;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
   status: string;
 }
 
@@ -34,12 +44,27 @@ const emptyAssignmentForm: AssignmentForm = {
   status: 'PUBLISHED',
 };
 
+const emptyQuizForm: QuizForm = {
+  title: '',
+  description: '',
+  timeLimit: '10',
+  maxAttempts: '1',
+  shuffleQuestions: false,
+  shuffleOptions: false,
+  status: 'DRAFT',
+};
+
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isTeacher, isAdmin } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizMessage, setQuizMessage] = useState('');
+  const [showCreateQuiz, setShowCreateQuiz] = useState(false);
+  const [quizForm, setQuizForm] = useState<QuizForm>(emptyQuizForm);
+  const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -55,14 +80,16 @@ export default function CourseDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const [courseRes, contentRes, assignmentsRes] = await Promise.all([
+      const [courseRes, contentRes, assignmentsRes, quizzesRes] = await Promise.all([
         api.get(`/courses/${id}`),
         api.get(`/courses/${id}/content`, { params: { pageSize: 100 } }),
         api.get(`/courses/${id}/assignments`, { params: { pageSize: 100 } }),
+        api.get(`/courses/${id}/quizzes`, { params: { pageSize: 100 } }),
       ]);
       setCourse(courseRes.data.data.course);
       setContent(contentRes.data.data);
       setAssignments(assignmentsRes.data.data);
+      setQuizzes(quizzesRes.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load course');
     } finally {
@@ -131,6 +158,32 @@ export default function CourseDetailPage() {
     }
   };
 
+  const handleCreateQuiz = async (e: FormEvent) => {
+    e.preventDefault();
+    setCreatingQuiz(true);
+    setError('');
+    setQuizMessage('');
+    try {
+      await api.post(`/courses/${id}/quizzes`, {
+        title: quizForm.title,
+        description: quizForm.description,
+        timeLimit: Number(quizForm.timeLimit),
+        maxAttempts: Number(quizForm.maxAttempts),
+        shuffleQuestions: quizForm.shuffleQuestions,
+        shuffleOptions: quizForm.shuffleOptions,
+        status: quizForm.status,
+      });
+      setQuizMessage('Quiz created successfully');
+      setShowCreateQuiz(false);
+      setQuizForm(emptyQuizForm);
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create quiz');
+    } finally {
+      setCreatingQuiz(false);
+    }
+  };
+
   const typeBadge = (type: string) => {
     const styles: Record<string, string> = {
       VIDEO: 'bg-purple-50 text-purple-700',
@@ -148,6 +201,20 @@ export default function CourseDetailPage() {
   };
 
   const assignmentStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      DRAFT: 'bg-yellow-50 text-yellow-700',
+      PUBLISHED: 'bg-green-50 text-green-700',
+      CLOSED: 'bg-gray-100 text-gray-600',
+      ARCHIVED: 'bg-gray-100 text-gray-500',
+    };
+    return (
+      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
+        {status}
+      </span>
+    );
+  };
+
+  const quizStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       DRAFT: 'bg-yellow-50 text-yellow-700',
       PUBLISHED: 'bg-green-50 text-green-700',
@@ -442,6 +509,145 @@ export default function CourseDetailPage() {
                 {assignment.submissions && assignment.submissions.length > 0 && (
                   <span className="text-green-600 font-medium">Submitted</span>
                 )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* -----------------------------------------------------
+          Quizzes (Member 4)
+          ----------------------------------------------------- */}
+      <div className="mt-10 flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Quizzes</h2>
+        {isTeacher && (
+          <button
+            onClick={() => setShowCreateQuiz(!showCreateQuiz)}
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+          >
+            {showCreateQuiz ? 'Cancel' : '+ Create Quiz'}
+          </button>
+        )}
+      </div>
+
+      {quizMessage && (
+        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{quizMessage}</div>
+      )}
+
+      {showCreateQuiz && isTeacher && (
+        <form onSubmit={handleCreateQuiz} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <input
+              type="text"
+              required
+              value={quizForm.title}
+              onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              placeholder="e.g. Chapter 1 Quiz"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              value={quizForm.description}
+              onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
+              rows={2}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Time Limit (minutes) *</label>
+            <input
+              type="number"
+              required
+              min={1}
+              max={300}
+              value={quizForm.timeLimit}
+              onChange={(e) => setQuizForm({ ...quizForm, timeLimit: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Max Attempts *</label>
+            <input
+              type="number"
+              required
+              min={1}
+              max={10}
+              value={quizForm.maxAttempts}
+              onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <select
+              value={quizForm.status}
+              onChange={(e) => setQuizForm({ ...quizForm, status: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+            >
+              <option value="DRAFT">Draft</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+          </div>
+          <div className="flex items-end gap-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={quizForm.shuffleQuestions}
+                onChange={(e) => setQuizForm({ ...quizForm, shuffleQuestions: e.target.checked })}
+              />
+              Shuffle questions
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={quizForm.shuffleOptions}
+                onChange={(e) => setQuizForm({ ...quizForm, shuffleOptions: e.target.checked })}
+              />
+              Shuffle options
+            </label>
+          </div>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={creatingQuiz}
+              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+            >
+              {creatingQuiz ? 'Creating...' : 'Create Quiz'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {quizzes.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">No quizzes yet.</div>
+      ) : (
+        <div className="space-y-3">
+          {quizzes.map((quiz) => (
+            <Link
+              key={quiz.id}
+              to={`/courses/${id}/quizzes/${quiz.id}`}
+              className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-gray-900">{quiz.title}</h3>
+                    {quizStatusBadge(quiz.status)}
+                  </div>
+                  {quiz.description && (
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{quiz.description}</p>
+                  )}
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
+                <span>Time limit: {quiz.timeLimit} min</span>
+                <span>Attempts: {quiz.maxAttempts}</span>
+                <span>{quiz._count?.questions || 0} questions</span>
+                <span>{quiz._count?.attempts || 0} attempts</span>
               </div>
             </Link>
           ))}

@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import * as courseController from '../controllers/courseController';
 import * as assignmentController from '../controllers/assignmentController';
+import * as quizController from '../controllers/quizController';
 import authenticate from '../middleware/auth';
 import { requireAdmin, requireTeacher } from '../middleware/rbac';
 
@@ -38,5 +39,11 @@ router.post('/content/:id/archive', requireTeacher, courseController.archiveCont
 // ---------------------------------------------------------------
 router.get('/:id/assignments', assignmentController.listCourseAssignments);
 router.post('/:id/assignments', requireTeacher, assignmentController.createAssignment);
+
+// ---------------------------------------------------------------
+// Quizzes (course-scoped)
+// ---------------------------------------------------------------
+router.get('/:id/quizzes', quizController.listCourseQuizzes);
+router.post('/:id/quizzes', requireTeacher, quizController.createQuiz);
 
 export default router;

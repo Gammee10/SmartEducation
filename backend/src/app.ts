@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import libraryRoutes from './routes/libraryRoutes';
 import courseRoutes from './routes/courseRoutes';
 import assignmentRoutes from './routes/assignmentRoutes';
+import quizRoutes from './routes/quizRoutes';
 import errorHandler from './middleware/errorHandler';
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/library', libraryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api', assignmentRoutes);
+app.use('/api', quizRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -45,7 +45,7 @@ export default function Layout() {
                     key={item.to}
                     to={item.to}
                     end={item.end}
-                    className={({ isActive }) =>
+                    className={({ isActive }: { isActive: boolean }) =>
                       `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         isActive
                           ? 'bg-primary-50 text-primary-700'

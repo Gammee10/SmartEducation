@@ -7,6 +7,7 @@ import AdminLibraryPage from './pages/AdminLibraryPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AssignmentDetailPage from './pages/AssignmentDetailPage';
+import QuizDetailPage from './pages/QuizDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
         <Route path="courses/:id/assignments/:assignmentId" element={<AssignmentDetailPage />} />
+        <Route path="courses/:id/quizzes/:quizId" element={<QuizDetailPage />} />
         <Route path="library" element={<LibraryCatalogPage />} />
         <Route
           path="library/my-borrowing"

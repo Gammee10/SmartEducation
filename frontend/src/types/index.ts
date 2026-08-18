@@ -171,6 +171,85 @@ export interface ContentItem {
 }
 
 // ---------------------------------------------------------------
+// LMS - Quizzes, Attempts, Results (Member 4)
+// ---------------------------------------------------------------
+
+export type QuizStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ARCHIVED';
+export type QuizQuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE';
+export type QuizAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'TIME_EXPIRED';
+
+export interface QuizOption {
+  id: string;
+  optionText: string;
+  orderIndex: number;
+  isCorrect?: boolean;
+}
+
+export interface QuizQuestion {
+  id: string;
+  prompt: string;
+  type: QuizQuestionType;
+  points: number;
+  orderIndex: number;
+  options: QuizOption[];
+}
+
+export interface Quiz {
+  id: string;
+  courseId: string;
+  title: string;
+  description?: string | null;
+  timeLimit: number;
+  maxAttempts: number;
+  shuffleQuestions: boolean;
+  shuffleOptions: boolean;
+  status: QuizStatus;
+  publishedAt?: string | null;
+  createdAt: string;
+  course?: {
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+  };
+  questions?: QuizQuestion[];
+  attempts?: QuizAttempt[];
+  _count?: {
+    questions: number;
+    attempts: number;
+  };
+}
+
+export interface QuizAttempt {
+  id: string;
+  quizId: string;
+  studentId: string;
+  status: QuizAttemptStatus;
+  startedAt: string;
+  submittedAt?: string | null;
+  expiresAt: string;
+  score?: number | null;
+  maxScore?: number | null;
+  student?: {
+    id: string;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+}
+
+export interface QuizAnswer {
+  id: string;
+  attemptId: string;
+  questionId: string;
+  optionId?: string | null;
+  isCorrect?: boolean | null;
+  pointsEarned?: number | null;
+}
+
+// ---------------------------------------------------------------
 // LMS - Assignments, Submissions, Grading
 // ---------------------------------------------------------------
 
