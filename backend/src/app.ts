@@ -1,4 +1,4 @@
-// Express application - modular monolith entry point.
+﻿// Express application - modular monolith entry point.
 import express from 'express';
 import cors from 'cors';
 import env from './config/env';
@@ -7,6 +7,9 @@ import libraryRoutes from './routes/libraryRoutes';
 import courseRoutes from './routes/courseRoutes';
 import assignmentRoutes from './routes/assignmentRoutes';
 import quizRoutes from './routes/quizRoutes';
+import attendanceRoutes from './routes/attendanceRoutes';
+import timetableRoutes from './routes/timetableRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
 import errorHandler from './middleware/errorHandler';
 
 const app = express();
@@ -40,6 +43,9 @@ app.use('/api/library', libraryRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api', assignmentRoutes);
 app.use('/api', quizRoutes);
+app.use('/api', attendanceRoutes);
+app.use('/api', timetableRoutes);
+app.use('/api', dashboardRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -54,3 +60,4 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 export default app;
+

@@ -266,6 +266,14 @@ export default function CourseDetailPage() {
         {course.description && (
           <p className="mt-4 text-sm text-gray-600">{course.description}</p>
         )}
+        <div className="mt-4">
+          <Link
+            to={`/courses/${course.id}/attendance`}
+            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            View Attendance →
+          </Link>
+        </div>
         {isAdmin && course.enrollments && course.enrollments.length > 0 && (
           <div className="mt-4">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Enrolled Students ({course.enrollments.length})</h3>

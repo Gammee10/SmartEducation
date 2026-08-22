@@ -230,6 +230,10 @@ export interface QuizAttempt {
   expiresAt: string;
   score?: number | null;
   maxScore?: number | null;
+  quiz?: {
+    id: string;
+    title: string;
+  };
   student?: {
     id: string;
     user?: {
@@ -284,6 +288,177 @@ export interface Assignment {
   _count?: {
     submissions: number;
   };
+}
+
+// ---------------------------------------------------------------
+// SIS - Attendance & Timetable (Member 5)
+// ---------------------------------------------------------------
+
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY';
+
+export interface Attendance {
+  id: string;
+  studentId: string;
+  courseId: string;
+  date: string;
+  status: AttendanceStatus;
+  markedById: string;
+  markedAt: string;
+  comment?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  student?: {
+    id: string;
+    studentCode: string;
+    gradeLevel: string;
+    section?: string | null;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  };
+  course?: {
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel?: string;
+  };
+  markedBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
+
+export interface TimetableSlot {
+  id: string;
+  courseId: string;
+  teacherId?: string | null;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  room?: string | null;
+  course?: {
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+  };
+  teacher?: {
+    id: string;
+    user?: {
+      id: string;
+      fullName: string;
+      email?: string;
+    };
+  } | null;
+}
+
+export interface CourseAttendanceView {
+  course: {
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+  };
+  enrolledStudents: Array<{
+    id: string;
+    studentCode: string;
+    gradeLevel: string;
+    section?: string | null;
+    user?: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
+  }>;
+  attendance: Attendance[];
+}
+
+export interface StudentAttendanceView {
+  student: {
+    id: string;
+    studentCode: string;
+    gradeLevel: string;
+    section?: string | null;
+  };
+  attendance: Attendance[];
+}
+
+export interface AdminDashboardData {
+  stats: {
+    courses: number;
+    students: number;
+    teachers: number;
+    attendanceRate: number;
+    avgAssignmentScore: number;
+    avgQuizScore: number;
+  };
+}
+
+export interface TeacherDashboardData {
+  stats: {
+    courses: number;
+    students: number;
+    quizzes: number;
+  };
+  courses: Array<{
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+    status: string;
+    enrollments: number;
+    assignments: number;
+    quizzes: number;
+  }>;
+  recentSubmissions: AssignmentSubmission[];
+  recentGrades: AssignmentSubmission[];
+}
+
+export interface StudentDashboardData {
+  stats: {
+    enrollments: number;
+    attendanceRate: number;
+    avgAssignmentScore: number;
+    avgQuizScore: number;
+  };
+  courses: Array<{
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+  }>;
+}
+
+export interface StudentSummary {
+  student: {
+    id: string;
+    studentCode: string;
+    gradeLevel: string;
+    section?: string | null;
+    user: {
+      id: string;
+      fullName: string;
+      email: string;
+      phone?: string | null;
+    };
+  };
+  stats: {
+    enrollments: number;
+    attendanceRate: number;
+    avgAssignmentScore: number;
+    avgQuizScore: number;
+  };
+  courses: Array<{
+    id: string;
+    title: string;
+    subject: string;
+    gradeLevel: string;
+  }>;
+  recentAttempts: QuizAttempt[];
 }
 
 export interface AssignmentSubmission {

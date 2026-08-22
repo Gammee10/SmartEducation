@@ -77,6 +77,7 @@ model User {
   submissionsGraded AssignmentSubmission[] @relation("SubmissionGrader")
   quizzesCreated  Quiz[]                @relation("QuizCreator")
   notifications  Notification[]   @relation("UserNotifications")
+  attendanceMarked Attendance[]        @relation("AttendanceMarker")
 
   @@index([role, status])
   @@map("users")
@@ -98,6 +99,7 @@ model Student {
   enrollments   CourseEnrollment[]
   submissions   AssignmentSubmission[]
   quizAttempts  QuizAttempt[]
+  attendances   Attendance[]
 
   @@index([gradeLevel])
   @@map("students")
@@ -113,6 +115,7 @@ model Teacher {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
   courses   Course[]
+  timetableSlots TimetableSlot[]
 
   @@map("teachers")
 }
@@ -163,6 +166,21 @@ enum NotificationType {
   GENERAL
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
 model Course {
   id            String        @id @default(uuid()) @db.Uuid
   title         String
@@ -180,6 +198,8 @@ model Course {
   content      ContentItem[]
   assignments  Assignment[]
   quizzes      Quiz[]
+  attendances  Attendance[]
+  timetableSlots TimetableSlot[]
 
   @@index([teacherId, status])
   @@index([gradeLevel, status])
@@ -451,6 +471,51 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------
+// SIS - Attendance & Timetable (Member 5)
+// ---------------------------------------------------------------
+
+model Attendance {
+  id         String           @id @default(uuid()) @db.Uuid
+  studentId  String           @map("student_id") @db.Uuid
+  courseId   String           @map("course_id") @db.Uuid
+  date       DateTime         @map("date") @db.Date
+  status     AttendanceStatus @default(PRESENT)
+  markedById String           @map("marked_by_id") @db.Uuid
+  markedAt   DateTime         @default(now()) @map("marked_at")
+  comment    String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  markedBy  User    @relation("AttendanceMarker", fields: [markedById], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, courseId, date])
+  @@index([studentId, date])
+  @@index([courseId, date])
+  @@map("attendances")
+}
+
+model TimetableSlot {
+  id        String     @id @default(uuid()) @db.Uuid
+  courseId  String     @map("course_id") @db.Uuid
+  teacherId String?    @map("teacher_id") @db.Uuid
+  dayOfWeek DayOfWeek  @map("day_of_week")
+  startTime String     @map("start_time") // '08:00'
+  endTime   String     @map("end_time")   // '09:30'
+  room      String?
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@index([teacherId, dayOfWeek])
+  @@index([courseId, dayOfWeek])
+  @@map("timetable_slots")
 }
 
 // ---------------------------------------------------------------

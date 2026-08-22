@@ -8,6 +8,9 @@ import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AssignmentDetailPage from './pages/AssignmentDetailPage';
 import QuizDetailPage from './pages/QuizDetailPage';
+import TimetablePage from './pages/TimetablePage';
+import AttendancePage from './pages/AttendancePage';
+import StudentProfilePage from './pages/StudentProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -29,6 +32,9 @@ export default function App() {
         <Route path="courses/:id" element={<CourseDetailPage />} />
         <Route path="courses/:id/assignments/:assignmentId" element={<AssignmentDetailPage />} />
         <Route path="courses/:id/quizzes/:quizId" element={<QuizDetailPage />} />
+        <Route path="courses/:id/attendance" element={<AttendancePage />} />
+        <Route path="timetable" element={<TimetablePage />} />
+        <Route path="students/:id" element={<StudentProfilePage />} />
         <Route path="library" element={<LibraryCatalogPage />} />
         <Route
           path="library/my-borrowing"

@@ -37,3 +37,6 @@ coverage/
 
 # Uploads (local permanent storage is not used)
 uploads/
+
+# Local agent scaffolding scripts (one-off file generators)
+backend/scripts/

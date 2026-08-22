@@ -15,7 +15,7 @@
 
 ## ✨ What's Inside
 
-A complete digital school platform with **four feature modules already built** and working end-to-end:
+A complete digital school platform with **five feature modules already built** and working end-to-end:
 
 | 🏗️ Module | 📦 Status | 🎯 What it does |
 |---|---|---|
@@ -23,7 +23,7 @@ A complete digital school platform with **four feature modules already built** a
 | 📚 **LMS Courses & Content** | ✅ Member 2 | Course creation, enrollment, content uploads (Cloudinary), course detail pages |
 | 📝 **Assignments & Grading** | ✅ Member 3 | Assignment creation, student submissions (text + files), teacher grading with feedback & notifications |
 | 🧠 **Quizzes & Assessment** | ✅ Member 4 | Quiz builder, timed attempts, auto-grading, answer secrecy, attempt limits, results & notifications |
-| 📊 **SIS, Attendance & Dashboards** | 🚧 Member 5 | *Coming next* |
+| 📊 **SIS, Attendance & Dashboards** | ✅ Member 5 | Attendance marking & corrections, weekly timetable with conflict detection, role-specific dashboards, student profiles |
 | 💬 **Communication & Users** | 🚧 Member 6 | *Coming next* |
 
 ---
@@ -122,6 +122,17 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser and log 
 - Correct answers are **never leaked** to students before submission
 - Results trigger `QUIZ_RESULT` notifications
 
+### 📊 SIS: Attendance, Timetable & Dashboards
+- Teachers **mark attendance per course per day** (Present / Absent / Late / Excused) in bulk
+- Attendance corrections are **audited** with before/after snapshots
+- Students see their own attendance history and rate; teachers only their own courses
+- Weekly **timetable** grouped by day — admins create/delete slots with automatic **room & teacher conflict detection**
+- Role-specific dashboards:
+  - **Admin**: school-wide stats (courses, students, teachers, attendance rate, average scores)
+  - **Teacher**: course list with counts + recent submissions & grades
+  - **Student**: enrollment stats, attendance rate, average scores, course links
+- **Student profile page**: summary stats, courses, recent quiz attempts, full attendance history
+
 ---
 
 ## 🗂️ Project Structure
@@ -137,17 +148,17 @@ SmartEducation/
 │   │   ├── controllers/        # HTTP request handlers
 │   │   ├── middleware/         # Auth, RBAC, error handler
 │   │   ├── routes/             # Express route definitions
-│   │   ├── services/           # Business logic (auth, library, courses, assignments, quizzes)
+│   │   ├── services/           # Business logic (auth, library, courses, assignments, quizzes, attendance, timetable, dashboards)
 │   │   ├── utils/              # Response/error helpers
 │   │   ├── app.ts              # Express app
 │   │   └── index.ts            # Server entry
-│   └── tests/                  # Node test runner tests (133 passing)
+│   └── tests/                  # Node test runner tests (150 passing)
 └── frontend/                   # React SPA (TypeScript + Vite + Tailwind)
     └── src/
         ├── api/                # Axios client with JWT interceptor
         ├── components/         # Layout, ProtectedRoute
         ├── context/            # AuthContext
-        ├── pages/              # Login, Dashboard, Courses, Assignments, Quizzes, Library
+        ├── pages/              # Login, Dashboard, Courses, Assignments, Quizzes, Library, Timetable, Attendance, Student Profile
         └── types/              # Shared TypeScript types
 ```
 
@@ -228,6 +239,22 @@ All responses use a consistent shape:
 | GET | `/api/attempts/:id` | Attempt detail | Auth |
 | GET | `/api/quizzes/:id/results` | Quiz results | Auth |
 
+### 📊 SIS - Attendance, Timetable & Dashboards
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/api/courses/:id/attendance` | Course attendance by date | Auth (role-filtered) |
+| POST | `/api/attendance/upsert` | Mark attendance (bulk or single) | Teacher |
+| PUT | `/api/attendance/:id` | Correct a record (audited) | Teacher/Admin |
+| GET | `/api/students/:id/attendance` | Student attendance history | Self/Teacher/Admin |
+| GET | `/api/timetable` | Weekly timetable slots | Auth (role-filtered) |
+| POST | `/api/timetable` | Create slot (conflict-checked) | Admin |
+| PUT | `/api/timetable/:id` | Update slot | Admin |
+| DELETE | `/api/timetable/:id` | Delete slot | Admin |
+| GET | `/api/dashboard/admin` | School-wide stats | Admin |
+| GET | `/api/dashboard/teacher` | Teacher stats & activity | Teacher |
+| GET | `/api/dashboard/student` | Student stats & courses | Student |
+| GET | `/api/students/:id/summary` | Academic profile summary | Self/Teacher/Admin |
+
 ### 🩺 Health
 | Method | Endpoint | Description |
 |---|---|---|
@@ -238,7 +265,7 @@ All responses use a consistent shape:
 ## 🧪 Testing
 
 ```bash
-# Run the full backend test suite (133 tests)
+# Run the full backend test suite (150 tests)
 npm run test:backend
 ```
 
@@ -251,6 +278,9 @@ npm run test:backend
 - ✅ Course & enrollment workflows
 - ✅ Assignment submission & grading
 - ✅ Quiz creation, answer secrecy, attempt limits, expiry, and scoring
+- ✅ Attendance marking, corrections with audit trail, and history access control
+- ✅ Timetable slot CRUD with room/teacher conflict detection
+- ✅ Admin/teacher/student dashboard aggregation
 
 ---
 
@@ -276,7 +306,7 @@ npm run test:backend
 | 2 | LMS Courses, Enrollment, Content | ✅ **Done** |
 | 3 | Assignments, Submissions, Grading | ✅ **Done** |
 | 4 | Quizzes, Attempts, Assessment Engine | ✅ **Done** |
-| 5 | SIS, Attendance, Timetable, Dashboards | 🚧 In progress |
+| 5 | SIS, Attendance, Timetable, Dashboards | ✅ **Done** |
 | 6 | Communication, Notifications, User Admin | ⏳ Planned |
 | 7 | Cross-module integration & deployment | ⏳ Planned |
 

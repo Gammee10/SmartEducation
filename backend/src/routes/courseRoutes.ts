@@ -1,8 +1,9 @@
-// Course routes - courses, enrollment, and content.
+﻿// Course routes - courses, enrollment, and content.
 import { Router } from 'express';
 import * as courseController from '../controllers/courseController';
 import * as assignmentController from '../controllers/assignmentController';
 import * as quizController from '../controllers/quizController';
+import * as attendanceController from '../controllers/attendanceController';
 import authenticate from '../middleware/auth';
 import { requireAdmin, requireTeacher } from '../middleware/rbac';
 
@@ -46,4 +47,10 @@ router.post('/:id/assignments', requireTeacher, assignmentController.createAssig
 router.get('/:id/quizzes', quizController.listCourseQuizzes);
 router.post('/:id/quizzes', requireTeacher, quizController.createQuiz);
 
+// ---------------------------------------------------------------
+// Attendance (course-scoped)
+// ---------------------------------------------------------------
+router.get('/:id/attendance', attendanceController.listCourseAttendance);
+
 export default router;
+

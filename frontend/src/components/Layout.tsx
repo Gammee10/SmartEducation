@@ -10,6 +10,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/courses', label: 'Courses' },
+  { to: '/timetable', label: 'Timetable' },
   { to: '/library', label: 'Library Catalog' },
 ];
 
@@ -23,7 +24,8 @@ export default function Layout() {
   };
 
   const items = [...navItems];
-  if (isStudent) {
+  if (isStudent && user?.student?.id) {
+    items.push({ to: `/students/${user.student.id}`, label: 'My Profile' });
     items.push({ to: '/library/my-borrowing', label: 'My Borrowing' });
   }
   if (isAdmin) {
