@@ -33,6 +33,11 @@ function AdminDashboard() {
   if (!data) return <p className="text-gray-500 text-sm">Loading dashboard...</p>;
 
   const s = data.stats;
+  const quickLinks = [
+    { to: '/courses', label: 'Courses', desc: 'Browse and manage all courses' },
+    { to: '/timetable', label: 'Timetable', desc: 'Weekly schedule and slots' },
+    { to: '/library', label: 'Library', desc: 'Book catalog and borrowing' },
+  ];
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -42,6 +47,20 @@ function AdminDashboard() {
         <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} />
         <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} />
         <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} />
+      </div>
+
+      <h2 className="mt-8 text-lg font-medium text-gray-900 mb-3">Quick Links</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {quickLinks.map((l) => (
+          <Link
+            key={l.to}
+            to={l.to}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+          >
+            <p className="text-sm font-semibold text-primary-700">{l.label}</p>
+            <p className="mt-1 text-xs text-gray-500">{l.desc}</p>
+          </Link>
+        ))}
       </div>
     </>
   );
