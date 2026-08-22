@@ -78,6 +78,9 @@ model User {
   quizzesCreated  Quiz[]                @relation("QuizCreator")
   notifications  Notification[]   @relation("UserNotifications")
   attendanceMarked Attendance[]        @relation("AttendanceMarker")
+  announcementsPublished Announcement[] @relation("AnnouncementPublisher")
+  eventsCreated  Event[]               @relation("EventCreator")
+  importsCreated ImportBatch[]         @relation("ImportCreator")
 
   @@index([role, status])
   @@map("users")
@@ -171,6 +174,23 @@ enum AttendanceStatus {
   ABSENT
   LATE
   EXCUSED
+}
+
+// ---------------------------------------------------------------
+// Communication - Announcements & Events (Member 6)
+// ---------------------------------------------------------------
+
+enum AudienceScope {
+  ALL
+  TEACHERS
+  STUDENTS
+}
+
+enum ImportStatus {
+  PENDING
+  COMPLETED
+  PARTIAL
+  FAILED
 }
 
 enum DayOfWeek {
@@ -497,6 +517,78 @@ model Attendance {
   @@index([studentId, date])
   @@index([courseId, date])
   @@map("attendances")
+}
+
+// ---------------------------------------------------------------
+// Communication - Announcements & Events (Member 6)
+// ---------------------------------------------------------------
+
+model Announcement {
+  id            String        @id @default(uuid()) @db.Uuid
+  title         String
+  body          String
+  audience      AudienceScope @default(ALL)
+  publishedById String        @map("published_by_id") @db.Uuid
+  publishedAt   DateTime      @default(now()) @map("published_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  publishedBy User @relation("AnnouncementPublisher", fields: [publishedById], references: [id], onDelete: Restrict)
+
+  @@index([audience, publishedAt])
+  @@map("announcements")
+}
+
+model Event {
+  id          String        @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  location    String?
+  audience    AudienceScope @default(ALL)
+  startsAt    DateTime      @map("starts_at")
+  endsAt      DateTime?     @map("ends_at")
+  createdById String        @map("created_by_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  createdBy User @relation("EventCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([audience, startsAt])
+  @@map("events")
+}
+
+// ---------------------------------------------------------------
+// User administration - CSV bulk import tracking (Member 6)
+// ---------------------------------------------------------------
+
+model ImportBatch {
+  id           String       @id @default(uuid()) @db.Uuid
+  filename     String
+  status       ImportStatus @default(PENDING)
+  totalRows    Int          @default(0) @map("total_rows")
+  successCount Int          @default(0) @map("success_count")
+  errorCount   Int          @default(0) @map("error_count")
+  createdById  String       @map("created_by_id") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  createdBy User          @relation("ImportCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  errors    ImportError[]
+
+  @@index([createdById, createdAt])
+  @@map("import_batches")
+}
+
+model ImportError {
+  id        String  @id @default(uuid()) @db.Uuid
+  batchId   String  @map("batch_id") @db.Uuid
+  rowNumber Int     @map("row_number")
+  email     String?
+  message   String
+
+  batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@map("import_errors")
 }
 
 model TimetableSlot {

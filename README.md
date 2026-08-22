@@ -15,7 +15,7 @@
 
 ## ✨ What's Inside
 
-A complete digital school platform with **five feature modules already built** and working end-to-end:
+A complete digital school platform with **six feature modules already built** and working end-to-end:
 
 | 🏗️ Module | 📦 Status | 🎯 What it does |
 |---|---|---|
@@ -24,7 +24,7 @@ A complete digital school platform with **five feature modules already built** a
 | 📝 **Assignments & Grading** | ✅ Member 3 | Assignment creation, student submissions (text + files), teacher grading with feedback & notifications |
 | 🧠 **Quizzes & Assessment** | ✅ Member 4 | Quiz builder, timed attempts, auto-grading, answer secrecy, attempt limits, results & notifications |
 | 📊 **SIS, Attendance & Dashboards** | ✅ Member 5 | Attendance marking & corrections, weekly timetable with conflict detection, role-specific dashboards, student profiles |
-| 💬 **Communication & Users** | 🚧 Member 6 | *Coming next* |
+| 💬 **Communication, Notifications & User Admin** | ✅ Member 6 | Announcements & events with audience targeting, notification bell & inbox, admin user management with CSV bulk import |
 
 ---
 
@@ -133,6 +133,15 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser and log 
   - **Student**: enrollment stats, attendance rate, average scores, course links
 - **Student profile page**: summary stats, courses, recent quiz attempts, full attendance history
 
+### 💬 Communication, Notifications & User Admin
+- **Announcements & events** with audience targeting (Everyone / Teachers / Students) — filtering enforced **server-side**
+- Publishing an announcement or event **fans out in-app notifications** to the targeted audience
+- **Notification bell** in the navbar with live unread badge (polls every 30s)
+- **Notification inbox** — unread filter, mark one read, mark all read; users can only access their own notifications
+- **Admin user management** — create students/teachers manually (auto-generated `STU-####`/`TCH-####` codes), update details, archive (soft delete)
+- **CSV bulk import** with per-row validation and clear error reporting (`ImportBatch`/`ImportError` tracking)
+- No public registration — all user creation is admin-controlled and audited
+
 ---
 
 ## 🗂️ Project Structure
@@ -152,13 +161,13 @@ SmartEducation/
 │   │   ├── utils/              # Response/error helpers
 │   │   ├── app.ts              # Express app
 │   │   └── index.ts            # Server entry
-│   └── tests/                  # Node test runner tests (150 passing)
+│   └── tests/                  # Node test runner tests (175 passing)
 └── frontend/                   # React SPA (TypeScript + Vite + Tailwind)
     └── src/
         ├── api/                # Axios client with JWT interceptor
         ├── components/         # Layout, ProtectedRoute
         ├── context/            # AuthContext
-        ├── pages/              # Login, Dashboard, Courses, Assignments, Quizzes, Library, Timetable, Attendance, Student Profile
+        ├── pages/              # Login, Dashboard, Courses, Assignments, Quizzes, Library, Timetable, Attendance, Student Profile, Announcements, Events, Notifications, User Admin
         └── types/              # Shared TypeScript types
 ```
 
@@ -255,6 +264,25 @@ All responses use a consistent shape:
 | GET | `/api/dashboard/student` | Student stats & courses | Student |
 | GET | `/api/students/:id/summary` | Academic profile summary | Self/Teacher/Admin |
 
+### 💬 Communication, Notifications & User Admin
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/api/announcements` | List announcements (audience-filtered) | Auth |
+| POST | `/api/announcements` | Publish announcement (+ notify audience) | Teacher/Admin |
+| DELETE | `/api/announcements/:id` | Delete announcement | Admin |
+| GET | `/api/events` | List events (audience-filtered) | Auth |
+| POST | `/api/events` | Create event (+ notify audience) | Teacher/Admin |
+| DELETE | `/api/events/:id` | Delete event | Admin |
+| GET | `/api/notifications` | My notifications (supports `unreadOnly`) | Auth |
+| GET | `/api/notifications/unread-count` | Unread count for bell | Auth |
+| PUT | `/api/notifications/:id/read` | Mark one read (owner only) | Auth |
+| PUT | `/api/notifications/read-all` | Mark all read | Auth |
+| GET | `/api/users` | List/filter/search users | Admin |
+| POST | `/api/users` | Create student/teacher/admin | Admin |
+| PUT | `/api/users/:id` | Update user details/status | Admin |
+| POST | `/api/users/:id/archive` | Archive user (soft delete) | Admin |
+| POST | `/api/users/import` | CSV bulk import with error report | Admin |
+
 ### 🩺 Health
 | Method | Endpoint | Description |
 |---|---|---|
@@ -265,7 +293,7 @@ All responses use a consistent shape:
 ## 🧪 Testing
 
 ```bash
-# Run the full backend test suite (150 tests)
+# Run the full backend test suite (175 tests)
 npm run test:backend
 ```
 
@@ -281,6 +309,10 @@ npm run test:backend
 - ✅ Attendance marking, corrections with audit trail, and history access control
 - ✅ Timetable slot CRUD with room/teacher conflict detection
 - ✅ Admin/teacher/student dashboard aggregation
+- ✅ Announcements/events with server-side audience targeting and notification fan-out
+- ✅ Notification inbox ownership, read state, and unread counts
+- ✅ User creation validation, duplicate email rejection, soft-delete archiving
+- ✅ CSV import parsing, per-row validation, and batch/error tracking
 
 ---
 
@@ -307,7 +339,7 @@ npm run test:backend
 | 3 | Assignments, Submissions, Grading | ✅ **Done** |
 | 4 | Quizzes, Attempts, Assessment Engine | ✅ **Done** |
 | 5 | SIS, Attendance, Timetable, Dashboards | ✅ **Done** |
-| 6 | Communication, Notifications, User Admin | ⏳ Planned |
+| 6 | Communication, Notifications, User Admin | ✅ **Done** |
 | 7 | Cross-module integration & deployment | ⏳ Planned |
 
 ---

@@ -11,6 +11,10 @@ import QuizDetailPage from './pages/QuizDetailPage';
 import TimetablePage from './pages/TimetablePage';
 import AttendancePage from './pages/AttendancePage';
 import StudentProfilePage from './pages/StudentProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
+import AnnouncementsPage from './pages/AnnouncementsPage';
+import EventsPage from './pages/EventsPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -35,6 +39,17 @@ export default function App() {
         <Route path="courses/:id/attendance" element={<AttendancePage />} />
         <Route path="timetable" element={<TimetablePage />} />
         <Route path="students/:id" element={<StudentProfilePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="announcements" element={<AnnouncementsPage />} />
+        <Route path="events" element={<EventsPage />} />
+        <Route
+          path="admin/users"
+          element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <AdminUsersPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="library" element={<LibraryCatalogPage />} />
         <Route
           path="library/my-borrowing"

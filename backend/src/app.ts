@@ -10,6 +10,9 @@ import quizRoutes from './routes/quizRoutes';
 import attendanceRoutes from './routes/attendanceRoutes';
 import timetableRoutes from './routes/timetableRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import communicationRoutes from './routes/communicationRoutes';
+import userAdminRoutes from './routes/userAdminRoutes';
 import errorHandler from './middleware/errorHandler';
 
 const app = express();
@@ -46,6 +49,9 @@ app.use('/api', quizRoutes);
 app.use('/api', attendanceRoutes);
 app.use('/api', timetableRoutes);
 app.use('/api', dashboardRoutes);
+app.use('/api', notificationRoutes);
+app.use('/api', communicationRoutes);
+app.use('/api', userAdminRoutes);
 
 // 404 handler
 app.use((req, res) => {

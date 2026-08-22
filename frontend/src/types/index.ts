@@ -461,6 +461,93 @@ export interface StudentSummary {
   recentAttempts: QuizAttempt[];
 }
 
+// ---------------------------------------------------------------
+// Communication & User Admin (Member 6)
+// ---------------------------------------------------------------
+
+export type AudienceScope = 'ALL' | 'TEACHERS' | 'STUDENTS';
+export type NotificationType =
+  | 'ASSIGNMENT'
+  | 'GRADE'
+  | 'QUIZ_RESULT'
+  | 'ANNOUNCEMENT'
+  | 'EVENT'
+  | 'GENERAL';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: AudienceScope;
+  publishedAt: string;
+  publishedBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
+
+export interface SchoolEvent {
+  id: string;
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  audience: AudienceScope;
+  startsAt: string;
+  endsAt?: string | null;
+  createdBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+  status: 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
+  phone?: string | null;
+  createdAt: string;
+  student?: {
+    id: string;
+    studentCode: string;
+    gradeLevel: string;
+    section?: string | null;
+  } | null;
+  teacher?: {
+    id: string;
+    employeeCode: string;
+    subject?: string | null;
+  } | null;
+}
+
+export interface ImportErrorRow {
+  rowNumber: number;
+  email?: string | null;
+  message: string;
+}
+
+export interface ImportResult {
+  batchId: string;
+  filename: string;
+  totalRows: number;
+  successCount: number;
+  errorCount: number;
+  status: 'PENDING' | 'COMPLETED' | 'PARTIAL' | 'FAILED';
+  errors: ImportErrorRow[];
+}
+
 export interface AssignmentSubmission {
   id: string;
   assignmentId: string;
