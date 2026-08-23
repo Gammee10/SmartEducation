@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import type { TimetableSlot, DayOfWeek, Course } from '../types';
@@ -20,6 +20,7 @@ export default function TimetablePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
+  const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<NewSlotForm>({
@@ -30,24 +31,29 @@ export default function TimetablePage() {
     room: '',
   });
 
-  const loadSlots = () => {
+  const loadSlots = useCallback(() => {
     setLoading(true);
+    setError('');
     api
       .get('/timetable')
       .then((res) => setSlots(res.data.data.slots))
       .catch(() => setError('Failed to load timetable'))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     loadSlots();
+    // Surface course-list failures instead of silently rendering an empty
+    // course dropdown for admins.
     if (isAdmin) {
       api
         .get('/courses')
         .then((res) => setCourses(res.data.data.courses || res.data.data))
-        .catch(() => {});
+        .catch(() =>
+          setError('Failed to load courses. You may not be able to add slots until this is fixed.')
+        );
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadSlots, isAdmin]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +67,7 @@ export default function TimetablePage() {
         endTime: form.endTime,
         room: form.room || undefined,
       });
+      setMessage('Timetable slot created');
       setShowForm(false);
       loadSlots();
     } catch (err: any) {
@@ -72,8 +79,11 @@ export default function TimetablePage() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this timetable slot?')) return;
+    setError('');
+    setMessage('');
     try {
       await api.delete(`/timetable/${id}`);
+      setMessage('Timetable slot deleted');
       loadSlots();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete slot');
@@ -95,6 +105,7 @@ export default function TimetablePage() {
       </div>
 
       {error && <p className="mb-4 text-red-600 text-sm">{error}</p>}
+      {message && <p className="mb-4 text-green-700 text-sm">{message}</p>}
 
       {isAdmin && showForm && (
         <form
