@@ -40,3 +40,6 @@ uploads/
 
 # Local agent scaffolding scripts (one-off file generators)
 backend/scripts/
+
+
+cline_overnight_codebase_improvement.md
