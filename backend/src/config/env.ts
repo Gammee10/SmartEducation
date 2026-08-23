@@ -22,6 +22,10 @@ const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  // Initial password for admin-created/CSV-imported users who are not given
+  // an explicit password. Deployments should set this to something private
+  // instead of relying on the built-in fallback.
+  defaultUserPassword: process.env.DEFAULT_USER_PASSWORD || '',
 };
 
 export default env;

@@ -4,10 +4,14 @@ import prisma from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { sanitizeUser } from './authService';
+import env from '../config/env';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ROLES = ['ADMIN', 'TEACHER', 'STUDENT'];
-const DEFAULT_PASSWORD = 'Password123!';
+// Fallback initial password for users created without an explicit one.
+// Deployments should override it via DEFAULT_USER_PASSWORD so imported
+// accounts do not all share a publicly-known secret.
+const DEFAULT_PASSWORD = env.defaultUserPassword || 'Password123!';
 
 function assertEmail(email: unknown): string {
   const value = String(email || '').toLowerCase().trim();
