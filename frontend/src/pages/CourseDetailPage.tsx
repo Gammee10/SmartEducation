@@ -3,6 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import {
+  buttonPrimary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+} from '../components/ui';
 import type { Course, ContentItem, Assignment, Quiz } from '../types';
 
 interface ContentForm {
@@ -225,7 +232,7 @@ export default function CourseDetailPage() {
       OTHER: 'bg-gray-100 text-gray-600',
     };
     return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[type] || 'bg-gray-100 text-gray-600'}`}>
+      <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${styles[type] || 'bg-gray-100 text-gray-600'}`}>
         {type}
       </span>
     );
@@ -236,45 +243,85 @@ export default function CourseDetailPage() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
+    return <LoadingState label="Loading course…" />;
   }
 
   if (!course) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">{error || 'Course not found'}</p>
-        <Link to="/courses" className="text-primary-600 hover:text-primary-700">← Back to Courses</Link>
+      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+        <p className="text-sm text-red-700">{error || 'Course not found'}</p>
+        <Link
+          to="/courses"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Courses
+        </Link>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="mb-6">
-        <Link to="/courses" className="text-sm text-primary-600 hover:text-primary-700">← Back to Courses</Link>
-        <div className="mt-2 flex justify-between items-start">
+      <div className="mb-8">
+        <Link
+          to="/courses"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Courses
+        </Link>
+        <div className="mt-3 flex justify-between items-start gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+              {course.title}
+            </h1>
             <p className="text-sm text-gray-600 mt-1">
               {course.subject} · Grade {course.gradeLevel}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-0.5">
               Teacher: {course.teacher?.user?.fullName || 'Unknown'}
             </p>
           </div>
-          <span className="inline-block text-xs font-medium rounded-full px-2 py-1 bg-green-50 text-green-700">
-            {course.status}
-          </span>
+          <StatusBadge status={course.status} />
         </div>
         {course.description && (
-          <p className="mt-4 text-sm text-gray-600">{course.description}</p>
+          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-600">{course.description}</p>
         )}
         <div className="mt-4">
           <Link
             to={`/courses/${course.id}/attendance`}
-            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-700 transition-colors duration-150 hover:text-primary-800"
           >
-            View Attendance →
+            View Attendance
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         </div>
         {isAdmin && course.enrollments && course.enrollments.length > 0 && (
@@ -292,10 +339,10 @@ export default function CourseDetailPage() {
       </div>
 
       {message && (
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="flex justify-between items-center mb-4">
@@ -303,7 +350,7 @@ export default function CourseDetailPage() {
         {isTeacher && (
           <button
             onClick={() => setShowUpload(!showUpload)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            className={buttonPrimary}
           >
             {showUpload ? 'Cancel' : '+ Upload Content'}
           </button>
@@ -311,23 +358,23 @@ export default function CourseDetailPage() {
       </div>
 
       {showUpload && isTeacher && (
-        <form onSubmit={handleUpload} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleUpload} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <label className={labelStyles}>Title *</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Type</label>
+            <label className={labelStyles}>Type</label>
             <select
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             >
               <option value="VIDEO">Video</option>
               <option value="DOCUMENT">Document</option>
@@ -338,30 +385,30 @@ export default function CourseDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">URL *</label>
+            <label className={labelStyles}>URL *</label>
             <input
               type="url"
               required
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
               placeholder="https://..."
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className={labelStyles}>Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div className="sm:col-span-2">
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {submitting ? 'Uploading...' : 'Upload Content'}
             </button>
@@ -370,14 +417,18 @@ export default function CourseDetailPage() {
       )}
 
       {sectionErrors.content && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.content}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.content}</div>
       )}
       {!sectionErrors.content && content.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No content available yet.</div>
+        <EmptyState
+          icon="book"
+          title="No content available yet"
+          message="Uploaded materials for this course will appear here."
+        />
       ) : (
         <div className="space-y-3">
           {content.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-start justify-between">
+            <div key={item.id} className="flex items-start justify-between rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
@@ -397,7 +448,7 @@ export default function CourseDetailPage() {
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 rounded-md text-xs font-medium text-white bg-primary-600 hover:bg-primary-700"
+                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700"
                 >
                   Open
                 </a>
@@ -405,7 +456,7 @@ export default function CourseDetailPage() {
                   <button
                     onClick={() => handleArchive(item.id)}
                     disabled={archiving === item.id}
-                    className="px-3 py-1 rounded-md text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
                   >
                     Archive
                   </button>
@@ -421,7 +472,7 @@ export default function CourseDetailPage() {
         {isTeacher && (
           <button
             onClick={() => setShowCreateAssignment(!showCreateAssignment)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            className={buttonPrimary}
           >
             {showCreateAssignment ? 'Cancel' : '+ Create Assignment'}
           </button>
@@ -429,54 +480,54 @@ export default function CourseDetailPage() {
       </div>
 
       {showCreateAssignment && isTeacher && (
-        <form onSubmit={handleCreateAssignment} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleCreateAssignment} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <label className={labelStyles}>Title *</label>
             <input
               type="text"
               required
               value={assignmentForm.title}
               onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
               placeholder="e.g. Homework 1"
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Instructions</label>
+            <label className={labelStyles}>Instructions</label>
             <textarea
               value={assignmentForm.instructions}
               onChange={(e) => setAssignmentForm({ ...assignmentForm, instructions: e.target.value })}
               rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
               placeholder="Describe what students should do..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Max Score *</label>
+            <label className={labelStyles}>Max Score *</label>
             <input
               type="number"
               required
               min={1}
               value={assignmentForm.maxScore}
               onChange={(e) => setAssignmentForm({ ...assignmentForm, maxScore: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Due Date</label>
+            <label className={labelStyles}>Due Date</label>
             <input
               type="datetime-local"
               value={assignmentForm.dueDate}
               onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <label className={labelStyles}>Status</label>
             <select
               value={assignmentForm.status}
               onChange={(e) => setAssignmentForm({ ...assignmentForm, status: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
@@ -487,7 +538,7 @@ export default function CourseDetailPage() {
             <button
               type="submit"
               disabled={creatingAssignment}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {creatingAssignment ? 'Creating...' : 'Create Assignment'}
             </button>
@@ -496,17 +547,21 @@ export default function CourseDetailPage() {
       )}
 
       {sectionErrors.assignments && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.assignments}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.assignments}</div>
       )}
       {!sectionErrors.assignments && assignments.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No assignments yet.</div>
+        <EmptyState
+          icon="clipboard"
+          title="No assignments yet"
+          message="Assignments for this course will be listed here."
+        />
       ) : (
         <div className="space-y-3">
           {assignments.map((assignment) => (
             <Link
               key={assignment.id}
               to={`/courses/${id}/assignments/${assignment.id}`}
-              className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+              className="block rounded-xl border border-gray-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -540,7 +595,7 @@ export default function CourseDetailPage() {
         {isTeacher && (
           <button
             onClick={() => setShowCreateQuiz(!showCreateQuiz)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            className={buttonPrimary}
           >
             {showCreateQuiz ? 'Cancel' : '+ Create Quiz'}
           </button>
@@ -548,33 +603,33 @@ export default function CourseDetailPage() {
       </div>
 
       {quizMessage && (
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{quizMessage}</div>
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{quizMessage}</div>
       )}
 
       {showCreateQuiz && isTeacher && (
-        <form onSubmit={handleCreateQuiz} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleCreateQuiz} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <label className={labelStyles}>Title *</label>
             <input
               type="text"
               required
               value={quizForm.title}
               onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
               placeholder="e.g. Chapter 1 Quiz"
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className={labelStyles}>Description</label>
             <textarea
               value={quizForm.description}
               onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
               rows={2}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Time Limit (minutes) *</label>
+            <label className={labelStyles}>Time Limit (minutes) *</label>
             <input
               type="number"
               required
@@ -582,11 +637,11 @@ export default function CourseDetailPage() {
               max={300}
               value={quizForm.timeLimit}
               onChange={(e) => setQuizForm({ ...quizForm, timeLimit: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Max Attempts *</label>
+            <label className={labelStyles}>Max Attempts *</label>
             <input
               type="number"
               required
@@ -594,15 +649,15 @@ export default function CourseDetailPage() {
               max={10}
               value={quizForm.maxAttempts}
               onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <label className={labelStyles}>Status</label>
             <select
               value={quizForm.status}
               onChange={(e) => setQuizForm({ ...quizForm, status: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
@@ -631,7 +686,7 @@ export default function CourseDetailPage() {
             <button
               type="submit"
               disabled={creatingQuiz}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {creatingQuiz ? 'Creating...' : 'Create Quiz'}
             </button>
@@ -640,17 +695,21 @@ export default function CourseDetailPage() {
       )}
 
       {sectionErrors.quizzes && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.quizzes}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.quizzes}</div>
       )}
       {!sectionErrors.quizzes && quizzes.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No quizzes yet.</div>
+        <EmptyState
+          icon="clipboard"
+          title="No quizzes yet"
+          message="Quizzes for this course will be listed here."
+        />
       ) : (
         <div className="space-y-3">
           {quizzes.map((quiz) => (
             <Link
               key={quiz.id}
               to={`/courses/${id}/quizzes/${quiz.id}`}
-              className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+              className="block rounded-xl border border-gray-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

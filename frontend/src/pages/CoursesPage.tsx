@@ -3,6 +3,15 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+  PageHeader,
+} from '../components/ui';
 import type { Course } from '../types';
 
 interface CourseForm {
@@ -68,83 +77,86 @@ export default function CoursesPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
-        {isTeacher && (
-          <button
-            onClick={() => setShowCreate(!showCreate)}
-            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
-          >
-            {showCreate ? 'Cancel' : '+ Create Course'}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Courses"
+        description="Browse the catalog and manage course content."
+        actions={
+          isTeacher ? (
+            <button
+              onClick={() => setShowCreate(!showCreate)}
+              className={showCreate ? buttonSecondary : buttonPrimary}
+            >
+              {showCreate ? 'Cancel' : '+ Create Course'}
+            </button>
+          ) : undefined
+        }
+      />
 
       {message && (
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {showCreate && isTeacher && (
-        <form onSubmit={handleCreate} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Title *</label>
+            <label className={labelStyles}>Title *</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Subject *</label>
+            <label className={labelStyles}>Subject *</label>
             <input
               type="text"
               required
               value={form.subject}
               onChange={(e) => setForm({ ...form, subject: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Grade Level *</label>
+            <label className={labelStyles}>Grade Level *</label>
             <input
               type="text"
               required
               value={form.gradeLevel}
               onChange={(e) => setForm({ ...form, gradeLevel: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
               placeholder="e.g. Grade 9"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <label className={labelStyles}>Status</label>
             <select
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             >
               <option value="DRAFT">Draft</option>
               <option value="ACTIVE">Active</option>
             </select>
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className={labelStyles}>Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+              className={inputStyles}
             />
           </div>
           <div className="sm:col-span-2">
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {submitting ? 'Creating...' : 'Create Course'}
             </button>
@@ -153,31 +165,39 @@ export default function CoursesPage() {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading courses...</div>
+        <LoadingState label="Loading courses…" />
       ) : courses.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          {isTeacher ? 'You have not created any courses yet.' : 'No courses available.'}
-        </div>
+        <EmptyState
+          icon="book"
+          title={isTeacher ? 'No courses yet' : 'No courses available'}
+          message={
+            isTeacher
+              ? 'Create your first course to start adding content, assignments, and quizzes.'
+              : 'Check back soon — new courses are added regularly.'
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {courses.map((course) => (
             <Link
               key={course.id}
               to={`/courses/${course.id}`}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="group rounded-xl border border-gray-200/80 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             >
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
+                <h3 className="text-base font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                  {course.title}
+                </h3>
                 <StatusBadge status={course.status} />
               </div>
               <p className="text-sm text-gray-600 mt-1">{course.subject}</p>
-              <p className="text-xs text-gray-400 mt-1">Grade: {course.gradeLevel}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Grade: {course.gradeLevel}</p>
               {course.description && (
                 <p className="text-sm text-gray-500 mt-2 line-clamp-2">{course.description}</p>
               )}
-              <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-                <span>{course.teacher?.user?.fullName || 'Unknown teacher'}</span>
-                <span>
+              <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                <span className="truncate">{course.teacher?.user?.fullName || 'Unknown teacher'}</span>
+                <span className="flex-shrink-0 pl-2">
                   {course._count?.enrollments || 0} students · {course._count?.content || 0} items
                 </span>
               </div>
