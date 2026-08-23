@@ -69,7 +69,7 @@ export default function MyBorrowingPage() {
           {requests.length === 0 ? (
             <p className="text-sm text-gray-500">You have not made any borrow requests yet.</p>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -102,7 +102,7 @@ export default function MyBorrowingPage() {
           {loans.length === 0 ? (
             <p className="text-sm text-gray-500">You have no loans.</p>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
