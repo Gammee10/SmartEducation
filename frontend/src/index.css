@@ -5,3 +5,9 @@
 body {
   @apply bg-gray-50 text-gray-900 antialiased;
 }
+
+/* Consistent, visible keyboard focus across the app. Only applies to
+   keyboard-driven focus (:focus-visible), so mouse clicks stay clean. */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
