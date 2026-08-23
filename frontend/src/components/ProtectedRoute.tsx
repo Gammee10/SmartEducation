@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { LoadingState } from './ui';
 import type { UserRole } from '../types';
 
 interface ProtectedRouteProps {
@@ -14,8 +15,8 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <LoadingState label="Checking your session…" />
       </div>
     );
   }
