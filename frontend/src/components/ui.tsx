@@ -22,6 +22,8 @@ const ICON_PATHS: Record<string, string> = {
   calendar:
     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
   bell: 'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+  search:
+    'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
 };
 
 export type IconName = keyof typeof ICON_PATHS;

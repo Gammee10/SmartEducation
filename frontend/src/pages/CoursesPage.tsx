@@ -7,12 +7,40 @@ import {
   buttonPrimary,
   buttonSecondary,
   EmptyState,
+  Icon,
   inputStyles,
   labelStyles,
   LoadingState,
   PageHeader,
 } from '../components/ui';
 import type { Course } from '../types';
+
+// Static Tailwind classes only, so the JIT compiler keeps them all.
+const SUBJECT_TILES = [
+  'bg-blue-500',
+  'bg-emerald-500',
+  'bg-violet-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-600',
+];
+
+function subjectTileClass(subject?: string): string {
+  if (!subject) return SUBJECT_TILES[0];
+  let hash = 0;
+  for (let i = 0; i < subject.length; i++) hash += subject.charCodeAt(i);
+  return SUBJECT_TILES[hash % SUBJECT_TILES.length];
+}
+
+function getInitials(name?: string): string {
+  if (!name) return '?';
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
 
 interface CourseForm {
   title: string;
@@ -39,6 +67,7 @@ export default function CoursesPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<CourseForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [query, setQuery] = useState('');
 
   const fetchCourses = useCallback(async () => {
     setLoading(true);
@@ -74,6 +103,16 @@ export default function CoursesPage() {
       setSubmitting(false);
     }
   };
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredCourses = normalizedQuery
+    ? courses.filter(
+        (c) =>
+          c.title.toLowerCase().includes(normalizedQuery) ||
+          c.subject?.toLowerCase().includes(normalizedQuery) ||
+          c.gradeLevel?.toLowerCase().includes(normalizedQuery)
+      )
+    : courses;
 
   return (
     <div>
@@ -164,6 +203,29 @@ export default function CoursesPage() {
         </form>
       )}
 
+      {/* Search */}
+      {!loading && courses.length > 0 && (
+        <div className="relative mb-5 max-w-md">
+          <svg
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by title, subject, or grade…"
+            className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+          />
+        </div>
+      )}
+
       {loading ? (
         <LoadingState label="Loading courses…" />
       ) : courses.length === 0 ? (
@@ -176,35 +238,97 @@ export default function CoursesPage() {
               : 'Check back soon — new courses are added regularly.'
           }
         />
+      ) : filteredCourses.length === 0 ? (
+        <EmptyState
+          icon="search"
+          title={`No matches for “${query.trim()}”`}
+          message="Try a different title, subject, or grade level."
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-          {courses.map((course) => (
-            <Link
-              key={course.id}
-              to={`/courses/${course.id}`}
-              className="group rounded-xl border border-gray-200/80 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
-            >
-              <div className="flex justify-between items-start">
-                <h3 className="text-base font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
-                  {course.title}
-                </h3>
-                <StatusBadge status={course.status} />
-              </div>
-              <p className="text-sm text-gray-600 mt-1">{course.subject}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Grade: {course.gradeLevel}</p>
-              {course.description && (
-                <p className="text-sm text-gray-500 mt-2 line-clamp-2">{course.description}</p>
-              )}
-              <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
-                <span className="truncate">{course.teacher?.user?.fullName || 'Unknown teacher'}</span>
-                <span className="flex-shrink-0 pl-2">
-                  {course._count?.enrollments || 0} students · {course._count?.content || 0} items
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <p className="mb-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+            {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'}
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            {filteredCourses.map((course) => {
+              const teacherName = course.teacher?.user?.fullName || 'Unknown teacher';
+              return (
+                <CourseCard key={course.id} course={course} teacherName={teacherName} />
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+function CourseCard({ course, teacherName }: { course: Course; teacherName: string }) {
+  return (
+    <Link
+      to={`/courses/${course.id}`}
+      className="group flex flex-col rounded-xl border border-gray-200/80 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+    >
+      {/* Accent strip */}
+      <div className={`h-1.5 rounded-t-xl ${subjectTileClass(course.subject)}`} />
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3.5">
+            <span
+              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-white ${subjectTileClass(course.subject)}`}
+            >
+              <Icon name="book" className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                {course.title}
+              </h3>
+              <p className="mt-0.5 truncate text-sm text-gray-600">{course.subject}</p>
+            </div>
+          </div>
+          <StatusBadge status={course.status} />
+        </div>
+
+        {course.description && (
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-500">
+            {course.description}
+          </p>
+        )}
+
+        <div className="mt-auto pt-4">
+          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 pt-3 text-xs text-gray-500">
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="users" className="h-3.5 w-3.5 text-gray-400" />
+              {course._count?.enrollments || 0} students
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="inbox" className="h-3.5 w-3.5 text-gray-400" />
+              {course._count?.content || 0} items
+            </span>
+            <span className="ml-auto rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700">
+              Grade {course.gradeLevel.replace(/[^0-9]/g, '') || course.gradeLevel}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-semibold text-gray-600">
+                {getInitials(teacherName)}
+              </span>
+              <span className="truncate text-xs text-gray-500">{teacherName}</span>
+            </div>
+            <svg
+              className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
