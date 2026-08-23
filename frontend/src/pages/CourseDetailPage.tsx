@@ -67,6 +67,12 @@ export default function CourseDetailPage() {
   const [creatingQuiz, setCreatingQuiz] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Per-section errors so a failure in one list does not blank the whole page
+  const [sectionErrors, setSectionErrors] = useState<{
+    content?: string;
+    assignments?: string;
+    quizzes?: string;
+  }>({});
   const [message, setMessage] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [form, setForm] = useState<ContentForm>(emptyForm);
@@ -80,16 +86,40 @@ export default function CourseDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const [courseRes, contentRes, assignmentsRes, quizzesRes] = await Promise.all([
-        api.get(`/courses/${id}`),
-        api.get(`/courses/${id}/content`, { params: { pageSize: 100 } }),
-        api.get(`/courses/${id}/assignments`, { params: { pageSize: 100 } }),
-        api.get(`/courses/${id}/quizzes`, { params: { pageSize: 100 } }),
-      ]);
+      // Load the course first - it drives the whole page.
+      const courseRes = await api.get(`/courses/${id}`);
       setCourse(courseRes.data.data.course);
-      setContent(contentRes.data.data);
-      setAssignments(assignmentsRes.data.data);
-      setQuizzes(quizzesRes.data.data);
+
+      // Load each section independently so a single failed request only
+      // affects its own section instead of blanking the entire page.
+      setSectionErrors({});
+      api
+        .get(`/courses/${id}/content`, { params: { pageSize: 100 } })
+        .then((res) => setContent(res.data.data))
+        .catch((err: any) =>
+          setSectionErrors((prev) => ({
+            ...prev,
+            content: err.response?.data?.message || 'Failed to load content',
+          }))
+        );
+      api
+        .get(`/courses/${id}/assignments`, { params: { pageSize: 100 } })
+        .then((res) => setAssignments(res.data.data))
+        .catch((err: any) =>
+          setSectionErrors((prev) => ({
+            ...prev,
+            assignments: err.response?.data?.message || 'Failed to load assignments',
+          }))
+        );
+      api
+        .get(`/courses/${id}/quizzes`, { params: { pageSize: 100 } })
+        .then((res) => setQuizzes(res.data.data))
+        .catch((err: any) =>
+          setSectionErrors((prev) => ({
+            ...prev,
+            quizzes: err.response?.data?.message || 'Failed to load quizzes',
+          }))
+        );
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load course');
     } finally {
@@ -366,7 +396,10 @@ export default function CourseDetailPage() {
         </form>
       )}
 
-      {content.length === 0 ? (
+      {sectionErrors.content && (
+        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.content}</div>
+      )}
+      {!sectionErrors.content && content.length === 0 ? (
         <div className="text-center py-12 text-gray-500">No content available yet.</div>
       ) : (
         <div className="space-y-3">
@@ -489,7 +522,10 @@ export default function CourseDetailPage() {
         </form>
       )}
 
-      {assignments.length === 0 ? (
+      {sectionErrors.assignments && (
+        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.assignments}</div>
+      )}
+      {!sectionErrors.assignments && assignments.length === 0 ? (
         <div className="text-center py-8 text-gray-500">No assignments yet.</div>
       ) : (
         <div className="space-y-3">
@@ -630,7 +666,10 @@ export default function CourseDetailPage() {
         </form>
       )}
 
-      {quizzes.length === 0 ? (
+      {sectionErrors.quizzes && (
+        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{sectionErrors.quizzes}</div>
+      )}
+      {!sectionErrors.quizzes && quizzes.length === 0 ? (
         <div className="text-center py-8 text-gray-500">No quizzes yet.</div>
       ) : (
         <div className="space-y-3">
