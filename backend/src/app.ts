@@ -14,12 +14,15 @@ import notificationRoutes from './routes/notificationRoutes';
 import communicationRoutes from './routes/communicationRoutes';
 import userAdminRoutes from './routes/userAdminRoutes';
 import errorHandler from './middleware/errorHandler';
+import { apiLimiter } from './middleware/rateLimit';
 
 const app = express();
 
 // Middleware
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 app.use(express.json());
+// Basic DoS protection for the whole API surface.
+app.use('/api', apiLimiter);
 
 // Request logging (lightweight)
 app.use((req, res, next) => {
