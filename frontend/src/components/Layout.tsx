@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -24,17 +24,41 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const failuresRef = useRef(0);
+
   const refreshUnread = useCallback(() => {
     api
       .get('/notifications/unread-count')
-      .then((res) => setUnreadCount(res.data.data.count))
-      .catch(() => {});
+      .then((res) => {
+        failuresRef.current = 0;
+        setUnreadCount(res.data.data.count);
+      })
+      .catch(() => {
+        failuresRef.current += 1;
+      });
   }, []);
 
   useEffect(() => {
+    // Poll every 30s while the tab is visible, backing off progressively
+    // when requests fail so a broken backend is not hammered forever.
+    let timer: number;
+    const schedule = () => {
+      const delay = Math.min(30000 * 2 ** failuresRef.current, 300000);
+      timer = window.setTimeout(() => {
+        if (!document.hidden) refreshUnread();
+        schedule();
+      }, delay);
+    };
     refreshUnread();
-    const interval = setInterval(refreshUnread, 30000); // poll every 30s
-    return () => clearInterval(interval);
+    schedule();
+    const onVisibilityChange = () => {
+      if (!document.hidden) refreshUnread();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [refreshUnread]);
 
   const handleLogout = () => {
@@ -83,7 +107,7 @@ export default function Layout() {
                 to="/notifications"
                 onClick={refreshUnread}
                 className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                aria-label="Notifications"
+                aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
               >
                 <svg
                   className="h-5 w-5"
