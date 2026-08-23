@@ -38,17 +38,37 @@ export default function EventsPage() {
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError('');
     setMessage('');
+    // Validate dates before sending - a bypassed/invalid value would
+    // otherwise serialize to "Invalid Date" and fail confusingly server-side.
+    const startsAt = new Date(form.startsAt);
+    if (!form.startsAt || Number.isNaN(startsAt.getTime())) {
+      setError('Please provide a valid start date and time.');
+      return;
+    }
+    let endsAt: string | undefined;
+    if (form.endsAt) {
+      const end = new Date(form.endsAt);
+      if (Number.isNaN(end.getTime())) {
+        setError('Please provide a valid end date and time.');
+        return;
+      }
+      if (end.getTime() <= startsAt.getTime()) {
+        setError('End time must be after the start time.');
+        return;
+      }
+      endsAt = end.toISOString();
+    }
+    setSaving(true);
     try {
       await api.post('/events', {
         title: form.title,
         description: form.description || undefined,
         location: form.location || undefined,
         audience: form.audience,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
+        startsAt: startsAt.toISOString(),
+        endsAt,
       });
       setMessage('Event created');
       setShowForm(false);
@@ -148,6 +168,7 @@ export default function EventsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Ends at</label>
             <input
               type="datetime-local"
+              min={form.startsAt || undefined}
               value={form.endsAt}
               onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
