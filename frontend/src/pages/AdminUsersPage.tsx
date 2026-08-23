@@ -22,6 +22,13 @@ export default function AdminUsersPage() {
   // Filters
   const [roleFilter, setRoleFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+
+  // Debounce the search box so typing does not fire a request per keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Create form
   const [showCreate, setShowCreate] = useState(false);
@@ -239,8 +246,8 @@ export default function AdminUsersPage() {
         </select>
         <input
           type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name or email..."
           className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
