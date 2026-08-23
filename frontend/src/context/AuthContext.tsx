@@ -25,7 +25,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
   });
-  const [loading, setLoading] = useState(false);
+  // If a token exists but no cached user, we must wait for the session
+  // restore request before protected routes decide whether to redirect.
+  const [loading, setLoading] = useState<boolean>(() => {
+    try {
+      return !!localStorage.getItem('token') && !localStorage.getItem('user');
+    } catch {
+      return false;
+    }
+  });
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
