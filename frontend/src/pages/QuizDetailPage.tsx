@@ -418,7 +418,8 @@ export default function QuizDetailPage() {
                     </div>
                     <span className="text-xs text-gray-400">{question.points} pt(s)</span>
                   </div>
-                  <div className="space-y-2">
+                  <fieldset className="space-y-2">
+                    <legend className="sr-only">{question.prompt}</legend>
                     {question.options.map((option) => {
                       const isSelected = selected.includes(option.id);
                       return (
@@ -452,7 +453,7 @@ export default function QuizDetailPage() {
                         </label>
                       );
                     })}
-                  </div>
+                  </fieldset>
                 </div>
               );
             })}
