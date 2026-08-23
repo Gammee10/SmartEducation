@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, FormEvent, Fragment } from 'react';
 import api from '../api/client';
 import StatusBadge from '../components/StatusBadge';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+  PageHeader,
+} from '../components/ui';
 import type { Book, BorrowRequest, Loan } from '../types';
 
 const TABS = {
@@ -183,8 +191,11 @@ export default function AdminLibraryPage() {
   const tabButton = (key: TabKey, label: string) => (
     <button
       onClick={() => setTab(key)}
-      className={`px-4 py-2 rounded-md text-sm font-medium ${
-        tab === key ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+      aria-pressed={tab === key}
+      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
+        tab === key
+          ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200'
+          : 'text-gray-500 hover:text-gray-900'
       }`}
     >
       {label}
@@ -196,25 +207,28 @@ export default function AdminLibraryPage() {
   const initialLoading = loading && books.length === 0 && requests.length === 0 && loans.length === 0;
 
   if (initialLoading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
+    return <LoadingState label="Loading library administration…" />;
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Library Administration</h1>
-        <div className="flex gap-2">
-          {tabButton(TABS.BOOKS, 'Books')}
-          {tabButton(TABS.REQUESTS, 'Requests')}
-          {tabButton(TABS.LOANS, 'Loans')}
-        </div>
-      </div>
+      <PageHeader
+        title="Library Administration"
+        description="Manage the book catalog, borrow requests, and loans."
+        actions={
+          <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+            {tabButton(TABS.BOOKS, 'Books')}
+            {tabButton(TABS.REQUESTS, 'Requests')}
+            {tabButton(TABS.LOANS, 'Loans')}
+          </div>
+        }
+      />
 
       {message && (
-        <div className="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {tab === TABS.BOOKS && (
@@ -222,93 +236,93 @@ export default function AdminLibraryPage() {
           <div className="mb-4">
             <button
               onClick={() => setShowAddBook(!showAddBook)}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+              className={showAddBook ? buttonSecondary : buttonPrimary}
             >
               {showAddBook ? 'Cancel' : '+ Add Book'}
             </button>
           </div>
 
           {showAddBook && (
-            <form onSubmit={handleAddBook} className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleAddBook} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Title *</label>
+                <label className={labelStyles}>Title *</label>
                 <input
                   type="text"
                   required
                   value={bookForm.title}
                   onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Author *</label>
+                <label className={labelStyles}>Author *</label>
                 <input
                   type="text"
                   required
                   value={bookForm.author}
                   onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ISBN</label>
+                <label className={labelStyles}>ISBN</label>
                 <input
                   type="text"
                   value={bookForm.isbn}
                   onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Publisher</label>
+                <label className={labelStyles}>Publisher</label>
                 <input
                   type="text"
                   value={bookForm.publisher}
                   onChange={(e) => setBookForm({ ...bookForm, publisher: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Published Year</label>
+                <label className={labelStyles}>Published Year</label>
                 <input
                   type="number"
                   value={bookForm.publishedYear}
                   onChange={(e) => setBookForm({ ...bookForm, publishedYear: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <label className={labelStyles}>Category</label>
                 <input
                   type="text"
                   value={bookForm.category}
                   onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Number of Copies</label>
+                <label className={labelStyles}>Number of Copies</label>
                 <input
                   type="number"
                   min="1"
                   value={bookForm.copies}
                   onChange={(e) => setBookForm({ ...bookForm, copies: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className={labelStyles}>Description</label>
                 <textarea
                   value={bookForm.description}
                   onChange={(e) => setBookForm({ ...bookForm, description: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+                  className={buttonPrimary}
                 >
                   Save Book
                 </button>
@@ -316,7 +330,7 @@ export default function AdminLibraryPage() {
             </form>
           )}
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+          <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -352,7 +366,7 @@ export default function AdminLibraryPage() {
       )}
 
       {tab === TABS.REQUESTS && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -388,14 +402,14 @@ export default function AdminLibraryPage() {
                         <button
                           onClick={() => openDecision(req.id, 'APPROVED')}
                           disabled={deciding === req.id}
-                          className="px-3 py-1 rounded-md text-xs font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                          className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-green-700 disabled:pointer-events-none disabled:opacity-60"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => openDecision(req.id, 'REJECTED')}
                           disabled={deciding === req.id}
-                          className="px-3 py-1 rounded-md text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                          className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-red-700 disabled:pointer-events-none disabled:opacity-60"
                         >
                           Reject
                         </button>
@@ -415,7 +429,7 @@ export default function AdminLibraryPage() {
                       >
                         {decisionTarget.decision === 'APPROVED' ? (
                           <div>
-                            <label htmlFor={`due-${req.id}`} className="block text-xs font-medium text-gray-700">
+                            <label htmlFor={`due-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600">
                               Due date *
                             </label>
                             <input
@@ -424,12 +438,12 @@ export default function AdminLibraryPage() {
                               required
                               value={dueDate}
                               onChange={(e) => setDueDate(e.target.value)}
-                              className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                              className={inputStyles}
                             />
                           </div>
                         ) : (
                           <div className="min-w-[220px] flex-1">
-                            <label htmlFor={`reason-${req.id}`} className="block text-xs font-medium text-gray-700">
+                            <label htmlFor={`reason-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600">
                               Reason for rejection (optional)
                             </label>
                             <input
@@ -438,7 +452,7 @@ export default function AdminLibraryPage() {
                               value={rejectReason}
                               onChange={(e) => setRejectReason(e.target.value)}
                               placeholder="e.g. Copy reserved for another student"
-                              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                              className={inputStyles}
                             />
                           </div>
                         )}
@@ -456,7 +470,7 @@ export default function AdminLibraryPage() {
                         <button
                           type="button"
                           onClick={cancelDecision}
-                          className="px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 border border-gray-300 hover:bg-gray-100"
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50"
                         >
                           Cancel
                         </button>
@@ -472,7 +486,7 @@ export default function AdminLibraryPage() {
       )}
 
       {tab === TABS.LOANS && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -487,7 +501,9 @@ export default function AdminLibraryPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loans.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-sm text-gray-500 text-center">No loans</td>
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                    No loans yet. Loans appear here once requests are approved.
+                  </td>
                 </tr>
               )}
               {loans.map((loan) => (
@@ -508,7 +524,7 @@ export default function AdminLibraryPage() {
                       <button
                         onClick={() => handleReturn(loan.id)}
                         disabled={deciding === loan.id}
-                        className="px-3 py-1 rounded-md text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                        className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700 disabled:pointer-events-none disabled:opacity-60"
                       >
                         Record Return
                       </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import StatusBadge from '../components/StatusBadge';
+import { Card, EmptyState, LoadingState, PageHeader } from '../components/ui';
 import type { BorrowRequest, Loan } from '../types';
 
 export default function MyBorrowingPage() {
@@ -40,24 +41,33 @@ export default function MyBorrowingPage() {
   const initialLoading = loading && requests.length === 0 && loans.length === 0;
 
   if (initialLoading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
+    return <LoadingState label="Loading your borrowing activity…" />;
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">My Borrowing</h1>
+      <PageHeader
+        title="My Borrowing"
+        description="Track your borrow requests and active loans."
+      />
 
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="space-y-8">
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Borrow Requests</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Borrow Requests</h2>
           {requests.length === 0 ? (
-            <p className="text-sm text-gray-500">You have not made any borrow requests yet.</p>
+            <Card>
+              <EmptyState
+                icon="book"
+                title="No borrow requests yet"
+                message="Request a book from the library catalog and it will show up here."
+              />
+            </Card>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+            <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -86,11 +96,17 @@ export default function MyBorrowingPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Loans</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Loans</h2>
           {loans.length === 0 ? (
-            <p className="text-sm text-gray-500">You have no loans.</p>
+            <Card>
+              <EmptyState
+                icon="book"
+                title="No loans"
+                message="Once a request is approved, your loan and its due date will appear here."
+              />
+            </Card>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+            <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
