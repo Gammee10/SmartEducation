@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import StatusBadge from '../components/StatusBadge';
 import type { Quiz, QuizQuestion, QuizAttempt } from '../types';
 
 interface QuizForm {
@@ -144,23 +145,6 @@ export default function QuizDetailPage() {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const statusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      DRAFT: 'bg-yellow-50 text-yellow-700',
-      PUBLISHED: 'bg-green-50 text-green-700',
-      CLOSED: 'bg-gray-100 text-gray-600',
-      ARCHIVED: 'bg-gray-100 text-gray-500',
-      IN_PROGRESS: 'bg-blue-50 text-blue-700',
-      SUBMITTED: 'bg-green-50 text-green-700',
-      TIME_EXPIRED: 'bg-orange-50 text-orange-700',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status.replace('_', ' ')}
-      </span>
-    );
   };
 
   // ---------------------------------------------------------------
@@ -340,7 +324,7 @@ export default function QuizDetailPage() {
             {quiz.course?.subject} · Grade {quiz.course?.gradeLevel}
           </p>
         </div>
-        {statusBadge(quiz.status)}
+        <StatusBadge status={quiz.status} />
       </div>
 
       {quiz.description && (
@@ -388,7 +372,7 @@ export default function QuizDetailPage() {
                         )}
                       </div>
                       <div className="text-right">
-                        {statusBadge(attempt.status)}
+                        <StatusBadge status={attempt.status} />
                         {attempt.score !== null && attempt.score !== undefined && (
                           <p className="mt-1 text-lg font-semibold text-gray-900">
                             {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>
@@ -766,7 +750,7 @@ export default function QuizDetailPage() {
                       )}
                     </div>
                     <div className="text-right">
-                      {statusBadge(attempt.status)}
+                      <StatusBadge status={attempt.status} />
                       {attempt.score !== null && attempt.score !== undefined && (
                         <p className="mt-1 text-lg font-semibold text-gray-900">
                           {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>
@@ -798,7 +782,7 @@ export default function QuizDetailPage() {
                     <p className="text-xs text-gray-400">Started: {formatStart(attempt.startedAt)}</p>
                   </div>
                   <div className="text-right">
-                    {statusBadge(attempt.status)}
+                    <StatusBadge status={attempt.status} />
                     {attempt.score !== null && attempt.score !== undefined && (
                       <p className="mt-1 text-lg font-semibold text-gray-900">
                         {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>

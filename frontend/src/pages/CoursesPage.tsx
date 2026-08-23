@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import StatusBadge from '../components/StatusBadge';
 import type { Course } from '../types';
 
 interface CourseForm {
@@ -63,19 +64,6 @@ export default function CoursesPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const statusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      ACTIVE: 'bg-green-50 text-green-700',
-      DRAFT: 'bg-yellow-50 text-yellow-700',
-      ARCHIVED: 'bg-gray-100 text-gray-600',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status}
-      </span>
-    );
   };
 
   return (
@@ -180,7 +168,7 @@ export default function CoursesPage() {
             >
               <div className="flex justify-between items-start">
                 <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
-                {statusBadge(course.status)}
+                <StatusBadge status={course.status} />
               </div>
               <p className="text-sm text-gray-600 mt-1">{course.subject}</p>
               <p className="text-xs text-gray-400 mt-1">Grade: {course.gradeLevel}</p>

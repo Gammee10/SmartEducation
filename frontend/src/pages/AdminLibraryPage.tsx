@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, FormEvent, Fragment } from 'react';
 import api from '../api/client';
+import StatusBadge from '../components/StatusBadge';
 import type { Book, BorrowRequest, Loan } from '../types';
 
 const TABS = {
@@ -174,28 +175,6 @@ export default function AdminLibraryPage() {
     }
   };
 
-  const statusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      PENDING: 'bg-yellow-50 text-yellow-700',
-      APPROVED: 'bg-green-50 text-green-700',
-      REJECTED: 'bg-red-50 text-red-700',
-      CANCELLED: 'bg-gray-100 text-gray-600',
-      ACTIVE: 'bg-blue-50 text-blue-700',
-      RETURNED: 'bg-green-50 text-green-700',
-      OVERDUE: 'bg-red-50 text-red-700',
-      AVAILABLE: 'bg-green-50 text-green-700',
-      BORROWED: 'bg-blue-50 text-blue-700',
-      LOST: 'bg-red-50 text-red-700',
-      DAMAGED: 'bg-orange-50 text-orange-700',
-      ARCHIVED: 'bg-gray-100 text-gray-600',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status}
-      </span>
-    );
-  };
-
   const formatDate = (date: string | null | undefined) => {
     if (!date) return '—';
     return new Date(date).toLocaleDateString();
@@ -355,7 +334,7 @@ export default function AdminLibraryPage() {
                       <div className="flex flex-wrap gap-1">
                         {book.copies?.map((copy) => (
                           <span key={copy.id} title={`Copy ${copy.copyNumber}`}>
-                            {statusBadge(copy.status)}
+                            <StatusBadge status={copy.status} />
                           </span>
                         ))}
                       </div>
@@ -398,7 +377,7 @@ export default function AdminLibraryPage() {
                     <span className="block text-xs text-gray-500">Copy {req.bookCopy?.copyNumber}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatDate(req.requestedAt)}</td>
-                  <td className="px-6 py-4">{statusBadge(req.status)}</td>
+                  <td className="px-6 py-4"><StatusBadge status={req.status} /></td>
                   <td className="px-6 py-4">
                     {req.status === 'PENDING' && (
                       <div className="flex gap-2">
@@ -519,7 +498,7 @@ export default function AdminLibraryPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatDate(loan.issuedAt)}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatDate(loan.dueDate)}</td>
-                  <td className="px-6 py-4">{statusBadge(loan.status)}</td>
+                  <td className="px-6 py-4"><StatusBadge status={loan.status} /></td>
                   <td className="px-6 py-4">
                     {loan.status === 'ACTIVE' && (
                       <button

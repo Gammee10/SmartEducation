@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import StatusBadge from '../components/StatusBadge';
 import type { Course, ContentItem, Assignment, Quiz } from '../types';
 
 interface ContentForm {
@@ -226,34 +227,6 @@ export default function CourseDetailPage() {
     return (
       <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[type] || 'bg-gray-100 text-gray-600'}`}>
         {type}
-      </span>
-    );
-  };
-
-  const assignmentStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      DRAFT: 'bg-yellow-50 text-yellow-700',
-      PUBLISHED: 'bg-green-50 text-green-700',
-      CLOSED: 'bg-gray-100 text-gray-600',
-      ARCHIVED: 'bg-gray-100 text-gray-500',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status}
-      </span>
-    );
-  };
-
-  const quizStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      DRAFT: 'bg-yellow-50 text-yellow-700',
-      PUBLISHED: 'bg-green-50 text-green-700',
-      CLOSED: 'bg-gray-100 text-gray-600',
-      ARCHIVED: 'bg-gray-100 text-gray-500',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status}
       </span>
     );
   };
@@ -539,7 +512,7 @@ export default function CourseDetailPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium text-gray-900">{assignment.title}</h3>
-                    {assignmentStatusBadge(assignment.status)}
+                    <StatusBadge status={assignment.status} />
                   </div>
                   {assignment.instructions && (
                     <p className="text-sm text-gray-500 mt-1 line-clamp-2">{assignment.instructions}</p>
@@ -683,7 +656,7 @@ export default function CourseDetailPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium text-gray-900">{quiz.title}</h3>
-                    {quizStatusBadge(quiz.status)}
+                    <StatusBadge status={quiz.status} />
                   </div>
                   {quiz.description && (
                     <p className="text-sm text-gray-500 mt-1 line-clamp-2">{quiz.description}</p>

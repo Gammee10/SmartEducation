@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import StatusBadge from '../components/StatusBadge';
 import type { Assignment, AssignmentSubmission } from '../types';
 
 export default function AssignmentDetailPage() {
@@ -87,22 +88,6 @@ export default function AssignmentDetailPage() {
     return new Date(date).toLocaleString();
   };
 
-  const statusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      DRAFT: 'bg-yellow-50 text-yellow-700',
-      PUBLISHED: 'bg-green-50 text-green-700',
-      CLOSED: 'bg-gray-100 text-gray-600',
-      ARCHIVED: 'bg-gray-100 text-gray-500',
-      SUBMITTED: 'bg-blue-50 text-blue-700',
-      GRADED: 'bg-green-50 text-green-700',
-    };
-    return (
-      <span className={`inline-block text-xs font-medium rounded-full px-2 py-1 ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
-        {status}
-      </span>
-    );
-  };
-
   if (loading) {
     return <div className="text-center py-12 text-gray-500">Loading...</div>;
   }
@@ -130,7 +115,7 @@ export default function AssignmentDetailPage() {
             {assignment.course?.subject} · Grade {assignment.course?.gradeLevel}
           </p>
         </div>
-        {statusBadge(assignment.status)}
+        <StatusBadge status={assignment.status} />
       </div>
 
       {assignment.instructions && (
@@ -162,7 +147,7 @@ export default function AssignmentDetailPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Your Submission</h3>
-                {statusBadge(mySubmission.status)}
+                <StatusBadge status={mySubmission.status} />
               </div>
               {mySubmission.isLate && (
                 <p className="text-xs text-orange-600 font-medium mb-2">Submitted late</p>
@@ -273,7 +258,7 @@ export default function AssignmentDetailPage() {
                         {sub.isLate && <span className="ml-2 text-orange-600 font-medium">Late</span>}
                       </p>
                     </div>
-                    {statusBadge(sub.status)}
+                    <StatusBadge status={sub.status} />
                   </div>
 
                   {sub.content && (
