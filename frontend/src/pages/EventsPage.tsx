@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+  PageHeader,
+} from '../components/ui';
 import type { SchoolEvent, AudienceScope } from '../types';
 
 const emptyForm = {
@@ -93,61 +102,72 @@ export default function EventsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-        {canPost && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
-          >
-            {showForm ? 'Cancel' : '+ New Event'}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Events"
+        description="Upcoming school events and activities."
+        actions={
+          canPost ? (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className={showForm ? buttonSecondary : buttonPrimary}
+            >
+              {showForm ? 'Cancel' : '+ New Event'}
+            </button>
+          ) : undefined
+        }
+      />
 
-      {error && <p className="mb-4 text-red-600 text-sm">{error}</p>}
-      {message && <p className="mb-4 text-green-700 text-sm">{message}</p>}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {message}
+        </div>
+      )}
 
       {canPost && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4"
+          className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label className={`${labelStyles} mb-1`}>Title *</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className={`${labelStyles} mb-1`}>Description</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label className={`${labelStyles} mb-1`}>Location</label>
             <input
               type="text"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
               placeholder="e.g. Main hall"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+            <label className={`${labelStyles} mb-1`}>Audience</label>
             <select
               value={form.audience}
               onChange={(e) => setForm({ ...form, audience: e.target.value as AudienceScope })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             >
               <option value="ALL">Everyone</option>
               <option value="TEACHERS">Teachers only</option>
@@ -155,30 +175,30 @@ export default function EventsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Starts at *</label>
+            <label className={`${labelStyles} mb-1`}>Starts at *</label>
             <input
               type="datetime-local"
               required
               value={form.startsAt}
               onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ends at</label>
+            <label className={`${labelStyles} mb-1`}>Ends at</label>
             <input
               type="datetime-local"
               min={form.startsAt || undefined}
               value={form.endsAt}
               onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div className="sm:col-span-2">
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {saving ? 'Creating...' : 'Create Event'}
             </button>
@@ -187,15 +207,23 @@ export default function EventsPage() {
       )}
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading events...</p>
+        <LoadingState label="Loading events…" />
       ) : events.length === 0 ? (
-        <p className="text-gray-500 text-sm">No upcoming events.</p>
+        <EmptyState
+          icon="calendar"
+          title="No upcoming events"
+          message={
+            canPost
+              ? 'Create the first event so students and teachers can plan ahead.'
+              : 'School events will appear here as they are scheduled.'
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {events.map((ev) => {
             const past = new Date(ev.startsAt).getTime() < Date.now();
             return (
-              <li key={ev.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+              <li key={ev.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -219,7 +247,7 @@ export default function EventsPage() {
                   {isAdmin && (
                     <button
                       onClick={() => handleDelete(ev.id)}
-                      className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+                      className="flex-shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
                     >
                       Delete
                     </button>

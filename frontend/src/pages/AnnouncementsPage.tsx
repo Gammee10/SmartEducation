@@ -1,6 +1,15 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+  PageHeader,
+} from '../components/ui';
 import type { Announcement, AudienceScope } from '../types';
 
 const emptyForm = { title: '', body: '', audience: 'ALL' as AudienceScope };
@@ -59,52 +68,63 @@ export default function AnnouncementsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>
-        {canPost && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
-          >
-            {showForm ? 'Cancel' : '+ New Announcement'}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Announcements"
+        description="School-wide news and updates."
+        actions={
+          canPost ? (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className={showForm ? buttonSecondary : buttonPrimary}
+            >
+              {showForm ? 'Cancel' : '+ New Announcement'}
+            </button>
+          ) : undefined
+        }
+      />
 
-      {error && <p className="mb-4 text-red-600 text-sm">{error}</p>}
-      {message && <p className="mb-4 text-green-700 text-sm">{message}</p>}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {message}
+        </div>
+      )}
 
       {canPost && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4"
+          className="mb-6 rounded-xl border border-gray-200/80 bg-white space-y-4 p-5 shadow-card sm:p-6"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label className={`${labelStyles} mb-1`}>Title *</label>
             <input
               type="text"
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Body *</label>
+            <label className={`${labelStyles} mb-1`}>Body *</label>
             <textarea
               required
               rows={4}
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+            <label className={`${labelStyles} mb-1`}>Audience</label>
             <select
               value={form.audience}
               onChange={(e) => setForm({ ...form, audience: e.target.value as AudienceScope })}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             >
               <option value="ALL">Everyone</option>
               <option value="TEACHERS">Teachers only</option>
@@ -114,7 +134,7 @@ export default function AnnouncementsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+            className={buttonPrimary}
           >
             {saving ? 'Publishing...' : 'Publish Announcement'}
           </button>
@@ -122,13 +142,21 @@ export default function AnnouncementsPage() {
       )}
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading announcements...</p>
+        <LoadingState label="Loading announcements…" />
       ) : announcements.length === 0 ? (
-        <p className="text-gray-500 text-sm">No announcements yet.</p>
+        <EmptyState
+          icon="bell"
+          title="No announcements yet"
+          message={
+            canPost
+              ? 'Publish your first announcement to keep everyone informed.'
+              : 'School announcements will appear here.'
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {announcements.map((a) => (
-            <li key={a.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <li key={a.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold text-gray-900">{a.title}</h2>
@@ -142,7 +170,7 @@ export default function AnnouncementsPage() {
                 {isAdmin && (
                   <button
                     onClick={() => handleDelete(a.id)}
-                    className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+                    className="flex-shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
                   >
                     Delete
                   </button>
