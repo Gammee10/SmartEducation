@@ -35,7 +35,11 @@ export default function MyBorrowingPage() {
     return new Date(date).toLocaleDateString();
   };
 
-  if (loading) {
+  // Only show the full-page loader before the first load completes so
+  // background refetches do not blank the page and cause a layout flash.
+  const initialLoading = loading && requests.length === 0 && loans.length === 0;
+
+  if (initialLoading) {
     return <div className="text-center py-12 text-gray-500">Loading...</div>;
   }
 
