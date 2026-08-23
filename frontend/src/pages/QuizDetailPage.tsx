@@ -3,6 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+} from '../components/ui';
 import type { Quiz, QuizQuestion, QuizAttempt } from '../types';
 
 interface QuizForm {
@@ -301,25 +309,55 @@ export default function QuizDetailPage() {
   // Render
   // ---------------------------------------------------------------
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
+    return <LoadingState label="Loading quiz…" />;
   }
 
   if (!quiz) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">{error || 'Quiz not found'}</p>
-        <Link to={`/courses/${courseId}`} className="text-primary-600 hover:text-primary-700">← Back to Course</Link>
+      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+        <p className="text-sm text-red-700">{error || 'Quiz not found'}</p>
+        <Link
+          to={`/courses/${courseId}`}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Course
+        </Link>
       </div>
     );
   }
 
   return (
     <div>
-      <Link to={`/courses/${courseId}`} className="text-sm text-primary-600 hover:text-primary-700">← Back to Course</Link>
+      <Link
+        to={`/courses/${courseId}`}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+      >
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Course
+      </Link>
 
-      <div className="mt-2 flex justify-between items-start">
+      <div className="mt-3 flex justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{quiz.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{quiz.title}</h1>
           <p className="text-sm text-gray-600 mt-1">
             {quiz.course?.subject} · Grade {quiz.course?.gradeLevel}
           </p>
@@ -339,8 +377,8 @@ export default function QuizDetailPage() {
         {quiz.shuffleOptions && <span>Shuffled options</span>}
       </div>
 
-      {message && <div className="mt-4 mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{message}</div>}
-      {error && <div className="mt-4 mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {message && <div className="mt-4 mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
+      {error && <div className="mt-4 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       {/* -----------------------------------------------------
           Student view when not actively taking the quiz
@@ -350,7 +388,7 @@ export default function QuizDetailPage() {
           {quiz.status === 'PUBLISHED' ? (
             <button
               onClick={handleStartAttempt}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+              className={buttonPrimary}
             >
               Start Quiz
             </button>
@@ -363,7 +401,7 @@ export default function QuizDetailPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Attempts</h3>
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div key={attempt.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-400">Started: {formatStart(attempt.startedAt)}</p>
@@ -393,9 +431,27 @@ export default function QuizDetailPage() {
         ----------------------------------------------------- */}
       {isStudent && takingQuiz && activeAttempt && (
         <div className="mt-8">
-          <div className="sticky top-0 bg-white border-b border-gray-200 py-3 mb-4 flex items-center justify-between z-10">
-            <span className="text-sm font-medium text-gray-700">Time remaining:</span>
-            <span className={`text-lg font-bold ${secondsLeft <= 60 ? 'text-red-600' : 'text-gray-900'}`}>
+          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-card sm:px-5">
+            <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <svg
+                className="h-4 w-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Time remaining
+            </span>
+            <span
+              className={`rounded-lg px-2.5 py-1 font-mono text-lg font-bold tabular-nums ${
+                secondsLeft <= 60 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-900'
+              }`}
+              role="timer"
+              aria-live="off"
+            >
               {formatTimer(secondsLeft)}
             </span>
           </div>
@@ -410,7 +466,7 @@ export default function QuizDetailPage() {
             {quiz.questions?.map((question: QuizQuestion, qIndex: number) => {
               const selected = selections[question.id] || [];
               return (
-                <div key={question.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                <div key={question.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs text-gray-400">Question {qIndex + 1}</span>
@@ -425,8 +481,8 @@ export default function QuizDetailPage() {
                       return (
                         <label
                           key={option.id}
-                          className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${
-                            isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:bg-gray-50'
+                          className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors duration-150 ${
+                            isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:bg-gray-50'
                           }`}
                         >
                           <input
@@ -461,7 +517,7 @@ export default function QuizDetailPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              className={`${buttonPrimary} px-6`}
             >
               {submitting ? 'Submitting...' : 'Submit Quiz'}
             </button>
@@ -473,26 +529,32 @@ export default function QuizDetailPage() {
       Student view — result after submission
       ----------------------------------------------------- */}
       {isStudent && result && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quiz Result</h3>
+        <div className="mt-8 rounded-xl border border-green-200 bg-green-50 p-6 shadow-card">
+          <h3 className="text-base font-semibold text-green-900">Quiz submitted</h3>
           {result.expired && (
-            <p className="text-xs text-orange-600 font-medium mb-2">Time expired — attempt was auto-submitted</p>
+            <p className="mt-1 text-xs font-medium text-orange-600">
+              Time expired — attempt was auto-submitted
+            </p>
           )}
-          <p className="text-3xl font-bold text-gray-900">
+          <p className="mt-4 text-4xl font-bold tracking-tight text-gray-900">
             {result.score}
             <span className="text-lg font-normal text-gray-500"> / {result.maxScore}</span>
           </p>
-          <p className="text-sm text-gray-500 mt-2">Status: {result.status.replace('_', ' ')}</p>
-          <button
-            onClick={() => {
-              setResult(null);
-              setMessage('');
-              fetchData();
-            }}
-            className="mt-4 px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
-          >
-            Back to Quiz
-          </button>
+          <p className="mt-2 inline-block rounded-full bg-white px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04]">
+            Status: {result.status.replace('_', ' ')}
+          </p>
+          <div className="mt-5">
+            <button
+              onClick={() => {
+                setResult(null);
+                setMessage('');
+                fetchData();
+              }}
+              className={buttonSecondary}
+            >
+              Back to Quiz
+            </button>
+          </div>
         </div>
       )}
 
@@ -504,41 +566,41 @@ export default function QuizDetailPage() {
           <div className="flex gap-3">
             <button
               onClick={openEdit}
-              className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+              className={buttonPrimary}
             >
               Edit Settings
             </button>
             <button
               onClick={() => setShowAddQuestion(!showAddQuestion)}
-              className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+              className={buttonSecondary}
             >
               {showAddQuestion ? 'Cancel' : '+ Add Question'}
             </button>
           </div>
 
           {showEdit && (
-            <form onSubmit={handleSaveQuiz} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSaveQuiz} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Title *</label>
+                <label className={labelStyles}>Title *</label>
                 <input
                   type="text"
                   required
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className={labelStyles}>Description</label>
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Time Limit (minutes) *</label>
+                <label className={labelStyles}>Time Limit (minutes) *</label>
                 <input
                   type="number"
                   required
@@ -546,11 +608,11 @@ export default function QuizDetailPage() {
                   max={300}
                   value={editForm.timeLimit}
                   onChange={(e) => setEditForm({ ...editForm, timeLimit: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Max Attempts *</label>
+                <label className={labelStyles}>Max Attempts *</label>
                 <input
                   type="number"
                   required
@@ -558,15 +620,15 @@ export default function QuizDetailPage() {
                   max={10}
                   value={editForm.maxAttempts}
                   onChange={(e) => setEditForm({ ...editForm, maxAttempts: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <label className={labelStyles}>Status</label>
                 <select
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                 >
                   <option value="DRAFT">Draft</option>
                   <option value="PUBLISHED">Published</option>
@@ -595,7 +657,7 @@ export default function QuizDetailPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                  className={buttonPrimary}
                 >
                   {saving ? 'Saving...' : 'Save Quiz'}
                 </button>
@@ -604,45 +666,45 @@ export default function QuizDetailPage() {
           )}
 
           {showAddQuestion && (
-            <form onSubmit={handleAddQuestion} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+            <form onSubmit={handleAddQuestion} className="rounded-xl border border-gray-200/80 bg-white space-y-4 p-5 shadow-card">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Question Prompt *</label>
+                <label className={labelStyles}>Question Prompt *</label>
                 <input
                   type="text"
                   required
                   value={questionDraft.prompt}
                   onChange={(e) => setQuestionDraft({ ...questionDraft, prompt: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                  className={inputStyles}
                   placeholder="e.g. What is the capital of Ethiopia?"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Type</label>
+                  <label className={labelStyles}>Type</label>
                   <select
                     value={questionDraft.type}
                     onChange={(e) => setQuestionDraft({ ...questionDraft, type: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                    className={inputStyles}
                   >
                     <option value="SINGLE_CHOICE">Single Choice</option>
                     <option value="MULTIPLE_CHOICE">Multiple Choice</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Points</label>
+                  <label className={labelStyles}>Points</label>
                   <input
                     type="number"
                     required
                     min={1}
                     value={questionDraft.points}
                     onChange={(e) => setQuestionDraft({ ...questionDraft, points: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                    className={inputStyles}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Options (mark the correct one)</label>
+                <label className={`${labelStyles} mb-2`}>Options (mark the correct one)</label>
                 <div className="space-y-2">
                   {questionDraft.options.map((option, optIndex) => (
                     <div key={optIndex} className="flex items-center gap-2">
@@ -666,7 +728,7 @@ export default function QuizDetailPage() {
                         required
                         value={option.optionText}
                         onChange={(e) => updateQuestionOption(optIndex, 'optionText', e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                        className={inputStyles}
                         placeholder={`Option ${optIndex + 1}`}
                       />
                       {questionDraft.options.length > 2 && (
@@ -693,7 +755,7 @@ export default function QuizDetailPage() {
               <button
                 type="submit"
                 disabled={addingQuestion}
-                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                className={buttonPrimary}
               >
                 {addingQuestion ? 'Adding...' : 'Add Question'}
               </button>
@@ -704,11 +766,15 @@ export default function QuizDetailPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Questions ({quiz.questions?.length || 0})</h3>
             {!quiz.questions || quiz.questions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No questions yet. Add one above.</div>
+              <EmptyState
+                icon="clipboard"
+                title="No questions yet"
+                message="Add your first question above to build this quiz."
+              />
             ) : (
               <div className="space-y-4">
                 {quiz.questions.map((question, qIndex) => (
-                  <div key={question.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div key={question.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -736,11 +802,15 @@ export default function QuizDetailPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Results ({attempts.length})</h3>
             {attempts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No attempts yet.</div>
+              <EmptyState
+                icon="users"
+                title="No attempts yet"
+                message="Student attempts will appear here as they are submitted."
+              />
             ) : (
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center justify-between">
+                  <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {attempt.student?.user?.fullName || 'Unknown student'}
@@ -771,11 +841,15 @@ export default function QuizDetailPage() {
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Attempts ({attempts.length})</h3>
           {attempts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No attempts yet.</div>
+            <EmptyState
+              icon="users"
+              title="No attempts yet"
+              message="No students have taken this quiz yet."
+            />
           ) : (
             <div className="space-y-3">
               {attempts.map((attempt) => (
-                <div key={attempt.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center justify-between">
+                <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
                   <div>
                     <p className="text-sm font-medium text-gray-900">
                       {attempt.student?.user?.fullName || 'Unknown student'}
