@@ -2,21 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import StatusBadge from '../components/StatusBadge';
+import {
+  Card,
+  CardHeader,
+  EmptyState,
+  ErrorState,
+  Icon,
+  LoadingState,
+  PageHeader,
+  StatCard,
+} from '../components/ui';
 import type {
   AdminDashboardData,
   TeacherDashboardData,
   StudentDashboardData,
 } from '../types';
-
-function StatCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
-      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
-    </div>
-  );
-}
 
 function AdminDashboard() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
@@ -29,36 +30,41 @@ function AdminDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <p className="text-red-600 text-sm">{error}</p>;
-  if (!data) return <p className="text-gray-500 text-sm">Loading dashboard...</p>;
+  if (error) return <ErrorState message={error} />;
+  if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   const quickLinks = [
-    { to: '/courses', label: 'Courses', desc: 'Browse and manage all courses' },
-    { to: '/timetable', label: 'Timetable', desc: 'Weekly schedule and slots' },
-    { to: '/library', label: 'Library', desc: 'Book catalog and borrowing' },
+    { to: '/courses', label: 'Courses', desc: 'Browse and manage all courses', icon: 'book' as const },
+    { to: '/timetable', label: 'Timetable', desc: 'Weekly schedule and slots', icon: 'calendar' as const },
+    { to: '/library', label: 'Library', desc: 'Book catalog and borrowing', icon: 'cap' as const },
   ];
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Active Courses" value={s.courses} />
-        <StatCard label="Students" value={s.students} />
-        <StatCard label="Teachers" value={s.teachers} />
-        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} />
-        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} />
-        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
+        <StatCard label="Active Courses" value={s.courses} icon="book" />
+        <StatCard label="Students" value={s.students} icon="users" />
+        <StatCard label="Teachers" value={s.teachers} icon="cap" />
+        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} icon="clipboard" />
+        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} icon="chart" />
+        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} icon="chart" />
       </div>
 
-      <h2 className="mt-8 text-lg font-medium text-gray-900 mb-3">Quick Links</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <h2 className="mb-3 mt-8 text-lg font-semibold text-gray-900">Quick Links</h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
         {quickLinks.map((l) => (
           <Link
             key={l.to}
             to={l.to}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow"
+            className="group flex items-start gap-4 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
           >
-            <p className="text-sm font-semibold text-primary-700">{l.label}</p>
-            <p className="mt-1 text-xs text-gray-500">{l.desc}</p>
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100">
+              <Icon name={l.icon} />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">{l.label}</span>
+              <span className="mt-0.5 block text-xs text-gray-500">{l.desc}</span>
+            </span>
           </Link>
         ))}
       </div>
@@ -77,89 +83,107 @@ function TeacherDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <p className="text-red-600 text-sm">{error}</p>;
-  if (!data) return <p className="text-gray-500 text-sm">Loading dashboard...</p>;
+  if (error) return <ErrorState message={error} />;
+  if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="My Courses" value={s.courses} />
-        <StatCard label="Enrolled Students" value={s.students} />
-        <StatCard label="Quizzes" value={s.quizzes} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
+        <StatCard label="My Courses" value={s.courses} icon="book" />
+        <StatCard label="Enrolled Students" value={s.students} icon="users" />
+        <StatCard label="Quizzes" value={s.quizzes} icon="clipboard" />
       </div>
 
-      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">My Courses</h2>
-        </div>
+      <Card className="mt-8">
+        <CardHeader title="My Courses" />
         {data.courses.length === 0 ? (
-          <p className="px-6 py-4 text-sm text-gray-500">No courses yet.</p>
+          <EmptyState
+            icon="book"
+            title="No courses yet"
+            message="Courses you teach will appear here once they are created."
+          />
         ) : (
           <ul className="divide-y divide-gray-100">
             {data.courses.map((c) => (
               <li key={c.id}>
                 <Link
                   to={`/courses/${c.id}`}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.title}</p>
+                    <p className="text-sm font-semibold text-gray-900">{c.title}</p>
                     <p className="text-xs text-gray-500">
                       {c.subject} · {c.gradeLevel}
                     </p>
                   </div>
-                  <div className="text-xs text-gray-500 space-x-4">
+                  <div className="flex flex-shrink-0 items-center gap-4 text-xs text-gray-500">
                     <span>{c.enrollments} students</span>
-                    <span>{c.assignments} assignments</span>
-                    <span>{c.quizzes} quizzes</span>
+                    <span className="hidden sm:inline">{c.assignments} assignments</span>
+                    <span className="hidden sm:inline">{c.quizzes} quizzes</span>
+                    <svg
+                      className="h-4 w-4 text-gray-300 transition-colors duration-150 hover:text-primary-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </Card>
 
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Recent Submissions</h2>
-          </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5 sm:gap-5">
+        <Card>
+          <CardHeader title="Recent Submissions" />
           {data.recentSubmissions.length === 0 ? (
-            <p className="px-6 py-4 text-sm text-gray-500">No submissions yet.</p>
+            <EmptyState
+              icon="clipboard"
+              title="No submissions yet"
+              message="Student submissions will appear here as they come in."
+            />
           ) : (
             <ul className="divide-y divide-gray-100">
               {data.recentSubmissions.map((sub) => (
-                <li key={sub.id} className="px-6 py-3 flex items-center justify-between">
+                <li key={sub.id} className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
                   <div>
-                    <p className="text-sm text-gray-900">{sub.student?.user?.fullName}</p>
+                    <p className="text-sm font-medium text-gray-900">{sub.student?.user?.fullName}</p>
                     <p className="text-xs text-gray-500">Assignment #{sub.assignmentId.slice(0, 8)}</p>
                   </div>
-                  <span className="text-xs uppercase tracking-wide text-gray-400">{sub.status}</span>
+                  <StatusBadge status={sub.status} />
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Recent Grades</h2>
-          </div>
+        <Card>
+          <CardHeader title="Recent Grades" />
           {data.recentGrades.length === 0 ? (
-            <p className="px-6 py-4 text-sm text-gray-500">No graded work yet.</p>
+            <EmptyState
+              icon="chart"
+              title="No graded work yet"
+              message="Grades you return to students will show up here."
+            />
           ) : (
             <ul className="divide-y divide-gray-100">
               {data.recentGrades.map((sub) => (
-                <li key={sub.id} className="px-6 py-3 flex items-center justify-between">
+                <li key={sub.id} className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
                   <p className="text-sm text-gray-900">{sub.student?.user?.fullName}</p>
-                  <span className="text-sm font-medium text-primary-700">{sub.score ?? '-'}</span>
+                  <span className="inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700">
+                    {sub.score ?? '-'}
+                  </span>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
       </div>
     </>
   );
@@ -176,46 +200,57 @@ function StudentDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <p className="text-red-600 text-sm">{error}</p>;
-  if (!data) return <p className="text-gray-500 text-sm">Loading dashboard...</p>;
+  if (error) return <ErrorState message={error} />;
+  if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="My Courses" value={s.enrollments} />
-        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} />
-        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} />
-        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
+        <StatCard label="My Courses" value={s.enrollments} icon="book" />
+        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} icon="clipboard" />
+        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} icon="chart" />
+        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} icon="chart" />
       </div>
 
-      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">My Courses</h2>
-        </div>
+      <Card className="mt-8">
+        <CardHeader title="My Courses" />
         {data.courses.length === 0 ? (
-          <p className="px-6 py-4 text-sm text-gray-500">You are not enrolled in any courses yet.</p>
+          <EmptyState
+            icon="book"
+            title="Not enrolled in any courses yet"
+            message="Browse the course catalog to see what's available this term."
+          />
         ) : (
           <ul className="divide-y divide-gray-100">
             {data.courses.map((c) => (
               <li key={c.id}>
                 <Link
                   to={`/courses/${c.id}`}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.title}</p>
+                    <p className="text-sm font-semibold text-gray-900">{c.title}</p>
                     <p className="text-xs text-gray-500">
                       {c.subject} · {c.gradeLevel}
                     </p>
                   </div>
-                  <span className="text-sm text-primary-700">View →</span>
+                  <svg
+                    className="h-4 w-4 flex-shrink-0 text-gray-300 transition-colors duration-150 hover:text-primary-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -225,9 +260,16 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        Welcome back, {user?.fullName}
-      </h1>
+      <PageHeader
+        title={`Welcome back, ${user?.fullName}`}
+        description={
+          isAdmin
+            ? "Here's an overview of your school today."
+            : isTeacher
+              ? "Here's what's happening across your classes."
+              : "Here's a snapshot of your learning progress."
+        }
+      />
 
       {isAdmin && <AdminDashboard />}
       {isTeacher && <TeacherDashboard />}
