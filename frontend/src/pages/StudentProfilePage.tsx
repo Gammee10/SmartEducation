@@ -23,6 +23,8 @@ export default function StudentProfilePage() {
   const { id: studentId } = useParams<{ id: string }>();
   const [summary, setSummary] = useState<StudentSummary | null>(null);
   const [attendance, setAttendance] = useState<StudentAttendanceView | null>(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
+  const [attendanceError, setAttendanceError] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -31,10 +33,17 @@ export default function StudentProfilePage() {
       .get(`/students/${studentId}/summary`)
       .then((res) => setSummary(res.data.data))
       .catch((err) => setError(err.response?.data?.message || 'Failed to load profile'));
+    // Track attendance loading/errors separately so a transient failure is
+    // not silently rendered as "No attendance records yet."
+    setAttendanceLoading(true);
+    setAttendanceError('');
     api
       .get(`/students/${studentId}/attendance`)
       .then((res) => setAttendance(res.data.data))
-      .catch(() => {});
+      .catch((err) =>
+        setAttendanceError(err.response?.data?.message || 'Failed to load attendance history')
+      )
+      .finally(() => setAttendanceLoading(false));
   }, [studentId]);
 
   if (error) return <p className="text-red-600 text-sm">{error}</p>;
@@ -104,9 +113,14 @@ export default function StudentProfilePage() {
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">Attendance History</h2>
         </div>
-        {!attendance || attendance.attendance.length === 0 ? (
+        {attendanceLoading ? (
+          <p className="px-6 py-4 text-sm text-gray-500">Loading attendance...</p>
+        ) : attendanceError ? (
+          <p className="px-6 py-4 text-sm text-red-600">{attendanceError}</p>
+        ) : !attendance || attendance.attendance.length === 0 ? (
           <p className="px-6 py-4 text-sm text-gray-500">No attendance records yet.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
@@ -139,6 +153,7 @@ export default function StudentProfilePage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
