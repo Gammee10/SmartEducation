@@ -49,6 +49,20 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
     });
   }
 
+  // File upload errors from multer
+  if (err.name === 'MulterError') {
+    const multerErr = err as Error & { code?: string };
+    const message =
+      multerErr.code === 'LIMIT_FILE_SIZE'
+        ? 'File is too large (maximum 50MB)'
+        : 'File upload failed';
+    return res.status(422).json({
+      success: false,
+      message,
+      data: {},
+    });
+  }
+
   // Unknown errors - log and return generic message
   console.error('Unhandled error:', err);
   return res.status(500).json({
