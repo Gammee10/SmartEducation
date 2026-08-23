@@ -14,17 +14,19 @@ export default function LibraryCatalogPage() {
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 20, total: 0, totalPages: 1 });
   const [requesting, setRequesting] = useState<string | null>(null);
 
-  const fetchBooks = useCallback(async (page = 1) => {
+  const fetchBooks = useCallback(async (page = 1, signal?: AbortSignal) => {
     setLoading(true);
     setError('');
     try {
       const params: Record<string, unknown> = { page, pageSize: 20 };
       if (search) params.search = search;
       if (category) params.category = category;
-      const response = await api.get('/library/books', { params });
+      const response = await api.get('/library/books', { params, signal });
       setBooks(response.data.data);
       setPagination(response.data.pagination);
     } catch (err: any) {
+      // Ignore aborted requests - a newer search superseded this one
+      if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') return;
       setError(err.response?.data?.message || 'Failed to load books');
     } finally {
       setLoading(false);
@@ -32,8 +34,12 @@ export default function LibraryCatalogPage() {
   }, [search, category]);
 
   useEffect(() => {
-    const timer = setTimeout(() => fetchBooks(1), 300);
-    return () => clearTimeout(timer);
+    const controller = new AbortController();
+    const timer = setTimeout(() => fetchBooks(1, controller.signal), 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [fetchBooks]);
 
   const handleRequest = async (bookCopyId: string) => {
