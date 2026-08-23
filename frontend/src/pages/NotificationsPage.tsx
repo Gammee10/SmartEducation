@@ -16,6 +16,8 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [markingAll, setMarkingAll] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -31,20 +33,32 @@ export default function NotificationsPage() {
   }, [load]);
 
   const handleMarkRead = async (id: string) => {
+    setError('');
+    setMarkingId(id);
     try {
       await api.put(`/notifications/${id}/read`);
-      load();
+      // Update locally for instant feedback; drop the item entirely when
+      // the "unread only" filter is active.
+      setNotifications((prev) =>
+        unreadOnly ? prev.filter((n) => n.id !== id) : prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
     } catch {
       setError('Failed to mark notification as read');
+    } finally {
+      setMarkingId(null);
     }
   };
 
   const handleMarkAllRead = async () => {
+    setError('');
+    setMarkingAll(true);
     try {
       await api.put('/notifications/read-all');
-      load();
+      setNotifications((prev) => (unreadOnly ? [] : prev.map((n) => ({ ...n, isRead: true }))));
     } catch {
       setError('Failed to mark all as read');
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -63,9 +77,10 @@ export default function NotificationsPage() {
           </label>
           <button
             onClick={handleMarkAllRead}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
+            disabled={markingAll || loading}
+            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
           >
-            Mark all read
+            {markingAll ? 'Marking...' : 'Mark all read'}
           </button>
         </div>
       </div>
@@ -105,9 +120,10 @@ export default function NotificationsPage() {
               {!n.isRead && (
                 <button
                   onClick={() => handleMarkRead(n.id)}
-                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  disabled={markingId === n.id}
+                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Mark read
+                  {markingId === n.id ? 'Marking...' : 'Mark read'}
                 </button>
               )}
             </li>
