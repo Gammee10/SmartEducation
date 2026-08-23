@@ -1,6 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import {
+  buttonPrimary,
+  buttonSecondary,
+  EmptyState,
+  inputStyles,
+  LoadingState,
+  PageHeader,
+} from '../components/ui';
 import type { TimetableSlot, DayOfWeek, Course } from '../types';
 
 const DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
@@ -92,36 +100,49 @@ export default function TimetablePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Timetable</h1>
-        {isAdmin && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700"
-          >
-            {showForm ? 'Cancel' : 'Add Slot'}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Timetable"
+        description="The weekly schedule of classes."
+        actions={
+          isAdmin ? (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className={showForm ? buttonSecondary : buttonPrimary}
+            >
+              {showForm ? 'Cancel' : 'Add Slot'}
+            </button>
+          ) : undefined
+        }
+      />
 
-      {error && <p className="mb-4 text-red-600 text-sm">{error}</p>}
-      {message && <p className="mb-4 text-green-700 text-sm">{message}</p>}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {message && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {message}
+        </div>
+      )}
 
       {isAdmin && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+          className="mb-6 rounded-xl border border-gray-200/80 bg-white shadow-card p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-5"
         >
           {formError && (
-            <p className="sm:col-span-2 lg:col-span-5 text-red-600 text-sm">{formError}</p>
+            <p className="sm:col-span-2 lg:col-span-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {formError}
+            </p>
           )}
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Course</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Course</label>
             <select
               required
               value={form.courseId}
               onChange={(e) => setForm({ ...form, courseId: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             >
               <option value="">Select a course</option>
               {courses.map((c) => (
@@ -132,11 +153,11 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Day</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Day</label>
             <select
               value={form.dayOfWeek}
               onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value as DayOfWeek })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             >
               {DAYS.map((d) => (
                 <option key={d} value={d}>
@@ -146,40 +167,40 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Start Time</label>
             <input
               type="time"
               required
               value={form.startTime}
               onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">End Time</label>
             <input
               type="time"
               required
               value={form.endTime}
               onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-gray-700 mb-1">Room (optional)</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Room (optional)</label>
             <input
               type="text"
               value={form.room}
               onChange={(e) => setForm({ ...form, room: e.target.value })}
               placeholder="e.g. Room 12"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className={inputStyles}
             />
           </div>
           <div className="flex items-end">
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+              className={buttonPrimary}
             >
               {saving ? 'Saving...' : 'Create Slot'}
             </button>
@@ -188,30 +209,41 @@ export default function TimetablePage() {
       )}
 
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading timetable...</p>
+        <LoadingState label="Loading timetable…" />
       ) : slots.length === 0 ? (
-        <p className="text-gray-500 text-sm">No timetable slots scheduled yet.</p>
+        <EmptyState
+          icon="calendar"
+          title="No timetable slots yet"
+          message={
+            isAdmin
+              ? 'Add the first slot to start building the weekly schedule.'
+              : 'The weekly schedule will appear here once it is published.'
+          }
+        />
       ) : (
         <div className="space-y-6">
           {DAYS.map((day) => {
             const daySlots = slots.filter((s) => s.dayOfWeek === day);
             if (daySlots.length === 0) return null;
             return (
-              <div key={day} className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-3 border-b border-gray-200">
+              <div key={day} className="rounded-xl border border-gray-200/80 bg-white shadow-card">
+                <div className="border-b border-gray-100 px-5 py-3 sm:px-6">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
                     {day}
                   </h2>
                 </div>
                 <ul className="divide-y divide-gray-100">
                   {daySlots.map((slot) => (
-                    <li key={slot.id} className="px-6 py-4 flex items-center justify-between">
+                    <li
+                      key={slot.id}
+                      className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6"
+                    >
                       <div>
                         <p className="text-sm font-medium text-gray-900">
                           {slot.startTime} – {slot.endTime}
                           {slot.room ? ` · ${slot.room}` : ''}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="mt-0.5 text-xs text-gray-500">
                           {slot.course?.title} ({slot.course?.subject})
                           {slot.teacher?.user?.fullName ? ` · ${slot.teacher.user.fullName}` : ''}
                         </p>
@@ -219,7 +251,7 @@ export default function TimetablePage() {
                       {isAdmin && (
                         <button
                           onClick={() => handleDelete(slot.id)}
-                          className="text-sm text-red-600 hover:text-red-800"
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors duration-150 hover:bg-red-50 hover:text-red-700"
                         >
                           Delete
                         </button>
