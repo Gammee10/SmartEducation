@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, FormEvent } from 'react';
+import { useState, useEffect, useCallback, FormEvent, Fragment } from 'react';
 import api from '../api/client';
 import type { Book, BorrowRequest, Loan } from '../types';
 
@@ -45,6 +45,25 @@ export default function AdminLibraryPage() {
 
   // Add book form
   const [bookForm, setBookForm] = useState<BookForm>(emptyForm);
+
+  // Inline approve/reject form state (replaces blocking prompt() dialogs)
+  const [decisionTarget, setDecisionTarget] = useState<{ id: string; decision: 'APPROVED' | 'REJECTED' } | null>(null);
+  const [dueDate, setDueDate] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+
+  const openDecision = (requestId: string, decision: 'APPROVED' | 'REJECTED') => {
+    setDecisionTarget({ id: requestId, decision });
+    setDueDate('');
+    setRejectReason('');
+    setError('');
+    setMessage('');
+  };
+
+  const cancelDecision = () => {
+    setDecisionTarget(null);
+    setDueDate('');
+    setRejectReason('');
+  };
 
   const fetchBooks = useCallback(async () => {
     try {
@@ -102,25 +121,33 @@ export default function AdminLibraryPage() {
     }
   };
 
-  const handleDecide = async (requestId: string, decision: string) => {
+  const handleDecide = async () => {
+    if (!decisionTarget) return;
+    const { id: requestId, decision } = decisionTarget;
+    if (decision === 'APPROVED') {
+      if (!dueDate) {
+        setError('Please choose a due date before approving.');
+        return;
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      if (dueDate < today) {
+        setError('Due date cannot be in the past.');
+        return;
+      }
+    }
     setDeciding(requestId);
     setError('');
     setMessage('');
     try {
       const body: Record<string, string> = { decision };
       if (decision === 'APPROVED') {
-        const dueDate = prompt('Enter due date (YYYY-MM-DD):');
-        if (!dueDate) {
-          setDeciding(null);
-          return;
-        }
         body.dueDate = dueDate;
       } else {
-        const reason = prompt('Reason for rejection (optional):');
-        body.reason = reason || '';
+        body.reason = rejectReason.trim();
       }
       await api.post(`/library/requests/${requestId}/decide`, body);
       setMessage(`Request ${decision.toLowerCase()} successfully`);
+      cancelDecision();
       fetchRequests();
       fetchLoans();
       fetchBooks();
@@ -360,7 +387,8 @@ export default function AdminLibraryPage() {
                 </tr>
               )}
               {requests.map((req) => (
-                <tr key={req.id}>
+                <Fragment key={req.id}>
+                  <tr>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {req.student?.user?.fullName}
                     <span className="block text-xs text-gray-500">{req.student?.user?.email}</span>
@@ -375,14 +403,14 @@ export default function AdminLibraryPage() {
                     {req.status === 'PENDING' && (
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleDecide(req.id, 'APPROVED')}
+                          onClick={() => openDecision(req.id, 'APPROVED')}
                           disabled={deciding === req.id}
                           className="px-3 py-1 rounded-md text-xs font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleDecide(req.id, 'REJECTED')}
+                          onClick={() => openDecision(req.id, 'REJECTED')}
                           disabled={deciding === req.id}
                           className="px-3 py-1 rounded-md text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                         >
@@ -392,6 +420,68 @@ export default function AdminLibraryPage() {
                     )}
                   </td>
                 </tr>
+                {decisionTarget?.id === req.id && (
+                  <tr>
+                    <td colSpan={5} className="bg-gray-50 px-6 py-4">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleDecide();
+                        }}
+                        className="flex flex-wrap items-end gap-3"
+                      >
+                        {decisionTarget.decision === 'APPROVED' ? (
+                          <div>
+                            <label htmlFor={`due-${req.id}`} className="block text-xs font-medium text-gray-700">
+                              Due date *
+                            </label>
+                            <input
+                              id={`due-${req.id}`}
+                              type="date"
+                              required
+                              value={dueDate}
+                              onChange={(e) => setDueDate(e.target.value)}
+                              className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <div className="min-w-[220px] flex-1">
+                            <label htmlFor={`reason-${req.id}`} className="block text-xs font-medium text-gray-700">
+                              Reason for rejection (optional)
+                            </label>
+                            <input
+                              id={`reason-${req.id}`}
+                              type="text"
+                              value={rejectReason}
+                              onChange={(e) => setRejectReason(e.target.value)}
+                              placeholder="e.g. Copy reserved for another student"
+                              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                            />
+                          </div>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={deciding === req.id}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium text-white disabled:opacity-50 ${
+                            decisionTarget.decision === 'APPROVED'
+                              ? 'bg-green-600 hover:bg-green-700'
+                              : 'bg-red-600 hover:bg-red-700'
+                          }`}
+                        >
+                          {deciding === req.id ? 'Saving...' : `Confirm ${decisionTarget.decision === 'APPROVED' ? 'Approval' : 'Rejection'}`}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelDecision}
+                          className="px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 border border-gray-300 hover:bg-gray-100"
+                        >
+                          Cancel
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>
