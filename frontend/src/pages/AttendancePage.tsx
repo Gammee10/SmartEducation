@@ -27,8 +27,10 @@ export default function AttendancePage() {
   const [actionError, setActionError] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
-  // Local draft of statuses keyed by studentId
-  const [drafts, setDrafts] = useState<Record<string, AttendanceStatus>>({});
+  // Local draft of statuses keyed by studentId. A missing entry means the
+  // teacher has not marked that student yet - it must NOT be submitted,
+  // otherwise saving would fabricate PRESENT records for unmarked students.
+  const [drafts, setDrafts] = useState<Record<string, AttendanceStatus | undefined>>({});
 
   const load = useCallback(() => {
     if (!courseId) return;
@@ -40,10 +42,10 @@ export default function AttendancePage() {
         const view: CourseAttendanceView = res.data.data;
         setData(view);
         // Pre-fill drafts from existing records
-        const next: Record<string, AttendanceStatus> = {};
+        const next: Record<string, AttendanceStatus | undefined> = {};
         view.enrolledStudents.forEach((s) => {
           const rec = view.attendance.find((a) => a.studentId === s.id);
-          next[s.id] = rec ? rec.status : 'PRESENT';
+          next[s.id] = rec ? rec.status : undefined;
         });
         setDrafts(next);
       })
@@ -61,14 +63,21 @@ export default function AttendancePage() {
     setSavedMsg('');
     setSaving(true);
     try {
-      const records = data.enrolledStudents.map((s) => ({
-        studentId: s.id,
-        courseId,
-        date,
-        status: drafts[s.id] || 'PRESENT',
-      }));
+      // Only submit students the teacher has explicitly marked.
+      const records = data.enrolledStudents
+        .filter((s) => drafts[s.id])
+        .map((s) => ({
+          studentId: s.id,
+          courseId,
+          date,
+          status: drafts[s.id] as AttendanceStatus,
+        }));
+      if (records.length === 0) {
+        setActionError('Mark at least one student before saving.');
+        return;
+      }
       await api.post('/attendance/upsert', { records });
-      setSavedMsg('Attendance saved');
+      setSavedMsg(`Attendance saved for ${records.length} student(s)`);
       load();
     } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to save attendance');
@@ -137,12 +146,14 @@ export default function AttendancePage() {
                   {isTeacher ? (
                     <div className="flex items-center gap-2">
                       <select
-                        value={drafts[student.id] || 'PRESENT'}
+                        value={drafts[student.id] ?? ''}
                         onChange={(e) =>
+                          e.target.value &&
                           setDrafts({ ...drafts, [student.id]: e.target.value as AttendanceStatus })
                         }
                         className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
                       >
+                        <option value="">Not marked</option>
                         {STATUSES.map((s) => (
                           <option key={s} value={s}>
                             {s}
@@ -151,7 +162,9 @@ export default function AttendancePage() {
                       </select>
                       {record && (
                         <button
-                          onClick={() => handleCorrect(record.id, drafts[student.id] || 'PRESENT')}
+                          onClick={() =>
+                            handleCorrect(record.id, drafts[student.id] ?? record.status)
+                          }
                           className="text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
                           Correct
@@ -181,7 +194,7 @@ export default function AttendancePage() {
             disabled={saving}
             className="px-4 py-2 rounded-md bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Attendance'}
+            {saving ? 'Saving...' : `Save Attendance (${data.enrolledStudents.filter((s) => drafts[s.id]).length})`}
           </button>
         </div>
       )}
