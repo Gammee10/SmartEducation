@@ -77,6 +77,9 @@ export default function QuizDetailPage() {
   // Refs to avoid stale closures in the countdown auto-submit effect
   const selectionsRef = useRef<Record<string, string[]>>({});
   const submitRef = useRef<(s: Record<string, string[]>, auto?: boolean) => Promise<void>>(async () => {});
+  // Synchronous guard so the expiring countdown tick cannot fire duplicate
+  // submissions while a manual/auto submit request is still in flight.
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     selectionsRef.current = selections;
@@ -104,6 +107,22 @@ export default function QuizDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Resume an in-progress attempt after a refresh or navigation away, so a
+  // student does not silently lose an attempt that is still running
+  // server-side. Selections cannot be recovered, but the remaining time can.
+  useEffect(() => {
+    if (!isStudent || !quiz || takingQuiz || result) return;
+    const inProgress = attempts.find((a) => a.status === 'IN_PROGRESS');
+    if (!inProgress) return;
+    setActiveAttempt({ id: inProgress.id, expiresAt: inProgress.expiresAt });
+    setTakingQuiz(true);
+    const initial: Record<string, string[]> = {};
+    for (const q of quiz.questions || []) {
+      initial[q.id] = [];
+    }
+    setSelections(initial);
+  }, [attempts, quiz, isStudent, takingQuiz, result]);
 
   // Countdown timer for active quiz attempt (auto-submits on expiry)
   useEffect(() => {
@@ -262,7 +281,8 @@ export default function QuizDetailPage() {
   // Student: submit attempt
   // ---------------------------------------------------------------
   const handleSubmit = async (currentSelections: Record<string, string[]>, autoExpired = false) => {
-    if (!activeAttempt) return;
+    if (!activeAttempt || submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setError('');
     try {
@@ -288,6 +308,7 @@ export default function QuizDetailPage() {
       // If the attempt was already submitted server-side, refresh state
       fetchData();
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
