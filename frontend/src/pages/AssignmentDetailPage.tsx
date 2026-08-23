@@ -3,6 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import {
+  buttonPrimary,
+  EmptyState,
+  inputStyles,
+  labelStyles,
+  LoadingState,
+} from '../components/ui';
 import type { Assignment, AssignmentSubmission } from '../types';
 
 export default function AssignmentDetailPage() {
@@ -89,15 +96,28 @@ export default function AssignmentDetailPage() {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">Loading...</div>;
+    return <LoadingState label="Loading assignment…" />;
   }
 
   if (!assignment) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">{error || 'Assignment not found'}</p>
-        <Link to={`/courses/${courseId}`} className="text-primary-600 hover:text-primary-700">
-          ← Back to Course
+      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+        <p className="text-sm text-red-700">{error || 'Assignment not found'}</p>
+        <Link
+          to={`/courses/${courseId}`}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Course
         </Link>
       </div>
     );
@@ -105,12 +125,27 @@ export default function AssignmentDetailPage() {
 
   return (
     <div>
-      <Link to={`/courses/${courseId}`} className="text-sm text-primary-600 hover:text-primary-700">
-        ← Back to Course
+      <Link
+        to={`/courses/${courseId}`}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+      >
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Course
       </Link>
-      <div className="mt-2 flex justify-between items-start">
+      <div className="mt-3 flex justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{assignment.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            {assignment.title}
+          </h1>
           <p className="text-sm text-gray-600 mt-1">
             {assignment.course?.subject} · Grade {assignment.course?.gradeLevel}
           </p>
@@ -119,7 +154,7 @@ export default function AssignmentDetailPage() {
       </div>
 
       {assignment.instructions && (
-        <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="mt-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Instructions</h3>
           <p className="text-sm text-gray-600 whitespace-pre-wrap">{assignment.instructions}</p>
         </div>
@@ -132,10 +167,10 @@ export default function AssignmentDetailPage() {
       </div>
 
       {message && (
-        <div className="mt-4 mb-4 rounded-md bg-green-50 p-4 text-sm text-green-700">{message}</div>
+        <div className="mt-4 mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mt-4 mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="mt-4 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {/* -----------------------------------------------------
@@ -144,7 +179,7 @@ export default function AssignmentDetailPage() {
       {isStudent && (
         <div className="mt-8">
           {mySubmission ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="rounded-xl border border-gray-200/80 bg-white p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Your Submission</h3>
                 <StatusBadge status={mySubmission.status} />
@@ -157,7 +192,7 @@ export default function AssignmentDetailPage() {
               {mySubmission.content && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-1">Your answer</h4>
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 rounded-md p-3">
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap rounded-lg bg-gray-50 p-3">
                     {mySubmission.content}
                   </p>
                 </div>
@@ -196,34 +231,34 @@ export default function AssignmentDetailPage() {
               )}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="rounded-xl border border-gray-200/80 bg-white p-6 shadow-card">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Submit Your Work</h3>
               {assignment.status !== 'PUBLISHED' ? (
                 <p className="text-sm text-gray-500">This assignment is not open for submissions.</p>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Your answer</label>
+                    <label className={labelStyles}>Your answer</label>
                     <textarea
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       rows={5}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                      className={inputStyles}
                       placeholder="Type your answer here..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Attach a file (optional, max 50MB)</label>
+                    <label className={labelStyles}>Attach a file (optional, max 50MB)</label>
                     <input
                       type="file"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      className="mt-1 block w-full text-sm text-gray-600"
+                      className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={submitting || (!content.trim() && !file)}
-                    className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                    className={buttonPrimary}
                   >
                     {submitting ? 'Submitting...' : 'Submit Assignment'}
                   </button>
@@ -243,11 +278,15 @@ export default function AssignmentDetailPage() {
             Submissions ({submissions.length})
           </h3>
           {submissions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No submissions yet.</div>
+            <EmptyState
+              icon="clipboard"
+              title="No submissions yet"
+              message="Student submissions will appear here as they come in."
+            />
           ) : (
             <div className="space-y-4">
               {submissions.map((sub) => (
-                <div key={sub.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div key={sub.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900">
@@ -262,7 +301,7 @@ export default function AssignmentDetailPage() {
                   </div>
 
                   {sub.content && (
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 rounded-md p-3 mb-3">
+                    <p className="text-sm text-gray-600 whitespace-pre-wrap rounded-lg bg-gray-50 p-3 mb-3">
                       {sub.content}
                     </p>
                   )}
@@ -283,7 +322,7 @@ export default function AssignmentDetailPage() {
                       className="border-t border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3"
                     >
                       <div>
-                        <label className="block text-xs font-medium text-gray-700">
+                        <label className="mb-1 block text-xs font-medium text-gray-600">
                           Score (max {assignment.maxScore})
                         </label>
                         <input
@@ -294,16 +333,16 @@ export default function AssignmentDetailPage() {
                           step="0.5"
                           value={gradeScores[sub.id] ?? (sub.score !== null && sub.score !== undefined ? String(sub.score) : '')}
                           onChange={(e) => setGradeScores({ ...gradeScores, [sub.id]: e.target.value })}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                          className={inputStyles}
                         />
                       </div>
                       <div className="sm:col-span-1">
-                        <label className="block text-xs font-medium text-gray-700">Feedback</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">Feedback</label>
                         <input
                           type="text"
                           value={gradeFeedbacks[sub.id] ?? sub.feedback ?? ''}
                           onChange={(e) => setGradeFeedbacks({ ...gradeFeedbacks, [sub.id]: e.target.value })}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border px-3 py-2"
+                          className={inputStyles}
                           placeholder="Feedback..."
                         />
                       </div>
@@ -311,7 +350,7 @@ export default function AssignmentDetailPage() {
                         <button
                           type="submit"
                           disabled={gradingId === sub.id}
-                          className="px-4 py-2 rounded-md text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                          className={buttonPrimary}
                         >
                           {gradingId === sub.id ? 'Saving...' : sub.status === 'GRADED' ? 'Update Grade' : 'Grade'}
                         </button>
