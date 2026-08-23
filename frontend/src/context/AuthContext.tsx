@@ -73,6 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, refreshUser]);
 
+  // The API client dispatches this when any authenticated request comes
+  // back 401 (expired/revoked session). Clear user state so protected
+  // routes redirect through React Router instead of a hard reload.
+  useEffect(() => {
+    const onUnauthorized = () => setUser(null);
+    window.addEventListener('auth:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
+  }, []);
+
   const value: AuthContextType = {
     user,
     loading,

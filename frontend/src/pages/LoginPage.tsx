@@ -1,10 +1,11 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,13 +15,23 @@ export default function LoginPage() {
     return <Navigate to="/" replace />;
   }
 
+  // Only follow same-origin relative redirects to avoid open redirects.
+  const requestedRedirect = searchParams.get('redirect') || '/';
+  const redirectTo =
+    requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/';
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate('/');
+      try {
+        sessionStorage.removeItem('postLoginRedirect');
+      } catch {
+        // ignore storage errors
+      }
+      navigate(redirectTo);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
