@@ -98,12 +98,14 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-xs text-gray-500 bg-gray-50 rounded-md p-3">
-            <p className="font-medium mb-1">Demo accounts (seeded):</p>
-            <p>admin@school.edu / Password123!</p>
-            <p>teacher@school.edu / Password123!</p>
-            <p>student@school.edu / Password123!</p>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="text-xs text-gray-500 bg-gray-50 rounded-md p-3">
+              <p className="font-medium mb-1">Demo accounts (seeded, dev only):</p>
+              <p>admin@school.edu / Password123!</p>
+              <p>teacher@school.edu / Password123!</p>
+              <p>student@school.edu / Password123!</p>
+            </div>
+          )}
         </form>
       </div>
     </div>
