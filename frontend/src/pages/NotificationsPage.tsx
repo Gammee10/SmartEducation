@@ -2,9 +2,12 @@ import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import {
   buttonPrimary,
+  buttonSecondary,
   EmptyState,
   LoadingState,
   PageHeader,
+  Banner,
+  Spinner,
 } from '../components/ui';
 import type { AppNotification } from '../types';
 
@@ -14,7 +17,7 @@ const typeStyles: Record<string, string> = {
   QUIZ_RESULT: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
   ANNOUNCEMENT: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
   EVENT: 'bg-pink-50 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400',
-  GENERAL: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
+  GENERAL: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 export default function NotificationsPage() {
@@ -89,6 +92,7 @@ export default function NotificationsPage() {
               disabled={markingAll || loading}
               className={buttonPrimary}
             >
+              {markingAll && <Spinner />}
               {markingAll ? 'Marking…' : 'Mark all read'}
             </button>
           </>
@@ -96,8 +100,8 @@ export default function NotificationsPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
         </div>
       )}
 
@@ -134,7 +138,7 @@ export default function NotificationsPage() {
                   )}
                 </div>
                 <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{n.title}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{n.message}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{n.message}</p>
                 <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   {new Date(n.createdAt).toLocaleString()}
                 </p>
@@ -143,9 +147,10 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleMarkRead(n.id)}
                   disabled={markingId === n.id}
-                  className="flex-shrink-0 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-60"
+                  className={buttonSecondary + ' flex-shrink-0 px-3 py-1.5 text-xs'}
                 >
-                  {markingId === n.id ? 'Marking...' : 'Mark read'}
+                  {markingId === n.id && <Spinner className="h-3.5 w-3.5" />}
+                  {markingId === n.id ? 'Marking…' : 'Mark read'}
                 </button>
               )}
             </li>

@@ -12,6 +12,8 @@ import {
   labelStyles,
   LoadingState,
   PageHeader,
+  Banner,
+  Spinner,
 } from '../components/ui';
 import type { Course } from '../types';
 
@@ -132,10 +134,14 @@ export default function CoursesPage() {
       />
 
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mb-4">
+          <Banner tone="success" message={message} />
+        </div>
       )}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
+        </div>
       )}
 
       {showCreate && isTeacher && (
@@ -197,7 +203,8 @@ export default function CoursesPage() {
               disabled={submitting}
               className={buttonPrimary}
             >
-              {submitting ? 'Creating...' : 'Create Course'}
+              {submitting && <Spinner />}
+              {submitting ? 'Creating…' : 'Create Course'}
             </button>
           </div>
         </form>
@@ -283,20 +290,20 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
               <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
                 {course.title}
               </h3>
-              <p className="mt-0.5 truncate text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{course.subject}</p>
+              <p className="mt-0.5 truncate text-sm text-gray-600 dark:text-gray-400">{course.subject}</p>
             </div>
           </div>
           <StatusBadge status={course.status} />
         </div>
 
         {course.description && (
-          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400 dark:text-gray-500">
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
             {course.description}
           </p>
         )}
 
         <div className="mt-auto pt-4">
-          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-500 dark:text-gray-400">
             <span className="inline-flex items-center gap-1.5">
               <Icon name="users" className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
               {course._count?.enrollments || 0} students
@@ -311,10 +318,10 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-400">
                 {getInitials(teacherName)}
               </span>
-              <span className="truncate text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{teacherName}</span>
+              <span className="truncate text-xs text-gray-500 dark:text-gray-400">{teacherName}</span>
             </div>
             <svg
               className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"

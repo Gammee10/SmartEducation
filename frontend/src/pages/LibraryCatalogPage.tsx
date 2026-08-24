@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { EmptyState, buttonPrimary, LoadingState, PageHeader } from '../components/ui';
+import { EmptyState, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
 import type { Book, Pagination } from '../types';
 
 export default function LibraryCatalogPage() {
@@ -65,10 +65,14 @@ export default function LibraryCatalogPage() {
       <PageHeader title="Library Catalog" description="Search the school library and request to borrow books." />
 
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mb-4">
+          <Banner tone="success" message={message} />
+        </div>
       )}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
+        </div>
       )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -120,14 +124,14 @@ export default function LibraryCatalogPage() {
               return (
                 <div key={book.id} className="flex flex-col rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{book.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-1">by {book.author}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">by {book.author}</p>
                   {book.isbn && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ISBN: {book.isbn}</p>}
                   {book.category && (
                     <span className="mt-2 inline-block text-xs bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 rounded-full px-2 py-1 w-fit">
                       {book.category}
                     </span>
                   )}
-                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                     <span className="font-medium">{avail.length}</span> available of{' '}
                     <span className="font-medium">{book.copies?.length || 0}</span> copies
                   </div>
@@ -138,7 +142,8 @@ export default function LibraryCatalogPage() {
                         disabled={requesting === avail[0].id}
                         className={`${buttonPrimary} w-full`}
                       >
-                        {requesting === avail[0].id ? 'Requesting...' : 'Request to Borrow'}
+                        {requesting === avail[0].id && <Spinner />}
+                        {requesting === avail[0].id ? 'Requesting…' : 'Request to Borrow'}
                       </button>
                     )}
                     {isStudent && avail.length === 0 && (
@@ -159,7 +164,7 @@ export default function LibraryCatalogPage() {
               >
                 Previous
               </button>
-              <span className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+              <span className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
