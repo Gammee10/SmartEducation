@@ -10,7 +10,6 @@ import {
   ErrorState,
   Icon,
   LoadingState,
-  PageHeader,
 } from '../components/ui';
 import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type {
@@ -27,28 +26,44 @@ function greetingForHour(hour: number): string {
 
 /* ------------------------------------------------- Interactive cards --- */
 
+const STAT_GRADIENTS = [
+  'from-blue-500 to-indigo-500',
+  'from-emerald-500 to-teal-500',
+  'from-violet-500 to-purple-500',
+  'from-amber-500 to-orange-500',
+] as const;
+
 function CountStatCard({
   label,
   value,
   suffix = '',
   decimals = 0,
   icon,
+  tone = 0,
 }: {
   label: string;
   value: number;
   suffix?: string;
   decimals?: number;
   icon: 'book' | 'users' | 'cap' | 'clipboard' | 'chart';
+  tone?: number;
 }) {
+  const gradient = STAT_GRADIENTS[Math.abs(tone) % STAT_GRADIENTS.length];
   return (
-    <div className="animate-fade-up rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
-      <div className="flex items-start justify-between gap-3">
+    <div className="group animate-fade-up relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.16]`}
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+        <span
+          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md`}
+        >
           <Icon name={icon} />
         </span>
       </div>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
+      <p className="relative mt-3 text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
         <AnimatedNumber value={value} decimals={decimals} suffix={suffix} />
       </p>
     </div>
@@ -65,16 +80,16 @@ function RingStatCard({
   caption: string;
 }) {
   return (
-    <div className="animate-fade-up rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+    <div className="animate-fade-up relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
       <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-      <div className="mt-2 flex items-center justify-between gap-4">
+      <div className="mt-3 flex items-center justify-between gap-4">
         <div>
-          <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
+          <p className="text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
             <AnimatedNumber value={percent} suffix="%" />
           </p>
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{caption}</p>
+          <p className="mt-2 text-xs font-medium text-gray-400 dark:text-gray-500">{caption}</p>
         </div>
-        <ProgressRing percent={percent} size={64} />
+        <ProgressRing percent={percent} size={68} />
       </div>
     </div>
   );
@@ -429,7 +444,24 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title={`${greeting}, ${user?.fullName}`} description={`${today} · ${roleLine}`} />
+      {/* Gradient hero banner */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl"
+        />
+        <div className="relative">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-200">{today}</p>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
+            {greeting}, {user?.fullName?.split(' ')[0]}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-blue-100">{roleLine}</p>
+        </div>
+      </div>
 
       {isAdmin && <AdminDashboard />}
       {isTeacher && <TeacherDashboard />}
