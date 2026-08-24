@@ -6,6 +6,9 @@ import {
   inputStyles,
   LoadingState,
   PageHeader,
+  Banner,
+  EmptyState,
+  Spinner,
 } from '../components/ui';
 import type { AdminUser, ImportResult } from '../types';
 
@@ -41,6 +44,7 @@ export default function AdminUsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [creating, setCreating] = useState(false);
+  const [archiving, setArchiving] = useState<string | null>(null);
 
   // CSV import
   const [csvText, setCsvText] = useState('');
@@ -95,12 +99,17 @@ export default function AdminUsersPage() {
 
   const handleArchive = async (id: string) => {
     if (!window.confirm('Archive this user? They will no longer be able to log in.')) return;
+    setArchiving(id);
+    setError('');
+    setMessage('');
     try {
       await api.post(`/users/${id}/archive`);
       setMessage('User archived');
       load();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to archive user');
+    } finally {
+      setArchiving(null);
     }
   };
 
@@ -145,13 +154,13 @@ export default function AdminUsersPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {message}
+        <div className="mb-4">
+          <Banner tone="success" message={message} />
         </div>
       )}
 
@@ -162,7 +171,7 @@ export default function AdminUsersPage() {
           className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Full name *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Full name *</label>
             <input
               type="text"
               required
@@ -172,7 +181,7 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Email *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Email *</label>
             <input
               type="email"
               required
@@ -182,7 +191,7 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Role *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Role *</label>
             <select
               value={createForm.role}
               onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
@@ -194,7 +203,7 @@ export default function AdminUsersPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
               Password (defaults to Password123!)
             </label>
             <input
@@ -207,7 +216,7 @@ export default function AdminUsersPage() {
           {createForm.role === 'STUDENT' ? (
             <>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Grade level *</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Grade level *</label>
                 <input
                   type="text"
                   required
@@ -218,7 +227,7 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Section</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Section</label>
                 <input
                   type="text"
                   value={createForm.section}
@@ -229,7 +238,7 @@ export default function AdminUsersPage() {
             </>
           ) : (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Subject</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Subject</label>
               <input
                 type="text"
                 value={createForm.subject}
@@ -244,7 +253,8 @@ export default function AdminUsersPage() {
               disabled={creating}
               className={buttonPrimary}
             >
-              {creating ? 'Creating...' : 'Create User'}
+              {creating && <Spinner />}
+              {creating ? 'Creating…' : 'Create User'}
             </button>
           </div>
         </form>
@@ -275,34 +285,37 @@ export default function AdminUsersPage() {
       {loading ? (
         <LoadingState label="Loading users…" />
       ) : users.length === 0 ? (
-        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 px-6 py-12 text-center shadow-card">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">No users found</p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
-            {search || roleFilter
-              ? 'Try adjusting your search or role filter.'
-              : 'Create a user or import them via CSV below.'}
-          </p>
+        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
+          <EmptyState
+            icon="users"
+            title="No users found"
+            message={
+              search || roleFilter
+                ? 'Try adjusting your search or role filter.'
+                : 'Create a user or import them via CSV below.'
+            }
+          />
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead>
+            <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Code / Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Code / Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {users.map((u) => (
-                <tr key={u.id}>
+                <tr key={u.id} className="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/40">
                   <td className="px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{u.fullName}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{u.email}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{u.role}</td>
-                  <td className="px-6 py-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{u.email}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{u.role}</td>
+                  <td className="px-6 py-3 text-xs text-gray-500 dark:text-gray-400">
                     {u.student
                       ? `${u.student.studentCode} · ${u.student.gradeLevel}${u.student.section ? ` ${u.student.section}` : ''}`
                       : u.teacher
@@ -315,7 +328,7 @@ export default function AdminUsersPage() {
                         u.status === 'ACTIVE'
                           ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400'
                           : u.status === 'ARCHIVED'
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500'
+                            ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                             : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400'
                       }`}
                     >
@@ -326,9 +339,10 @@ export default function AdminUsersPage() {
                     {u.status !== 'ARCHIVED' && (
                       <button
                         onClick={() => handleArchive(u.id)}
-                        className="rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
+                        disabled={archiving === u.id}
+                        className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-60 dark:border-red-500/30 dark:bg-gray-900 dark:hover:bg-red-500/10"
                       >
-                        Archive
+                        {archiving === u.id ? 'Archiving…' : 'Archive'}
                       </button>
                     )}
                   </td>
@@ -342,16 +356,16 @@ export default function AdminUsersPage() {
       {/* CSV import */}
       <div className="mt-10 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
         <h2 className="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">CSV Bulk Import</h2>
-        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           Header row required:{' '}
-          <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 font-mono">fullName,email,role,password,gradeLevel,section,subject</code>.
+          <code className="rounded bg-gray-100 px-1 py-0.5 font-mono dark:bg-gray-800">fullName,email,role,password,gradeLevel,section,subject</code>.
           Rows with errors are skipped and reported; valid rows are imported.
         </p>
         <input
           type="file"
           accept=".csv,text/csv"
           onChange={handleCsvFile}
-          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:text-gray-400"
         />
         <textarea
           rows={5}
@@ -365,23 +379,26 @@ export default function AdminUsersPage() {
           disabled={importing || !csvText.trim()}
           className={`${buttonPrimary} mt-3`}
         >
+          {importing && <Spinner />}
           {importing ? 'Importing…' : 'Import Users'}
         </button>
 
         {importResult && (
           <div
             className={`mt-4 rounded-xl border p-4 ${
-              importResult.errorCount > 0 ? 'border-red-200 dark:border-red-500/30 bg-red-50' : 'border-green-200 dark:border-green-500/30 bg-green-50'
+              importResult.errorCount > 0
+                ? 'border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10'
+                : 'border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10'
             }`}
           >
-            <p className={`text-sm font-medium ${importResult.errorCount > 0 ? 'text-red-800' : 'text-green-800'}`}>
+            <p className={`text-sm font-medium ${importResult.errorCount > 0 ? 'text-red-800 dark:text-red-300' : 'text-green-800 dark:text-green-300'}`}>
               Import {importResult.status.toLowerCase()} — {importResult.successCount} created,{' '}
               {importResult.errorCount} failed out of {importResult.totalRows} rows.
             </p>
             {importResult.errors.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {importResult.errors.map((e, i) => (
-                  <li key={i} className="text-xs text-red-600">
+                  <li key={i} className="text-xs text-red-600 dark:text-red-400">
                     Row {e.rowNumber}
                     {e.email ? ` (${e.email})` : ''}: {e.message}
                   </li>
