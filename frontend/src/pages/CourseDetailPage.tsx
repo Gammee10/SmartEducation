@@ -10,6 +10,7 @@ import {
   inputStyles,
   labelStyles,
   LoadingState,
+  Banner,
 } from '../components/ui';
 import type { Course, ContentItem, Assignment, Quiz } from '../types';
 
@@ -404,7 +405,7 @@ export default function CourseDetailPage() {
           <div className="mt-6">
             <Link
               to={`/courses/${course.id}/attendance`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-900/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors duration-150 hover:bg-white dark:bg-gray-900/20"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors duration-150 hover:bg-white/20"
             >
               View Attendance
               <svg
@@ -492,18 +493,18 @@ export default function CourseDetailPage() {
 
       {/* Alerts */}
       {message && (
-        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {message}
+        <div role="status" className="mb-4 mt-6">
+          <Banner tone="success" message={message} />
         </div>
       )}
       {quizMessage && (
-        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {quizMessage}
+        <div role="status" className="mb-4 mt-6">
+          <Banner tone="success" message={quizMessage} />
         </div>
       )}
       {error && (
-        <div role="alert" className="mb-4 mt-6 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div role="alert" className="mb-4 mt-6">
+          <Banner tone="error" message={error} />
         </div>
       )}
 
@@ -634,7 +635,7 @@ export default function CourseDetailPage() {
                         {typeBadge(item.type)}
                       </div>
                       {item.description && (
-                        <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{item.description}</p>
+                        <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
                       )}
                       <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                         {formatDate(item.createdAt)} · {item.uploadedBy?.fullName || 'Unknown'}
