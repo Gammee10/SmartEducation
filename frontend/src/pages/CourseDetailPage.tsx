@@ -344,14 +344,14 @@ export default function CourseDetailPage() {
   return (
     <div>
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-primary-700 px-6 py-8 shadow-card sm:px-10">
+      <div className="relative overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
         {/* Decorative shapes */}
         <div
-          className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-primary-500/40"
+          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl"
           aria-hidden="true"
         />
         <div
-          className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-primary-600/60 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl"
           aria-hidden="true"
         />
 
@@ -375,18 +375,18 @@ export default function CourseDetailPage() {
 
           <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
                 {course.title}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   {course.subject}
                 </span>
-                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   Grade {course.gradeLevel}
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-gray-900/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-[9px] font-bold">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-[9px] font-bold">
                     {getInitials(teacherName)}
                   </span>
                   {teacherName}
