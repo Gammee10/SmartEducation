@@ -19,12 +19,12 @@ import type { Course } from '../types';
 
 // Static Tailwind classes only, so the JIT compiler keeps them all.
 const SUBJECT_TILES = [
-  'bg-blue-500',
-  'bg-emerald-500',
-  'bg-violet-500',
-  'bg-amber-500',
-  'bg-rose-500',
-  'bg-cyan-600',
+  'from-blue-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-violet-500 to-purple-500',
+  'from-amber-500 to-orange-500',
+  'from-rose-500 to-pink-500',
+  'from-sky-600 to-indigo-600',
 ];
 
 function subjectTileClass(subject?: string): string {
@@ -274,26 +274,31 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
   return (
     <Link
       to={`/courses/${course.id}`}
-      className="group flex flex-col rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900"
     >
-      {/* Accent strip */}
-      <div className={`h-1.5 rounded-t-xl ${subjectTileClass(course.subject)}`} />
+      {/* Gradient header */}
+      <div className={`relative flex h-24 items-center justify-between bg-gradient-to-br px-6 ${subjectTileClass(course.subject)}`}>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-6 -top-10 h-28 w-28 rounded-full bg-white/15 blur-xl transition-opacity duration-300 group-hover:opacity-80"
+        />
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/25 backdrop-blur">
+          <Icon name="book" className="h-6 w-6" />
+        </span>
+        <StatusBadge status={course.status} />
+      </div>
+
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3.5">
-            <span
-              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-white ${subjectTileClass(course.subject)}`}
-            >
-              <Icon name="book" className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
-                {course.title}
-              </h3>
-              <p className="mt-0.5 truncate text-sm text-gray-600 dark:text-gray-400">{course.subject}</p>
-            </div>
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-base font-bold leading-snug tracking-tight text-gray-900 transition-colors duration-150 group-hover:text-primary-700 dark:text-gray-100">
+              {course.title}
+            </h3>
+            <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{course.subject}</p>
           </div>
-          <StatusBadge status={course.status} />
+          <span className="ml-auto flex-shrink-0 rounded-full bg-primary-50 px-2.5 py-1 text-[10px] font-bold uppercase text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+            {course.gradeLevel.replace(/[^0-9]/g, '') || course.gradeLevel}
+          </span>
         </div>
 
         {course.description && (
@@ -303,28 +308,25 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
         )}
 
         <div className="mt-auto pt-4">
-          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-500 dark:text-gray-400">
+          <div className="mb-4 flex items-center gap-4 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
             <span className="inline-flex items-center gap-1.5">
-              <Icon name="users" className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+              <Icon name="users" className="h-3.5 w-3.5" />
               {course._count?.enrollments || 0} students
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Icon name="inbox" className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+              <Icon name="inbox" className="h-3.5 w-3.5" />
               {course._count?.content || 0} items
-            </span>
-            <span className="ml-auto rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700">
-              Grade {course.gradeLevel.replace(/[^0-9]/g, '') || course.gradeLevel}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-400">
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-[10px] font-bold text-white shadow-sm">
                 {getInitials(teacherName)}
               </span>
-              <span className="truncate text-xs text-gray-500 dark:text-gray-400">{teacherName}</span>
+              <span className="truncate text-xs font-medium text-gray-600 dark:text-gray-400">{teacherName}</span>
             </div>
             <svg
-              className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"
+              className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-primary-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
