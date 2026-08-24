@@ -403,7 +403,7 @@ export default function QuizDetailPage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Attempts</h3>
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card">
+                  <div key={attempt.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-400 dark:text-gray-500">Started: {formatStart(attempt.startedAt)}</p>
@@ -433,7 +433,7 @@ export default function QuizDetailPage() {
         ----------------------------------------------------- */}
       {isStudent && takingQuiz && activeAttempt && (
         <div className="mt-8">
-          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] px-4 py-3 shadow-card sm:px-5">
+          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] px-4 py-3 sm:px-5">
             <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               <svg
                 className="h-4 w-4 text-gray-400 dark:text-gray-500"
@@ -470,7 +470,7 @@ export default function QuizDetailPage() {
             {quiz.questions?.map((question: QuizQuestion, qIndex: number) => {
               const selected = selections[question.id] || [];
               return (
-                <div key={question.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card">
+                <div key={question.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-xs text-gray-400 dark:text-gray-500">Question {qIndex + 1}</span>
@@ -584,7 +584,7 @@ export default function QuizDetailPage() {
           </div>
 
           {showEdit && (
-            <form onSubmit={handleSaveQuiz} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleSaveQuiz} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -674,7 +674,7 @@ export default function QuizDetailPage() {
           )}
 
           {showAddQuestion && (
-            <form onSubmit={handleAddQuestion} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] space-y-4 p-5 shadow-card">
+            <form onSubmit={handleAddQuestion} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] space-y-4 p-5">
               <div>
                 <label className={labelStyles}>Question Prompt *</label>
                 <input
@@ -783,7 +783,7 @@ export default function QuizDetailPage() {
             ) : (
               <div className="space-y-4">
                 {quiz.questions.map((question, qIndex) => (
-                  <div key={question.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card">
+                  <div key={question.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -819,7 +819,7 @@ export default function QuizDetailPage() {
             ) : (
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card">
+                  <div key={attempt.id} className="flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {attempt.student?.user?.fullName || 'Unknown student'}
@@ -858,7 +858,7 @@ export default function QuizDetailPage() {
           ) : (
             <div className="space-y-3">
               {attempts.map((attempt) => (
-                <div key={attempt.id} className="flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card">
+                <div key={attempt.id} className="flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4">
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {attempt.student?.user?.fullName || 'Unknown student'}

@@ -83,38 +83,38 @@ export default function StudentProfilePage() {
   return (
     <div>
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-primary-700 px-6 py-8 shadow-card sm:px-10">
+      <div className="relative overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
         {/* Decorative shapes */}
         <div
-          className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-primary-500/40"
+          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl"
           aria-hidden="true"
         />
         <div
-          className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-primary-600/60 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl"
           aria-hidden="true"
         />
 
         <div className="relative flex flex-wrap items-center gap-5">
-          <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-gray-900/10 text-xl font-bold text-white ring-1 ring-inset ring-white/25">
+          <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/15 text-xl font-bold text-white ring-1 ring-inset ring-white/25 backdrop-blur">
             {initials}
           </span>
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
               {s.user.fullName}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 {s.studentCode}
               </span>
-              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 Grade {s.gradeLevel}
               </span>
               {s.section && (
-                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   Section {s.section}
                 </span>
               )}
-              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 {s.user.email}
               </span>
             </div>
@@ -124,7 +124,7 @@ export default function StudentProfilePage() {
 
       {/* Animated stats strip — overlaps the hero */}
       <div className="-mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5">
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="book" className="h-[18px] w-[18px]" />
           </span>
@@ -136,7 +136,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5" style={{ animationDelay: '60ms' }}>
           <div>
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.attendanceRate} suffix="%" />
@@ -146,7 +146,7 @@ export default function StudentProfilePage() {
           <ProgressRing percent={summary.stats.attendanceRate} size={52} strokeWidth={6} />
         </div>
 
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5" style={{ animationDelay: '120ms' }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="chart" className="h-[18px] w-[18px]" />
           </span>
@@ -158,7 +158,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5" style={{ animationDelay: '180ms' }}>
           <div>
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.avgQuizScore} suffix="%" />

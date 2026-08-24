@@ -273,7 +273,7 @@ function AdminDashboard() {
           <Link
             key={l.to}
             to={l.to}
-            className="group animate-fade-up flex items-start gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+            className="group animate-fade-up flex items-start gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20">

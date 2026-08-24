@@ -122,7 +122,7 @@ export default function LibraryCatalogPage() {
             {books.map((book) => {
               const avail = availableCopies(book);
               return (
-                <div key={book.id} className="flex flex-col rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+                <div key={book.id} className="flex flex-col rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-6 transition-shadow duration-200 hover:shadow-card-hover">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{book.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">by {book.author}</p>
                   {book.isbn && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ISBN: {book.isbn}</p>}

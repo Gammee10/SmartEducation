@@ -131,7 +131,7 @@ export default function TimetablePage() {
       {isAdmin && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-5"
+          className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-5"
         >
           {formError && (
             <div className="sm:col-span-2 lg:col-span-5">
@@ -229,7 +229,7 @@ export default function TimetablePage() {
             const daySlots = slots.filter((s) => s.dayOfWeek === day);
             if (daySlots.length === 0) return null;
             return (
-              <div key={day} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card">
+              <div key={day} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
                 <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-3 sm:px-6">
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
                     {day}
