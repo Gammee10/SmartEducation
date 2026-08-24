@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import StatusBadge from '../components/StatusBadge';
-import { Card, EmptyState, LoadingState, PageHeader } from '../components/ui';
+import { Card, EmptyState, LoadingState, PageHeader, Banner } from '../components/ui';
 import type { BorrowRequest, Loan } from '../types';
 
 export default function MyBorrowingPage() {
@@ -36,6 +36,9 @@ export default function MyBorrowingPage() {
     return new Date(date).toLocaleDateString();
   };
 
+  const isOverdue = (loan: Loan) =>
+    loan.status === 'ACTIVE' && loan.dueDate && new Date(loan.dueDate) < new Date();
+
   // Only show the full-page loader before the first load completes so
   // background refetches do not blank the page and cause a layout flash.
   const initialLoading = loading && requests.length === 0 && loans.length === 0;
@@ -43,6 +46,9 @@ export default function MyBorrowingPage() {
   if (initialLoading) {
     return <LoadingState label="Loading your borrowing activity…" />;
   }
+
+  const thClass =
+    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400';
 
   return (
     <div>
@@ -52,7 +58,9 @@ export default function MyBorrowingPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
+        </div>
       )}
 
       <div className="space-y-8">
@@ -67,26 +75,26 @@ export default function MyBorrowingPage() {
               />
             </Card>
           ) : (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Book</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Requested</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className={thClass}>Book</th>
+                    <th className={thClass}>Requested</th>
+                    <th className={thClass}>Status</th>
+                    <th className={thClass}>Reason</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                   {requests.map((req) => (
-                    <tr key={req.id}>
+                    <tr key={req.id} className="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/40">
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                         {req.bookCopy?.book?.title}
-                        <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500"> — {req.bookCopy?.book?.author}</span>
+                        <span className="text-gray-500 dark:text-gray-400"> — {req.bookCopy?.book?.author}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(req.requestedAt)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{formatDate(req.requestedAt)}</td>
                       <td className="px-6 py-4"><StatusBadge status={req.status} /></td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{req.reason || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{req.reason || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -106,27 +114,41 @@ export default function MyBorrowingPage() {
               />
             </Card>
           ) : (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Book</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Issued</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Due</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Returned</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className={thClass}>Book</th>
+                    <th className={thClass}>Issued</th>
+                    <th className={thClass}>Due</th>
+                    <th className={thClass}>Returned</th>
+                    <th className={thClass}>Status</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
                   {loans.map((loan) => (
-                    <tr key={loan.id}>
+                    <tr
+                      key={loan.id}
+                      className={`transition-colors duration-150 ${
+                        isOverdue(loan)
+                          ? 'bg-red-50/60 hover:bg-red-50 dark:bg-red-500/10 dark:hover:bg-red-500/15'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                      }`}
+                    >
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                         {loan.bookCopy?.book?.title}
-                        <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500"> — {loan.bookCopy?.book?.author}</span>
+                        <span className="text-gray-500 dark:text-gray-400"> — {loan.bookCopy?.book?.author}</span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(loan.issuedAt)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(loan.dueDate)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(loan.returnedAt)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{formatDate(loan.issuedAt)}</td>
+                      <td
+                        className={`px-6 py-4 text-sm font-medium ${
+                          isOverdue(loan) ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
+                        }`}
+                      >
+                        {formatDate(loan.dueDate)}
+                        {isOverdue(loan) && <span className="ml-2 text-xs font-semibold">· Overdue</span>}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{formatDate(loan.returnedAt)}</td>
                       <td className="px-6 py-4"><StatusBadge status={loan.status} /></td>
                     </tr>
                   ))}
