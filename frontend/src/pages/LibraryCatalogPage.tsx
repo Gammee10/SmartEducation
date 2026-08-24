@@ -1,8 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { EmptyState, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
+import { EmptyState, Icon, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
 import type { Book, Pagination } from '../types';
+
+// Static Tailwind classes only, so the JIT compiler keeps them all.
+const BOOK_TILES = [
+  'from-blue-500 to-cyan-500',
+  'from-emerald-500 to-teal-500',
+  'from-violet-500 to-purple-500',
+  'from-amber-500 to-orange-500',
+  'from-rose-500 to-pink-500',
+  'from-sky-600 to-indigo-600',
+];
+
+function bookTileClass(category?: string | null): string {
+  if (!category) return BOOK_TILES[0];
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) hash += category.charCodeAt(i);
+  return BOOK_TILES[hash % BOOK_TILES.length];
+}
 
 export default function LibraryCatalogPage() {
   const { isStudent } = useAuth();
@@ -118,37 +135,57 @@ export default function LibraryCatalogPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
             {books.map((book) => {
               const avail = availableCopies(book);
+              const hasCopies = avail.length > 0;
               return (
-                <div key={book.id} className="flex flex-col rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-6 transition-shadow duration-200 hover:shadow-card-hover">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{book.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">by {book.author}</p>
-                  {book.isbn && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ISBN: {book.isbn}</p>}
-                  {book.category && (
-                    <span className="mt-2 inline-block text-xs bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 rounded-full px-2 py-1 w-fit">
-                      {book.category}
+                <div
+                  key={book.id}
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]"
+                >
+                  {/* Gradient header */}
+                  <div className={`relative flex h-20 items-center justify-between bg-gradient-to-br px-6 ${bookTileClass(book.category)}`}>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/25 backdrop-blur">
+                      <Icon name="book" className="h-5 w-5" />
                     </span>
-                  )}
-                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="font-medium">{avail.length}</span> available of{' '}
-                    <span className="font-medium">{book.copies?.length || 0}</span> copies
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                        hasCopies ? 'bg-white/15 text-white ring-1 ring-inset ring-white/25' : 'bg-gray-900/30 text-gray-100'
+                      }`}
+                    >
+                      {hasCopies ? `${avail.length} available` : 'All borrowed'}
+                    </span>
                   </div>
-                  <div className="mt-auto pt-4">
-                    {isStudent && avail.length > 0 && (
-                      <button
-                        onClick={() => handleRequest(avail[0].id)}
-                        disabled={requesting === avail[0].id}
-                        className={`${buttonPrimary} w-full`}
-                      >
-                        {requesting === avail[0].id && <Spinner />}
-                        {requesting === avail[0].id ? 'Requesting…' : 'Request to Borrow'}
-                      </button>
+
+                  <div className="flex flex-1 flex-col p-6">
+                    <h3 className="text-lg font-bold leading-snug tracking-tight text-gray-900 dark:text-gray-100">{book.title}</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">by {book.author}</p>
+                    {book.isbn && (
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">ISBN: {book.isbn}</p>
                     )}
-                    {isStudent && avail.length === 0 && (
-                      <span className="text-sm text-gray-400 dark:text-gray-500">No copies available</span>
+                    {book.category && (
+                      <span className="mt-3 inline-block w-fit rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                        {book.category}
+                      </span>
                     )}
+                    <div className="mt-auto pt-4">
+                      {isStudent && avail.length > 0 && (
+                        <button
+                          onClick={() => handleRequest(avail[0].id)}
+                          disabled={requesting === avail[0].id}
+                          className={`${buttonPrimary} w-full`}
+                        >
+                          {requesting === avail[0].id && <Spinner />}
+                          {requesting === avail[0].id ? 'Requesting…' : 'Request to Borrow'}
+                        </button>
+                      )}
+                      {isStudent && avail.length === 0 && (
+                        <span className="block rounded-xl bg-gray-50 py-2.5 text-center text-sm font-medium text-gray-400 dark:bg-gray-800/50">
+                          No copies available
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
