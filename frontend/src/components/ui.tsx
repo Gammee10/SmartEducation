@@ -57,8 +57,8 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm text-gray-500">{description}</p>}
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">{title}</h1>
+        {description && <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-3">{actions}</div>}
     </div>
@@ -70,7 +70,7 @@ export function PageHeader({
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-xl border border-gray-200/80 bg-white shadow-card ${className}`}
+      className={`rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card ${className}`}
     >
       {children}
     </div>
@@ -87,10 +87,10 @@ export function CardHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+    <div className="flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 px-5 py-4 sm:px-6">
       <div>
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>}
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{subtitle}</p>}
       </div>
       {actions && <div className="flex-shrink-0">{actions}</div>}
     </div>
@@ -111,17 +111,17 @@ export function StatCard({
   icon?: IconName;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+    <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
         {icon && (
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name={icon} />
           </span>
         )}
       </div>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">{value}</p>
-      {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
+      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">{value}</p>
+      {hint && <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">{hint}</p>}
     </div>
   );
 }
@@ -141,11 +141,11 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
         <Icon name={icon} className="h-6 w-6" />
       </span>
-      <p className="mt-4 text-sm font-semibold text-gray-900">{title}</p>
-      {message && <p className="mt-1 max-w-sm text-sm text-gray-500">{message}</p>}
+      <p className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>
+      {message && <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{message}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -155,7 +155,7 @@ export function EmptyState({
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+    <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-6 py-10 text-center">
       <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500">
         <Icon name="warning" className="h-6 w-6" />
       </span>
@@ -183,7 +183,7 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <span className="ml-3 text-sm text-gray-500">{label}</span>
+      <span className="ml-3 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
     </div>
   );
 }
@@ -195,7 +195,7 @@ const BUTTON_BASE =
 
 export const buttonPrimary = `${BUTTON_BASE} bg-primary-600 text-white shadow-sm hover:bg-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2`;
 
-export const buttonSecondary = `${BUTTON_BASE} border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2`;
+export const buttonSecondary = `${BUTTON_BASE} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2`;
 
 export const buttonDanger = `${BUTTON_BASE} bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2`;
 
@@ -218,10 +218,10 @@ export function LinkButton({
 /* ------------------------------ Form controls ----------------------------- */
 
 export const inputStyles =
-  'block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500';
+  'block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 dark:bg-gray-800/50 disabled:text-gray-500 dark:text-gray-400 dark:text-gray-500';
 
 export const selectStyles = inputStyles;
 
-export const labelStyles = 'mb-1.5 block text-sm font-medium text-gray-700';
+export const labelStyles = 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300';
 
 export const fieldErrorStyles = 'mt-1.5 text-xs text-red-600';

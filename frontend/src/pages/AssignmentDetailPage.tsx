@@ -101,11 +101,11 @@ export default function AssignmentDetailPage() {
 
   if (!assignment) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+      <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-6 py-12 text-center">
         <p className="text-sm text-red-700">{error || 'Assignment not found'}</p>
         <Link
           to={`/courses/${courseId}`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           <svg
             className="h-4 w-4"
@@ -127,7 +127,7 @@ export default function AssignmentDetailPage() {
     <div>
       <Link
         to={`/courses/${courseId}`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:text-primary-700"
       >
         <svg
           className="h-4 w-4"
@@ -143,10 +143,10 @@ export default function AssignmentDetailPage() {
       </Link>
       <div className="mt-3 flex justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
             {assignment.title}
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-1">
             {assignment.course?.subject} · Grade {assignment.course?.gradeLevel}
           </p>
         </div>
@@ -154,23 +154,23 @@ export default function AssignmentDetailPage() {
       </div>
 
       {assignment.instructions && (
-        <div className="mt-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Instructions</h3>
-          <p className="text-sm text-gray-600 whitespace-pre-wrap">{assignment.instructions}</p>
+        <div className="mt-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Instructions</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 whitespace-pre-wrap">{assignment.instructions}</p>
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
-        <span className="font-medium text-gray-900">Max score: {assignment.maxScore}</span>
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+        <span className="font-medium text-gray-900 dark:text-gray-100">Max score: {assignment.maxScore}</span>
         {assignment.dueDate && <span>Due: {formatDate(assignment.dueDate)}</span>}
         <span>{submissions.length} submission(s)</span>
       </div>
 
       {message && (
-        <div className="mt-4 mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mt-4 mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mt-4 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mt-4 mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {/* -----------------------------------------------------
@@ -179,20 +179,20 @@ export default function AssignmentDetailPage() {
       {isStudent && (
         <div className="mt-8">
           {mySubmission ? (
-            <div className="rounded-xl border border-gray-200/80 bg-white p-6 shadow-card">
+            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Your Submission</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Your Submission</h3>
                 <StatusBadge status={mySubmission.status} />
               </div>
               {mySubmission.isLate && (
                 <p className="text-xs text-orange-600 font-medium mb-2">Submitted late</p>
               )}
-              <p className="text-xs text-gray-400 mb-4">Submitted: {formatDate(mySubmission.submittedAt)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Submitted: {formatDate(mySubmission.submittedAt)}</p>
 
               {mySubmission.content && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Your answer</h4>
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap rounded-lg bg-gray-50 p-3">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your answer</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 whitespace-pre-wrap rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3">
                     {mySubmission.content}
                   </p>
                 </div>
@@ -200,7 +200,7 @@ export default function AssignmentDetailPage() {
 
               {mySubmission.fileUrl && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Submitted file</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Submitted file</h4>
                   <a
                     href={mySubmission.fileUrl}
                     target="_blank"
@@ -213,28 +213,28 @@ export default function AssignmentDetailPage() {
               )}
 
               {mySubmission.status === 'GRADED' ? (
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Grade</h4>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade</h4>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {mySubmission.score}
-                    <span className="text-sm font-normal text-gray-500"> / {assignment.maxScore}</span>
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400 dark:text-gray-500"> / {assignment.maxScore}</span>
                   </p>
                   {mySubmission.feedback && (
-                    <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{mySubmission.feedback}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-2 whitespace-pre-wrap">{mySubmission.feedback}</p>
                   )}
                   {mySubmission.gradedAt && (
-                    <p className="text-xs text-gray-400 mt-2">Graded: {formatDate(mySubmission.gradedAt)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Graded: {formatDate(mySubmission.gradedAt)}</p>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Awaiting grade from your teacher.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Awaiting grade from your teacher.</p>
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200/80 bg-white p-6 shadow-card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Submit Your Work</h3>
+            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Submit Your Work</h3>
               {assignment.status !== 'PUBLISHED' ? (
-                <p className="text-sm text-gray-500">This assignment is not open for submissions.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">This assignment is not open for submissions.</p>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
@@ -252,7 +252,7 @@ export default function AssignmentDetailPage() {
                     <input
                       type="file"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                      className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
                     />
                   </div>
                   <button
@@ -274,7 +274,7 @@ export default function AssignmentDetailPage() {
           ----------------------------------------------------- */}
       {!isStudent && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Submissions ({submissions.length})
           </h3>
           {submissions.length === 0 ? (
@@ -286,13 +286,13 @@ export default function AssignmentDetailPage() {
           ) : (
             <div className="space-y-4">
               {submissions.map((sub) => (
-                <div key={sub.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
+                <div key={sub.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {sub.student?.user?.fullName || 'Unknown student'}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         Submitted: {formatDate(sub.submittedAt)}
                         {sub.isLate && <span className="ml-2 text-orange-600 font-medium">Late</span>}
                       </p>
@@ -301,7 +301,7 @@ export default function AssignmentDetailPage() {
                   </div>
 
                   {sub.content && (
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap rounded-lg bg-gray-50 p-3 mb-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 whitespace-pre-wrap rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3 mb-3">
                       {sub.content}
                     </p>
                   )}
@@ -319,10 +319,10 @@ export default function AssignmentDetailPage() {
                   {isTeacher ? (
                     <form
                       onSubmit={(e) => handleGrade(sub.id, e)}
-                      className="border-t border-gray-200 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3"
+                      className="border-t border-gray-200 dark:border-gray-700 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3"
                     >
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600">
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
                           Score (max {assignment.maxScore})
                         </label>
                         <input
@@ -337,7 +337,7 @@ export default function AssignmentDetailPage() {
                         />
                       </div>
                       <div className="sm:col-span-1">
-                        <label className="mb-1 block text-xs font-medium text-gray-600">Feedback</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Feedback</label>
                         <input
                           type="text"
                           value={gradeFeedbacks[sub.id] ?? sub.feedback ?? ''}
@@ -357,14 +357,14 @@ export default function AssignmentDetailPage() {
                       </div>
                     </form>
                   ) : (
-                    <div className="border-t border-gray-200 pt-3 text-sm text-gray-600">
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
                       {sub.status === 'GRADED' ? (
                         <span>
                           Score: <span className="font-semibold">{sub.score}</span> / {assignment.maxScore}
                           {sub.feedback && <span className="ml-3">Feedback: {sub.feedback}</span>}
                         </span>
                       ) : (
-                        <span className="text-gray-500">Awaiting grade.</span>
+                        <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Awaiting grade.</span>
                       )}
                     </div>
                   )}

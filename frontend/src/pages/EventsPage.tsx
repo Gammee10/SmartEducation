@@ -118,12 +118,12 @@ export default function EventsPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {message}
         </div>
       )}
@@ -131,7 +131,7 @@ export default function EventsPage() {
       {canPost && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
+          className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div className="sm:col-span-2">
             <label className={`${labelStyles} mb-1`}>Title *</label>
@@ -223,21 +223,21 @@ export default function EventsPage() {
           {events.map((ev) => {
             const past = new Date(ev.startsAt).getTime() < Date.now();
             return (
-              <li key={ev.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+              <li key={ev.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-semibold text-gray-900">{ev.title}</h2>
+                      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{ev.title}</h2>
                       {past && (
-                        <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-gray-100 text-gray-500">
+                        <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500">
                           Past
                         </span>
                       )}
                     </div>
                     {ev.description && (
-                      <p className="mt-1 text-sm text-gray-600">{ev.description}</p>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{ev.description}</p>
                     )}
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
                       📅 {new Date(ev.startsAt).toLocaleString()}
                       {ev.endsAt ? ` → ${new Date(ev.endsAt).toLocaleString()}` : ''}
                       {ev.location ? ` · 📍 ${ev.location}` : ''} ·{' '}
@@ -247,7 +247,7 @@ export default function EventsPage() {
                   {isAdmin && (
                     <button
                       onClick={() => handleDelete(ev.id)}
-                      className="flex-shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
+                      className="flex-shrink-0 rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
                     >
                       Delete
                     </button>

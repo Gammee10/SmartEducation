@@ -9,12 +9,12 @@ import {
 import type { AppNotification } from '../types';
 
 const typeStyles: Record<string, string> = {
-  ASSIGNMENT: 'bg-blue-50 text-blue-700',
-  GRADE: 'bg-green-50 text-green-700',
-  QUIZ_RESULT: 'bg-purple-50 text-purple-700',
-  ANNOUNCEMENT: 'bg-yellow-50 text-yellow-700',
-  EVENT: 'bg-pink-50 text-pink-700',
-  GENERAL: 'bg-gray-100 text-gray-600',
+  ASSIGNMENT: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+  GRADE: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+  QUIZ_RESULT: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+  ANNOUNCEMENT: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
+  EVENT: 'bg-pink-50 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400',
+  GENERAL: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
 };
 
 export default function NotificationsPage() {
@@ -75,12 +75,12 @@ export default function NotificationsPage() {
         description="Stay up to date with grades, quizzes, and school updates."
         actions={
           <>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={unreadOnly}
                 onChange={(e) => setUnreadOnly(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
               />
               Unread only
             </label>
@@ -96,7 +96,7 @@ export default function NotificationsPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
@@ -118,8 +118,8 @@ export default function NotificationsPage() {
           {notifications.map((n) => (
             <li
               key={n.id}
-              className={`flex items-start justify-between gap-4 rounded-xl border bg-white p-4 shadow-card ${
-                n.isRead ? 'border-gray-200' : 'border-l-4 border-l-primary-600'
+              className={`flex items-start justify-between gap-4 rounded-xl border bg-white dark:bg-gray-900 p-4 shadow-card ${
+                n.isRead ? 'border-gray-200 dark:border-gray-700' : 'border-l-4 border-l-primary-600'
               }`}
             >
               <div className="min-w-0">
@@ -133,9 +133,9 @@ export default function NotificationsPage() {
                     <span className="text-xs font-semibold text-primary-700">New</span>
                   )}
                 </div>
-                <p className="mt-1 text-sm font-medium text-gray-900">{n.title}</p>
-                <p className="text-sm text-gray-600">{n.message}</p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{n.title}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{n.message}</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   {new Date(n.createdAt).toLocaleString()}
                 </p>
               </div>
@@ -143,7 +143,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleMarkRead(n.id)}
                   disabled={markingId === n.id}
-                  className="flex-shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
+                  className="flex-shrink-0 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-60"
                 >
                   {markingId === n.id ? 'Marking...' : 'Mark read'}
                 </button>

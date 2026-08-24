@@ -41,7 +41,7 @@ function BrandPanel() {
 
       <div className="relative flex flex-col justify-between p-12 xl:p-16">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-inset ring-white/20">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-gray-900/10 text-white ring-1 ring-inset ring-white/20">
             <CapIcon />
           </span>
           <span className="text-lg font-bold tracking-tight text-white">Smart Education</span>
@@ -124,29 +124,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-white dark:bg-gray-900">
       <BrandPanel />
 
-      <div className="flex flex-1 flex-col justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-16 xl:px-24">
+      <div className="flex flex-1 flex-col justify-center bg-gray-50 dark:bg-gray-800/50 px-4 py-12 sm:px-6 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-md">
           {/* Compact brand for mobile / tablet */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600 text-white shadow-card">
               <CapIcon />
             </span>
-            <span className="text-lg font-bold tracking-tight text-gray-900">Smart Education</span>
+            <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">Smart Education</span>
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-gray-500">Sign in to access your school portal.</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Sign in to access your school portal.</p>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div
                 role="alert"
-                className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                className="flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700"
               >
                 <svg
                   className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500"
@@ -228,8 +228,8 @@ export default function LoginPage() {
           </form>
 
           {import.meta.env.DEV && (
-            <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs leading-relaxed text-gray-500">
-              <p className="mb-1 font-semibold text-gray-700">Demo accounts (seeded, dev only)</p>
+            <div className="mt-8 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400 dark:text-gray-500">
+              <p className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Demo accounts (seeded, dev only)</p>
               <p>admin@school.edu / Password123!</p>
               <p>teacher@school.edu / Password123!</p>
               <p>student@school.edu / Password123!</p>

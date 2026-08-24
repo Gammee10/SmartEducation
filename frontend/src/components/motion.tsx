@@ -95,7 +95,7 @@ export function ProgressRing({
           r={radius}
           fill="none"
           strokeWidth={strokeWidth}
-          className="stroke-gray-100"
+          className="stroke-gray-100 dark:stroke-gray-800"
         />
         <circle
           cx={size / 2}
@@ -109,7 +109,7 @@ export function ProgressRing({
           className={`transition-[stroke-dashoffset] duration-700 ease-out ${ringTone(clamped)}`}
         />
       </svg>
-      <span className="absolute text-xs font-bold text-gray-900">{Math.round(clamped)}%</span>
+      <span className="absolute text-xs font-bold text-gray-900 dark:text-gray-100">{Math.round(clamped)}%</span>
     </div>
   );
 }

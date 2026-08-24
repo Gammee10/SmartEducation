@@ -7,8 +7,8 @@ export default function NotFoundPage() {
       <p className="bg-gradient-to-b from-primary-600 to-primary-800 bg-clip-text text-7xl font-extrabold tracking-tight text-transparent sm:text-8xl">
         404
       </p>
-      <h1 className="mt-4 text-xl font-semibold text-gray-900">Page not found</h1>
-      <p className="mt-2 max-w-sm text-sm leading-relaxed text-gray-500">
+      <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Page not found</h1>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-gray-500 dark:text-gray-400 dark:text-gray-500">
         The page you are looking for does not exist or has been moved. Check the URL or head
         back to your dashboard.
       </p>

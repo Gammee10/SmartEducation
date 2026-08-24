@@ -41,14 +41,14 @@ function CountStatCard({
   icon: 'book' | 'users' | 'cap' | 'clipboard' | 'chart';
 }) {
   return (
-    <div className="animate-fade-up rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+    <div className="animate-fade-up rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
           <Icon name={icon} />
         </span>
       </div>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
         <AnimatedNumber value={value} decimals={decimals} suffix={suffix} />
       </p>
     </div>
@@ -65,14 +65,14 @@ function RingStatCard({
   caption: string;
 }) {
   return (
-    <div className="animate-fade-up rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
+    <div className="animate-fade-up rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
       <div className="mt-2 flex items-center justify-between gap-4">
         <div>
-          <p className="text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+          <p className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
             <AnimatedNumber value={percent} suffix="%" />
           </p>
-          <p className="mt-1 text-xs text-gray-400">{caption}</p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{caption}</p>
         </div>
         <ProgressRing percent={percent} size={64} />
       </div>
@@ -131,7 +131,7 @@ function InteractiveCourseList<
           courses.length > 3 ? (
             <div className="relative">
               <svg
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -146,7 +146,7 @@ function InteractiveCourseList<
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filter…"
                 aria-label={`Filter ${title.toLowerCase()}`}
-                className="block w-40 rounded-lg border border-gray-300 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-52"
+                className="block w-40 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-1.5 pl-9 pr-3 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-52"
               />
             </div>
           ) : undefined
@@ -157,23 +157,23 @@ function InteractiveCourseList<
         <EmptyState icon="search" title="No matching courses" message="Try a different search term." />
       ) : (
         <>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {visible.map((c, index) => (
               <li key={c.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
                 <Link
                   to={`/courses/${c.id}`}
-                  className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
                       {c.title}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {c.subject} · {c.gradeLevel}
                     </p>
                   </div>
                   {renderMeta && (
-                    <span className="flex-shrink-0 text-xs text-gray-500">{renderMeta(c)}</span>
+                    <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{renderMeta(c)}</span>
                   )}
                   <svg
                     className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"
@@ -194,7 +194,7 @@ function InteractiveCourseList<
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60"
+              className="w-full border-t border-gray-100 dark:border-gray-800 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60 dark:hover:bg-primary-500/10"
             >
               Show all {filtered.length} courses
             </button>
@@ -203,7 +203,7 @@ function InteractiveCourseList<
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-gray-500 transition-colors duration-150 hover:bg-gray-50"
+              className="w-full border-t border-gray-100 dark:border-gray-800 px-6 py-3 text-sm font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               Show fewer
             </button>
@@ -252,21 +252,21 @@ function AdminDashboard() {
         <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="across all quizzes" />
       </div>
 
-      <h2 className="mb-3 mt-8 text-lg font-semibold text-gray-900">Quick Links</h2>
+      <h2 className="mb-3 mt-8 text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Links</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
         {quickLinks.map((l, index) => (
           <Link
             key={l.to}
             to={l.to}
-            className="group animate-fade-up flex items-start gap-4 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+            className="group animate-fade-up flex items-start gap-4 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20">
               <Icon name={l.icon} />
             </span>
             <span>
-              <span className="block text-sm font-semibold text-gray-900">{l.label}</span>
-              <span className="mt-0.5 block text-xs text-gray-500">{l.desc}</span>
+              <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">{l.label}</span>
+              <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{l.desc}</span>
             </span>
           </Link>
         ))}
@@ -320,16 +320,16 @@ function TeacherDashboard() {
               message="Student submissions will appear here as they come in."
             />
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {data.recentSubmissions.map((sub, index) => (
                 <li
                   key={sub.id}
-                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{sub.student?.user?.fullName}</p>
-                    <p className="text-xs text-gray-500">Assignment #{sub.assignmentId.slice(0, 8)}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Assignment #{sub.assignmentId.slice(0, 8)}</p>
                   </div>
                   <StatusBadge status={sub.status} />
                 </li>
@@ -347,14 +347,14 @@ function TeacherDashboard() {
               message="Grades you return to students will show up here."
             />
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {data.recentGrades.map((sub, index) => (
                 <li
                   key={sub.id}
-                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
-                  <p className="min-w-0 truncate text-sm text-gray-900">{sub.student?.user?.fullName}</p>
+                  <p className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
                   <span className="inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700">
                     {sub.score ?? '-'}
                   </span>

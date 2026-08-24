@@ -194,8 +194,8 @@ export default function AdminLibraryPage() {
       aria-pressed={tab === key}
       className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
         tab === key
-          ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200'
-          : 'text-gray-500 hover:text-gray-900'
+          ? 'bg-white dark:bg-gray-900 text-primary-700 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
+          : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100'
       }`}
     >
       {label}
@@ -216,7 +216,7 @@ export default function AdminLibraryPage() {
         title="Library Administration"
         description="Manage the book catalog, borrow requests, and loans."
         actions={
-          <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+          <div className="flex gap-1 rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
             {tabButton(TABS.BOOKS, 'Books')}
             {tabButton(TABS.REQUESTS, 'Requests')}
             {tabButton(TABS.LOANS, 'Loans')}
@@ -225,10 +225,10 @@ export default function AdminLibraryPage() {
       />
 
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {tab === TABS.BOOKS && (
@@ -243,7 +243,7 @@ export default function AdminLibraryPage() {
           </div>
 
           {showAddBook && (
-            <form onSubmit={handleAddBook} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleAddBook} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div>
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -330,24 +330,24 @@ export default function AdminLibraryPage() {
             </form>
           )}
 
-          <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ISBN</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Copies</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Author</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">ISBN</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Copies</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {books.map((book) => (
                   <tr key={book.id}>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{book.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{book.author}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{book.isbn || '—'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{book.category || '—'}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{book.title}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{book.author}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{book.isbn || '—'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{book.category || '—'}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
                         {book.copies?.map((copy) => (
@@ -366,35 +366,35 @@ export default function AdminLibraryPage() {
       )}
 
       {tab === TABS.REQUESTS && (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Student</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Book</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Requested</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {requests.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-sm text-gray-500 text-center">No borrow requests</td>
+                  <td colSpan={5} className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 text-center">No borrow requests</td>
                 </tr>
               )}
               {requests.map((req) => (
                 <Fragment key={req.id}>
                   <tr>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {req.student?.user?.fullName}
-                    <span className="block text-xs text-gray-500">{req.student?.user?.email}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{req.student?.user?.email}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {req.bookCopy?.book?.title}
-                    <span className="block text-xs text-gray-500">Copy {req.bookCopy?.copyNumber}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Copy {req.bookCopy?.copyNumber}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{formatDate(req.requestedAt)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(req.requestedAt)}</td>
                   <td className="px-6 py-4"><StatusBadge status={req.status} /></td>
                   <td className="px-6 py-4">
                     {req.status === 'PENDING' && (
@@ -419,7 +419,7 @@ export default function AdminLibraryPage() {
                 </tr>
                 {decisionTarget?.id === req.id && (
                   <tr>
-                    <td colSpan={5} className="bg-gray-50 px-6 py-4">
+                    <td colSpan={5} className="bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
                       <form
                         onSubmit={(e) => {
                           e.preventDefault();
@@ -429,7 +429,7 @@ export default function AdminLibraryPage() {
                       >
                         {decisionTarget.decision === 'APPROVED' ? (
                           <div>
-                            <label htmlFor={`due-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600">
+                            <label htmlFor={`due-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
                               Due date *
                             </label>
                             <input
@@ -443,7 +443,7 @@ export default function AdminLibraryPage() {
                           </div>
                         ) : (
                           <div className="min-w-[220px] flex-1">
-                            <label htmlFor={`reason-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600">
+                            <label htmlFor={`reason-${req.id}`} className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
                               Reason for rejection (optional)
                             </label>
                             <input
@@ -470,7 +470,7 @@ export default function AdminLibraryPage() {
                         <button
                           type="button"
                           onClick={cancelDecision}
-                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50"
+                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                           Cancel
                         </button>
@@ -486,38 +486,38 @@ export default function AdminLibraryPage() {
       )}
 
       {tab === TABS.LOANS && (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Student</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Book</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Issued</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Due</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
               {loans.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     No loans yet. Loans appear here once requests are approved.
                   </td>
                 </tr>
               )}
               {loans.map((loan) => (
                 <tr key={loan.id}>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {loan.student?.user?.fullName}
-                    <span className="block text-xs text-gray-500">{loan.student?.user?.email}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{loan.student?.user?.email}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                     {loan.bookCopy?.book?.title}
-                    <span className="block text-xs text-gray-500">Copy {loan.bookCopy?.copyNumber}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Copy {loan.bookCopy?.copyNumber}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{formatDate(loan.issuedAt)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{formatDate(loan.dueDate)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(loan.issuedAt)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{formatDate(loan.dueDate)}</td>
                   <td className="px-6 py-4"><StatusBadge status={loan.status} /></td>
                   <td className="px-6 py-4">
                     {loan.status === 'ACTIVE' && (

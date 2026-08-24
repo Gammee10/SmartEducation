@@ -132,14 +132,14 @@ export default function CoursesPage() {
       />
 
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {showCreate && isTeacher && (
-        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
           <div className="sm:col-span-2">
             <label className={labelStyles}>Title *</label>
             <input
@@ -207,7 +207,7 @@ export default function CoursesPage() {
       {!loading && courses.length > 0 && (
         <div className="relative mb-5 max-w-md">
           <svg
-            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -221,7 +221,7 @@ export default function CoursesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by title, subject, or grade…"
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-10 pr-3.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
           />
         </div>
       )}
@@ -246,7 +246,7 @@ export default function CoursesPage() {
         />
       ) : (
         <>
-          <p className="mb-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+          <p className="mb-4 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
             {filteredCourses.length} course{filteredCourses.length === 1 ? '' : 's'}
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
@@ -267,7 +267,7 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
   return (
     <Link
       to={`/courses/${course.id}`}
-      className="group flex flex-col rounded-xl border border-gray-200/80 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+      className="group flex flex-col rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
     >
       {/* Accent strip */}
       <div className={`h-1.5 rounded-t-xl ${subjectTileClass(course.subject)}`} />
@@ -280,29 +280,29 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
               <Icon name="book" className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+              <h3 className="line-clamp-2 text-base font-semibold leading-snug text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
                 {course.title}
               </h3>
-              <p className="mt-0.5 truncate text-sm text-gray-600">{course.subject}</p>
+              <p className="mt-0.5 truncate text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{course.subject}</p>
             </div>
           </div>
           <StatusBadge status={course.status} />
         </div>
 
         {course.description && (
-          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-500">
+          <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400 dark:text-gray-500">
             {course.description}
           </p>
         )}
 
         <div className="mt-auto pt-4">
-          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 pt-3 text-xs text-gray-500">
+          <div className="mb-3 flex items-center gap-4 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
             <span className="inline-flex items-center gap-1.5">
-              <Icon name="users" className="h-3.5 w-3.5 text-gray-400" />
+              <Icon name="users" className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
               {course._count?.enrollments || 0} students
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Icon name="inbox" className="h-3.5 w-3.5 text-gray-400" />
+              <Icon name="inbox" className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
               {course._count?.content || 0} items
             </span>
             <span className="ml-auto rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-700">
@@ -311,10 +311,10 @@ function CourseCard({ course, teacherName }: { course: Course; teacherName: stri
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-semibold text-gray-600">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
                 {getInitials(teacherName)}
               </span>
-              <span className="truncate text-xs text-gray-500">{teacherName}</span>
+              <span className="truncate text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{teacherName}</span>
             </div>
             <svg
               className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"

@@ -104,7 +104,7 @@ export default function AttendancePage() {
       <div className="mb-6">
         <Link
           to={`/courses/${courseId}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:text-primary-700"
         >
           <svg
             className="h-4 w-4"
@@ -128,7 +128,7 @@ export default function AttendancePage() {
         }
         actions={
           <div className="flex items-center gap-3">
-            <label htmlFor="attendance-date" className="text-sm font-medium text-gray-700">
+            <label htmlFor="attendance-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Date
             </label>
             <input
@@ -143,17 +143,17 @@ export default function AttendancePage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
       {actionError && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {actionError}
         </div>
       )}
       {savedMsg && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {savedMsg}
         </div>
       )}
@@ -161,17 +161,17 @@ export default function AttendancePage() {
       {loading ? (
         <LoadingState label="Loading attendance…" />
       ) : !data ? null : (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card">
-          <ul className="divide-y divide-gray-100">
+        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
+          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {data.enrolledStudents.map((student) => {
               const record = data.attendance.find((a) => a.studentId === student.id);
               return (
                 <li key={student.id} className="px-6 py-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {student.user?.fullName}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {student.studentCode}
                       {record?.markedBy ? ` · marked by ${record.markedBy.fullName}` : ''}
                     </p>
@@ -185,7 +185,7 @@ export default function AttendancePage() {
                           e.target.value &&
                           setDrafts({ ...drafts, [student.id]: e.target.value as AttendanceStatus })
                         }
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                       >
                         <option value="">Not marked</option>
                         {STATUSES.map((s) => (
@@ -199,7 +199,7 @@ export default function AttendancePage() {
                           onClick={() =>
                             handleCorrect(record.id, drafts[student.id] ?? record.status)
                           }
-                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50"
+                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                           Correct
                         </button>

@@ -65,16 +65,16 @@ export default function LibraryCatalogPage() {
       <PageHeader title="Library Catalog" description="Search the school library and request to borrow books." />
 
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>
       )}
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <svg
-            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -88,7 +88,7 @@ export default function LibraryCatalogPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by title, author, or ISBN…"
-            className="block w-full flex-1 rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-3.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            className="block w-full flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-2.5 pl-10 pr-3.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
           />
         </div>
         <input
@@ -96,7 +96,7 @@ export default function LibraryCatalogPage() {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder="Category (e.g. Textbook)"
-          className="block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-64"
+          className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-64"
         />
       </div>
 
@@ -118,16 +118,16 @@ export default function LibraryCatalogPage() {
             {books.map((book) => {
               const avail = availableCopies(book);
               return (
-                <div key={book.id} className="flex flex-col rounded-xl border border-gray-200/80 bg-white p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
-                  <h3 className="text-lg font-semibold text-gray-900">{book.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">by {book.author}</p>
-                  {book.isbn && <p className="text-xs text-gray-400 mt-1">ISBN: {book.isbn}</p>}
+                <div key={book.id} className="flex flex-col rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{book.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-1">by {book.author}</p>
+                  {book.isbn && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">ISBN: {book.isbn}</p>}
                   {book.category && (
-                    <span className="mt-2 inline-block text-xs bg-primary-50 text-primary-700 rounded-full px-2 py-1 w-fit">
+                    <span className="mt-2 inline-block text-xs bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400 rounded-full px-2 py-1 w-fit">
                       {book.category}
                     </span>
                   )}
-                  <div className="mt-4 text-sm text-gray-600">
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
                     <span className="font-medium">{avail.length}</span> available of{' '}
                     <span className="font-medium">{book.copies?.length || 0}</span> copies
                   </div>
@@ -142,7 +142,7 @@ export default function LibraryCatalogPage() {
                       </button>
                     )}
                     {isStudent && avail.length === 0 && (
-                      <span className="text-sm text-gray-400">No copies available</span>
+                      <span className="text-sm text-gray-400 dark:text-gray-500">No copies available</span>
                     )}
                   </div>
                 </div>
@@ -155,17 +155,17 @@ export default function LibraryCatalogPage() {
               <button
                 onClick={() => fetchBooks(pagination.page - 1)}
                 disabled={pagination.page <= 1}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-60"
               >
                 Previous
               </button>
-              <span className="px-4 py-2 text-sm text-gray-600">
+              <span className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button
                 onClick={() => fetchBooks(pagination.page + 1)}
                 disabled={pagination.page >= pagination.totalPages}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-60"
               >
                 Next
               </button>

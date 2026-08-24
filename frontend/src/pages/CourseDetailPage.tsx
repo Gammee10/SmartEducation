@@ -88,17 +88,17 @@ const CONTENT_TYPE_META: Record<string, { path: string; tile: string }> = {
   },
   OTHER: {
     path: 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4',
-    tile: 'bg-gray-100 text-gray-500',
+    tile: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500',
   },
 };
 
 const TYPE_BADGE_STYLES: Record<string, string> = {
-  VIDEO: 'bg-purple-50 text-purple-700',
-  DOCUMENT: 'bg-blue-50 text-blue-700',
-  PDF: 'bg-red-50 text-red-700',
-  IMAGE: 'bg-green-50 text-green-700',
-  LINK: 'bg-yellow-50 text-yellow-700',
-  OTHER: 'bg-gray-100 text-gray-600',
+  VIDEO: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+  DOCUMENT: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+  PDF: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+  IMAGE: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+  LINK: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
+  OTHER: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
 };
 
 function TypeIcon({ type }: { type: string }) {
@@ -123,7 +123,7 @@ function typeBadge(type: string) {
   return (
     <span
       className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
-        TYPE_BADGE_STYLES[type] || 'bg-gray-100 text-gray-600'
+        TYPE_BADGE_STYLES[type] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500'
       }`}
     >
       {type}
@@ -310,11 +310,11 @@ export default function CourseDetailPage() {
 
   if (!course) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+      <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-6 py-12 text-center">
         <p className="text-sm text-red-700">{error || 'Course not found'}</p>
         <Link
           to="/courses"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           <svg
             className="h-4 w-4"
@@ -378,13 +378,13 @@ export default function CourseDetailPage() {
                 {course.title}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   {course.subject}
                 </span>
-                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   Grade {course.gradeLevel}
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-gray-900/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-[9px] font-bold">
                     {getInitials(teacherName)}
                   </span>
@@ -404,7 +404,7 @@ export default function CourseDetailPage() {
           <div className="mt-6">
             <Link
               to={`/courses/${course.id}/attendance`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors duration-150 hover:bg-white/20"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-900/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors duration-150 hover:bg-white dark:bg-gray-900/20"
             >
               View Attendance
               <svg
@@ -432,7 +432,7 @@ export default function CourseDetailPage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="flex items-center gap-3.5 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5"
+            className="flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5"
           >
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
               <svg
@@ -459,10 +459,10 @@ export default function CourseDetailPage() {
               </svg>
             </span>
             <div>
-              <p className="text-xl font-bold leading-none tracking-tight text-gray-900">
+              <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100">
                 {stat.value}
               </p>
-              <p className="mt-1 text-xs font-medium text-gray-500">{stat.label}</p>
+              <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -470,10 +470,10 @@ export default function CourseDetailPage() {
 
       {/* Admin: enrolled students */}
       {isAdmin && course.enrollments && course.enrollments.length > 0 && (
-        <div className="mt-8 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card sm:p-6">
-          <h2 className="text-sm font-semibold text-gray-900">
+        <div className="mt-8 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Enrolled Students{' '}
-            <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+            <span className="ml-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
               {course.enrollments.length}
             </span>
           </h2>
@@ -481,7 +481,7 @@ export default function CourseDetailPage() {
             {course.enrollments.map((enr) => (
               <span
                 key={enr.id}
-                className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700"
+                className="rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300"
               >
                 {enr.student?.user?.fullName || 'Unknown'}
               </span>
@@ -492,23 +492,23 @@ export default function CourseDetailPage() {
 
       {/* Alerts */}
       {message && (
-        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {message}
         </div>
       )}
       {quizMessage && (
-        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div role="status" className="mb-4 mt-6 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {quizMessage}
         </div>
       )}
       {error && (
-        <div role="alert" className="mb-4 mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div role="alert" className="mb-4 mt-6 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {/* Section tabs */}
-      <div className="mt-8 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
+      <div className="mt-8 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -516,14 +516,14 @@ export default function CourseDetailPage() {
             aria-pressed={activeTab === t.key}
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
               activeTab === t.key
-                ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-900 text-primary-700 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
+                : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100'
             }`}
           >
             {t.label}
             <span
               className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                activeTab === t.key ? 'bg-primary-50 text-primary-700' : 'bg-gray-200 text-gray-600'
+                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400 dark:text-gray-500'
               }`}
             >
               {t.count}
@@ -536,7 +536,7 @@ export default function CourseDetailPage() {
       {activeTab === 'content' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500">Learning materials uploaded for this course.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Learning materials uploaded for this course.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowUpload(!showUpload)}
@@ -548,7 +548,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showUpload && isTeacher && (
-            <form onSubmit={handleUpload} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleUpload} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -604,11 +604,11 @@ export default function CourseDetailPage() {
           )}
 
           {sectionErrors.content && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.content}</div>
+            <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.content}</div>
           )}
 
           {!sectionErrors.content && content.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 bg-white shadow-card">
+            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
               <EmptyState
                 icon="book"
                 title="No content available yet"
@@ -624,19 +624,19 @@ export default function CourseDetailPage() {
               {content.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                  className="flex flex-col gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-center sm:justify-between sm:p-5"
                 >
                   <div className="flex min-w-0 items-start gap-3.5">
                     <TypeIcon type={item.type} />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
                         {typeBadge(item.type)}
                       </div>
                       {item.description && (
-                        <p className="mt-0.5 line-clamp-1 text-sm text-gray-500">{item.description}</p>
+                        <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{item.description}</p>
                       )}
-                      <p className="mt-1.5 text-xs text-gray-400">
+                      <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                         {formatDate(item.createdAt)} · {item.uploadedBy?.fullName || 'Unknown'}
                         {item.sizeBytes ? ` · ${(item.sizeBytes / 1024).toFixed(1)} KB` : ''}
                       </p>
@@ -655,7 +655,7 @@ export default function CourseDetailPage() {
                       <button
                         onClick={() => handleArchive(item.id)}
                         disabled={archiving === item.id}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60"
+                        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:pointer-events-none disabled:opacity-60"
                       >
                         {archiving === item.id ? 'Archiving…' : 'Archive'}
                       </button>
@@ -672,7 +672,7 @@ export default function CourseDetailPage() {
       {activeTab === 'assignments' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500">Coursework with due dates and scoring.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Coursework with due dates and scoring.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowCreateAssignment(!showCreateAssignment)}
@@ -684,7 +684,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showCreateAssignment && isTeacher && (
-            <form onSubmit={handleCreateAssignment} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleCreateAssignment} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -747,11 +747,11 @@ export default function CourseDetailPage() {
           )}
 
           {sectionErrors.assignments && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.assignments}</div>
+            <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.assignments}</div>
           )}
 
           {!sectionErrors.assignments && assignments.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 bg-white shadow-card">
+            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
               <EmptyState
                 icon="clipboard"
                 title="No assignments yet"
@@ -773,7 +773,7 @@ export default function CourseDetailPage() {
                   <Link
                     key={assignment.id}
                     to={`/courses/${id}/assignments/${assignment.id}`}
-                    className="group block rounded-xl border border-gray-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                    className="group block rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3.5">
@@ -790,11 +790,11 @@ export default function CourseDetailPage() {
                           </svg>
                         </span>
                         <div className="min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
                             {assignment.title}
                           </h3>
                           {assignment.instructions && (
-                            <p className="mt-0.5 line-clamp-1 text-sm text-gray-500">{assignment.instructions}</p>
+                            <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{assignment.instructions}</p>
                           )}
                         </div>
                       </div>
@@ -817,7 +817,7 @@ export default function CourseDetailPage() {
                         </svg>
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs text-gray-400">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-400 dark:text-gray-500">
                       <span>Max score: {assignment.maxScore}</span>
                       {assignment.dueDate && (
                         <span className={overdue ? 'font-semibold text-red-600' : ''}>
@@ -839,7 +839,7 @@ export default function CourseDetailPage() {
       {activeTab === 'quizzes' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500">Timed assessments with auto-grading.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Timed assessments with auto-grading.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowCreateQuiz(!showCreateQuiz)}
@@ -851,7 +851,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showCreateQuiz && isTeacher && (
-            <form onSubmit={handleCreateQuiz} className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleCreateQuiz} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -909,21 +909,21 @@ export default function CourseDetailPage() {
                 </select>
               </div>
               <div className="flex items-end gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={quizForm.shuffleQuestions}
                     onChange={(e) => setQuizForm({ ...quizForm, shuffleQuestions: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
                   />
                   Shuffle questions
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={quizForm.shuffleOptions}
                     onChange={(e) => setQuizForm({ ...quizForm, shuffleOptions: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
                   />
                   Shuffle options
                 </label>
@@ -937,11 +937,11 @@ export default function CourseDetailPage() {
           )}
 
           {sectionErrors.quizzes && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.quizzes}</div>
+            <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{sectionErrors.quizzes}</div>
           )}
 
           {!sectionErrors.quizzes && quizzes.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 bg-white shadow-card">
+            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
               <EmptyState
                 icon="cap"
                 title="No quizzes yet"
@@ -958,7 +958,7 @@ export default function CourseDetailPage() {
                 <Link
                   key={quiz.id}
                   to={`/courses/${id}/quizzes/${quiz.id}`}
-                  className="group block rounded-xl border border-gray-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                  className="group block rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3.5">
@@ -975,11 +975,11 @@ export default function CourseDetailPage() {
                         </svg>
                       </span>
                       <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
                           {quiz.title}
                         </h3>
                         {quiz.description && (
-                          <p className="mt-0.5 line-clamp-1 text-sm text-gray-500">{quiz.description}</p>
+                          <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{quiz.description}</p>
                         )}
                       </div>
                     </div>
@@ -997,7 +997,7 @@ export default function CourseDetailPage() {
                       </svg>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-3 text-xs text-gray-400">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 dark:border-gray-800 pt-3 text-xs text-gray-400 dark:text-gray-500">
                     <span>Time limit: {quiz.timeLimit} min</span>
                     <span>Attempts: {quiz.maxAttempts}</span>
                     <span>{quiz._count?.questions || 0} questions</span>

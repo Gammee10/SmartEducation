@@ -145,12 +145,12 @@ export default function AdminUsersPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {message}
         </div>
       )}
@@ -159,10 +159,10 @@ export default function AdminUsersPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
+          className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Full name *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Full name *</label>
             <input
               type="text"
               required
@@ -172,7 +172,7 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Email *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Email *</label>
             <input
               type="email"
               required
@@ -182,7 +182,7 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Role *</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Role *</label>
             <select
               value={createForm.role}
               onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
@@ -194,7 +194,7 @@ export default function AdminUsersPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">
               Password (defaults to Password123!)
             </label>
             <input
@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
           {createForm.role === 'STUDENT' ? (
             <>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Grade level *</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Grade level *</label>
                 <input
                   type="text"
                   required
@@ -218,7 +218,7 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Section</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Section</label>
                 <input
                   type="text"
                   value={createForm.section}
@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
             </>
           ) : (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Subject</label>
+              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Subject</label>
               <input
                 type="text"
                 value={createForm.subject}
@@ -267,7 +267,7 @@ export default function AdminUsersPage() {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Search by name or email..."
-          className="block min-w-[200px] flex-1 rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+          className="block min-w-[200px] flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
         />
       </div>
 
@@ -275,34 +275,34 @@ export default function AdminUsersPage() {
       {loading ? (
         <LoadingState label="Loading users…" />
       ) : users.length === 0 ? (
-        <div className="rounded-xl border border-gray-200/80 bg-white px-6 py-12 text-center shadow-card">
-          <p className="text-sm font-semibold text-gray-900">No users found</p>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 px-6 py-12 text-center shadow-card">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">No users found</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
             {search || roleFilter
               ? 'Try adjusting your search or role filter.'
               : 'Create a user or import them via CSV below.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Code / Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Code / Details</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Status</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td className="px-6 py-3 text-sm font-medium text-gray-900">{u.fullName}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{u.email}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{u.role}</td>
-                  <td className="px-6 py-3 text-xs text-gray-500">
+                  <td className="px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{u.fullName}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{u.email}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{u.role}</td>
+                  <td className="px-6 py-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {u.student
                       ? `${u.student.studentCode} · ${u.student.gradeLevel}${u.student.section ? ` ${u.student.section}` : ''}`
                       : u.teacher
@@ -313,10 +313,10 @@ export default function AdminUsersPage() {
                     <span
                       className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
                         u.status === 'ACTIVE'
-                          ? 'bg-green-50 text-green-700'
+                          ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400'
                           : u.status === 'ARCHIVED'
-                            ? 'bg-gray-100 text-gray-500'
-                            : 'bg-yellow-50 text-yellow-700'
+                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500'
+                            : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400'
                       }`}
                     >
                       {u.status}
@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
                     {u.status !== 'ARCHIVED' && (
                       <button
                         onClick={() => handleArchive(u.id)}
-                        className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
+                        className="rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
                       >
                         Archive
                       </button>
@@ -340,18 +340,18 @@ export default function AdminUsersPage() {
       )}
 
       {/* CSV import */}
-      <div className="mt-10 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card sm:p-6">
-        <h2 className="mb-2 text-base font-semibold text-gray-900">CSV Bulk Import</h2>
-        <p className="mb-4 text-xs text-gray-500">
+      <div className="mt-10 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
+        <h2 className="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">CSV Bulk Import</h2>
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
           Header row required:{' '}
-          <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">fullName,email,role,password,gradeLevel,section,subject</code>.
+          <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-0.5 font-mono">fullName,email,role,password,gradeLevel,section,subject</code>.
           Rows with errors are skipped and reported; valid rows are imported.
         </p>
         <input
           type="file"
           accept=".csv,text/csv"
           onChange={handleCsvFile}
-          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
         />
         <textarea
           rows={5}
@@ -371,7 +371,7 @@ export default function AdminUsersPage() {
         {importResult && (
           <div
             className={`mt-4 rounded-xl border p-4 ${
-              importResult.errorCount > 0 ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'
+              importResult.errorCount > 0 ? 'border-red-200 dark:border-red-500/30 bg-red-50' : 'border-green-200 dark:border-green-500/30 bg-green-50'
             }`}
           >
             <p className={`text-sm font-medium ${importResult.errorCount > 0 ? 'text-red-800' : 'text-green-800'}`}>

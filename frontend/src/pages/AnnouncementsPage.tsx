@@ -84,12 +84,12 @@ export default function AnnouncementsPage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
           {message}
         </div>
       )}
@@ -97,7 +97,7 @@ export default function AnnouncementsPage() {
       {canPost && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200/80 bg-white space-y-4 p-5 shadow-card sm:p-6"
+          className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 space-y-4 p-5 shadow-card sm:p-6"
         >
           <div>
             <label className={`${labelStyles} mb-1`}>Title *</label>
@@ -156,12 +156,12 @@ export default function AnnouncementsPage() {
       ) : (
         <ul className="space-y-3">
           {announcements.map((a) => (
-            <li key={a.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+            <li key={a.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-gray-900">{a.title}</h2>
-                  <p className="mt-1 text-sm text-gray-600 whitespace-pre-line">{a.body}</p>
-                  <p className="mt-2 text-xs text-gray-400">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{a.title}</h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 whitespace-pre-line">{a.body}</p>
+                  <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
                     {a.publishedBy?.fullName || 'Unknown'} ·{' '}
                     {new Date(a.publishedAt).toLocaleString()} ·{' '}
                     <span className="uppercase tracking-wide">{a.audience}</span>
@@ -170,7 +170,7 @@ export default function AnnouncementsPage() {
                 {isAdmin && (
                   <button
                     onClick={() => handleDelete(a.id)}
-                    className="flex-shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
+                    className="flex-shrink-0 rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50"
                   >
                     Delete
                   </button>

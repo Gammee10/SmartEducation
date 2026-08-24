@@ -13,10 +13,10 @@ import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type { StudentSummary, StudentAttendanceView, AttendanceStatus } from '../types';
 
 const STATUS_META: Record<AttendanceStatus, { bar: string; pill: string }> = {
-  PRESENT: { bar: 'bg-emerald-500', pill: 'bg-green-50 text-green-700' },
-  LATE: { bar: 'bg-amber-400', pill: 'bg-yellow-50 text-yellow-700' },
-  ABSENT: { bar: 'bg-red-500', pill: 'bg-red-50 text-red-700' },
-  EXCUSED: { bar: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700' },
+  PRESENT: { bar: 'bg-emerald-500', pill: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' },
+  LATE: { bar: 'bg-amber-400', pill: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400' },
+  ABSENT: { bar: 'bg-red-500', pill: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400' },
+  EXCUSED: { bar: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400' },
 };
 
 const ALL_STATUSES: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'];
@@ -95,7 +95,7 @@ export default function StudentProfilePage() {
         />
 
         <div className="relative flex flex-wrap items-center gap-5">
-          <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl font-bold text-white ring-1 ring-inset ring-white/25">
+          <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-gray-900/10 text-xl font-bold text-white ring-1 ring-inset ring-white/25">
             {initials}
           </span>
           <div className="min-w-0">
@@ -103,18 +103,18 @@ export default function StudentProfilePage() {
               {s.user.fullName}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 {s.studentCode}
               </span>
-              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 Grade {s.gradeLevel}
               </span>
               {s.section && (
-                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                   Section {s.section}
                 </span>
               )}
-              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+              <span className="inline-flex items-center rounded-full bg-white dark:bg-gray-900/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
                 {s.user.email}
               </span>
             </div>
@@ -124,53 +124,53 @@ export default function StudentProfilePage() {
 
       {/* Animated stats strip — overlaps the hero */}
       <div className="-mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5">
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="book" className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.enrollments} />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500">Enrolled Courses</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Enrolled Courses</p>
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
           <div>
-            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.attendanceRate} suffix="%" />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500">Attendance Rate</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Attendance Rate</p>
           </div>
           <ProgressRing percent={summary.stats.attendanceRate} size={52} strokeWidth={6} />
         </div>
 
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="chart" className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={Number(summary.stats.avgAssignmentScore) || 0} decimals={1} />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500">Avg Assignment Score</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Assignment Score</p>
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
           <div>
-            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.avgQuizScore} suffix="%" />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500">Avg Quiz Score</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Quiz Score</p>
           </div>
           <ProgressRing percent={summary.stats.avgQuizScore} size={52} strokeWidth={6} />
         </div>
       </div>
 
       {/* Section tabs */}
-      <div className="mt-8 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
+      <div className="mt-8 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
         {(
           [
             { key: 'courses' as const, label: 'Courses', count: summary.courses.length },
@@ -184,14 +184,14 @@ export default function StudentProfilePage() {
             aria-pressed={activeTab === t.key}
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
               activeTab === t.key
-                ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-900 text-primary-700 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
+                : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100'
             }`}
           >
             {t.label}
             <span
               className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                activeTab === t.key ? 'bg-primary-50 text-primary-700' : 'bg-gray-200 text-gray-600'
+                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400 dark:text-gray-500'
               }`}
             >
               {t.count}
@@ -211,19 +211,19 @@ export default function StudentProfilePage() {
               message="This student is not enrolled in any courses right now."
             />
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {summary.courses.map((c, index) => (
                 <li
                   key={c.id}
-                  className="animate-fade-up flex items-start gap-3 px-5 py-3.5 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  className="animate-fade-up flex items-start gap-3 px-5 py-3.5 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
                   <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
                     <Icon name="book" className="h-4 w-4" />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       {c.subject} · {c.gradeLevel}
                     </p>
                   </div>
@@ -245,7 +245,7 @@ export default function StudentProfilePage() {
               message="Quiz attempts will appear here once the student submits one."
             />
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {summary.recentAttempts.map((a, index) => {
                 const pct =
                   a.score !== null && a.score !== undefined && a.maxScore
@@ -254,11 +254,11 @@ export default function StudentProfilePage() {
                 return (
                   <li
                     key={a.id}
-                    className="animate-fade-up px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                    className="animate-fade-up px-5 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                     style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <p className="min-w-0 truncate text-sm font-medium text-gray-900">
+                      <p className="min-w-0 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                         {a.quiz?.title || 'Quiz'}
                       </p>
                       <span className="inline-flex h-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2.5 text-xs font-bold text-primary-700">
@@ -266,7 +266,7 @@ export default function StudentProfilePage() {
                       </span>
                     </div>
                     {pct !== null && (
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                         <div
                           className={`h-full rounded-full transition-[width] duration-700 ease-out ${
                             pct >= 80
@@ -309,8 +309,8 @@ export default function StudentProfilePage() {
           ) : (
             <>
               {/* Distribution bar */}
-              <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
-                <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-4 sm:px-6">
+                <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                   {ALL_STATUSES.filter((st) => (statusCounts.get(st) || 0) > 0).map((st) => (
                     <div
                       key={st}
@@ -322,18 +322,18 @@ export default function StudentProfilePage() {
                 </div>
                 <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
                   {ALL_STATUSES.filter((st) => (statusCounts.get(st) || 0) > 0).map((st) => (
-                    <span key={st} className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                    <span key={st} className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       <span className={`h-2 w-2 rounded-full ${STATUS_META[st].bar}`} />
                       {st.charAt(0) + st.slice(1).toLowerCase()}:{' '}
-                      <strong className="text-gray-700">{statusCounts.get(st)}</strong>
+                      <strong className="text-gray-700 dark:text-gray-300">{statusCounts.get(st)}</strong>
                     </span>
                   ))}
-                  <span className="text-xs text-gray-400">Total: {totalRecords}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">Total: {totalRecords}</span>
                 </div>
               </div>
 
               {/* Status filter pills */}
-              <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-5 py-3 sm:px-6">
+              <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 dark:border-gray-800 px-5 py-3 sm:px-6">
                 {(['ALL', ...ALL_STATUSES] as Array<AttendanceStatus | 'ALL'>).map((option) => {
                   const count = option === 'ALL' ? totalRecords : statusCounts.get(option) || 0;
                   if (count === 0 && option !== 'ALL') return null;
@@ -346,11 +346,11 @@ export default function StudentProfilePage() {
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
                         selected
                           ? 'bg-primary-600 text-white shadow-sm'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       {option === 'ALL' ? 'All' : option.charAt(0) + option.slice(1).toLowerCase()}
-                      <span className={`ml-1.5 ${selected ? 'text-primary-100' : 'text-gray-400'}`}>
+                      <span className={`ml-1.5 ${selected ? 'text-primary-100' : 'text-gray-400 dark:text-gray-500'}`}>
                         {count}
                       </span>
                     </button>
@@ -360,30 +360,30 @@ export default function StudentProfilePage() {
 
               {/* Records table */}
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
                         Date
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
                         Course
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
                         Status
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {(attendance?.attendance || [])
                       .filter((a) => statusFilter === 'ALL' || a.status === statusFilter)
                       .slice(0, showAllRecords ? undefined : VISIBLE_RECORDS)
                       .map((a) => (
-                        <tr key={a.id} className="transition-colors duration-150 hover:bg-gray-50">
-                          <td className="whitespace-nowrap px-5 py-3 text-sm text-gray-900 sm:px-6">
+                        <tr key={a.id} className="transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="whitespace-nowrap px-5 py-3 text-sm text-gray-900 dark:text-gray-100 sm:px-6">
                             {new Date(a.date).toLocaleDateString()}
                           </td>
-                          <td className="px-5 py-3 text-sm text-gray-700 sm:px-6">{a.course?.title}</td>
+                          <td className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300 sm:px-6">{a.course?.title}</td>
                           <td className="px-5 py-3 sm:px-6">
                             <span
                               className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
@@ -404,7 +404,7 @@ export default function StudentProfilePage() {
                   ).length;
                   if (filteredCount === 0) {
                     return (
-                      <p className="px-5 py-8 text-center text-sm text-gray-500 sm:px-6">
+                      <p className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
                         No records for this status.
                       </p>
                     );
@@ -414,7 +414,7 @@ export default function StudentProfilePage() {
                       <button
                         type="button"
                         onClick={() => setShowAllRecords(!showAllRecords)}
-                        className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60"
+                        className="w-full border-t border-gray-100 dark:border-gray-800 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60 dark:hover:bg-primary-500/10"
                       >
                         {showAllRecords ? 'Show fewer' : `Show all ${filteredCount} records`}
                       </button>

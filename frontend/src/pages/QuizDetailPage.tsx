@@ -314,11 +314,11 @@ export default function QuizDetailPage() {
 
   if (!quiz) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
+      <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-6 py-12 text-center">
         <p className="text-sm text-red-700">{error || 'Quiz not found'}</p>
         <Link
           to={`/courses/${courseId}`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           <svg
             className="h-4 w-4"
@@ -340,7 +340,7 @@ export default function QuizDetailPage() {
     <div>
       <Link
         to={`/courses/${courseId}`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:text-primary-700"
       >
         <svg
           className="h-4 w-4"
@@ -357,8 +357,8 @@ export default function QuizDetailPage() {
 
       <div className="mt-3 flex justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{quiz.title}</h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">{quiz.title}</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-1">
             {quiz.course?.subject} · Grade {quiz.course?.gradeLevel}
           </p>
         </div>
@@ -366,19 +366,19 @@ export default function QuizDetailPage() {
       </div>
 
       {quiz.description && (
-        <p className="mt-3 text-sm text-gray-600">{quiz.description}</p>
+        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{quiz.description}</p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600">
-        <span className="font-medium text-gray-900">Time limit: {quiz.timeLimit} min</span>
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+        <span className="font-medium text-gray-900 dark:text-gray-100">Time limit: {quiz.timeLimit} min</span>
         <span>Attempts allowed: {quiz.maxAttempts}</span>
         <span>{quiz.questions?.length || 0} question(s)</span>
         {quiz.shuffleQuestions && <span>Shuffled questions</span>}
         {quiz.shuffleOptions && <span>Shuffled options</span>}
       </div>
 
-      {message && <div className="mt-4 mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
-      {error && <div className="mt-4 mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {message && <div className="mt-4 mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
+      {error && <div className="mt-4 mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       {/* -----------------------------------------------------
           Student view when not actively taking the quiz
@@ -393,27 +393,27 @@ export default function QuizDetailPage() {
               Start Quiz
             </button>
           ) : (
-            <p className="text-sm text-gray-500">This quiz is not available yet.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">This quiz is not available yet.</p>
           )}
 
           {attempts.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Your Attempts</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Your Attempts</h3>
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
+                  <div key={attempt.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-400">Started: {formatStart(attempt.startedAt)}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Started: {formatStart(attempt.startedAt)}</p>
                         {attempt.submittedAt && (
-                          <p className="text-xs text-gray-400">Submitted: {formatStart(attempt.submittedAt)}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Submitted: {formatStart(attempt.submittedAt)}</p>
                         )}
                       </div>
                       <div className="text-right">
                         <StatusBadge status={attempt.status} />
                         {attempt.score !== null && attempt.score !== undefined && (
-                          <p className="mt-1 text-lg font-semibold text-gray-900">
-                            {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>
+                          <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
                           </p>
                         )}
                       </div>
@@ -431,10 +431,10 @@ export default function QuizDetailPage() {
         ----------------------------------------------------- */}
       {isStudent && takingQuiz && activeAttempt && (
         <div className="mt-8">
-          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-card sm:px-5">
-            <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 px-4 py-3 shadow-card sm:px-5">
+            <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               <svg
-                className="h-4 w-4 text-gray-400"
+                className="h-4 w-4 text-gray-400 dark:text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -447,7 +447,7 @@ export default function QuizDetailPage() {
             </span>
             <span
               className={`rounded-lg px-2.5 py-1 font-mono text-lg font-bold tabular-nums ${
-                secondsLeft <= 60 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-900'
+                secondsLeft <= 60 ? 'bg-red-50 text-red-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               }`}
               role="timer"
               aria-live="off"
@@ -466,13 +466,13 @@ export default function QuizDetailPage() {
             {quiz.questions?.map((question: QuizQuestion, qIndex: number) => {
               const selected = selections[question.id] || [];
               return (
-                <div key={question.id} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card">
+                <div key={question.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <span className="text-xs text-gray-400">Question {qIndex + 1}</span>
-                      <h3 className="text-sm font-medium text-gray-900 mt-1">{question.prompt}</h3>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Question {qIndex + 1}</span>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">{question.prompt}</h3>
                     </div>
-                    <span className="text-xs text-gray-400">{question.points} pt(s)</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{question.points} pt(s)</span>
                   </div>
                   <fieldset className="space-y-2">
                     <legend className="sr-only">{question.prompt}</legend>
@@ -482,7 +482,7 @@ export default function QuizDetailPage() {
                         <label
                           key={option.id}
                           className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors duration-150 ${
-                            isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 hover:bg-gray-50'
+                            isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                           }`}
                         >
                           <input
@@ -505,7 +505,7 @@ export default function QuizDetailPage() {
                             }}
                             className="mt-1"
                           />
-                          <span className="text-sm text-gray-700">{option.optionText}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{option.optionText}</span>
                         </label>
                       );
                     })}
@@ -529,18 +529,18 @@ export default function QuizDetailPage() {
       Student view — result after submission
       ----------------------------------------------------- */}
       {isStudent && result && (
-        <div className="mt-8 rounded-xl border border-green-200 bg-green-50 p-6 shadow-card">
+        <div className="mt-8 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 p-6 shadow-card">
           <h3 className="text-base font-semibold text-green-900">Quiz submitted</h3>
           {result.expired && (
             <p className="mt-1 text-xs font-medium text-orange-600">
               Time expired — attempt was auto-submitted
             </p>
           )}
-          <p className="mt-4 text-4xl font-bold tracking-tight text-gray-900">
+          <p className="mt-4 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             {result.score}
-            <span className="text-lg font-normal text-gray-500"> / {result.maxScore}</span>
+            <span className="text-lg font-normal text-gray-500 dark:text-gray-400 dark:text-gray-500"> / {result.maxScore}</span>
           </p>
-          <p className="mt-2 inline-block rounded-full bg-white px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04]">
+          <p className="mt-2 inline-block rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04]">
             Status: {result.status.replace('_', ' ')}
           </p>
           <div className="mt-5">
@@ -579,7 +579,7 @@ export default function QuizDetailPage() {
           </div>
 
           {showEdit && (
-            <form onSubmit={handleSaveQuiz} className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleSaveQuiz} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -636,7 +636,7 @@ export default function QuizDetailPage() {
                 </select>
               </div>
               <div className="flex items-end gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={editForm.shuffleQuestions}
@@ -644,7 +644,7 @@ export default function QuizDetailPage() {
                   />
                   Shuffle questions
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={editForm.shuffleOptions}
@@ -666,7 +666,7 @@ export default function QuizDetailPage() {
           )}
 
           {showAddQuestion && (
-            <form onSubmit={handleAddQuestion} className="rounded-xl border border-gray-200/80 bg-white space-y-4 p-5 shadow-card">
+            <form onSubmit={handleAddQuestion} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 space-y-4 p-5 shadow-card">
               <div>
                 <label className={labelStyles}>Question Prompt *</label>
                 <input
@@ -764,7 +764,7 @@ export default function QuizDetailPage() {
 
           {/* Questions list with correct answers */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Questions ({quiz.questions?.length || 0})</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Questions ({quiz.questions?.length || 0})</h3>
             {!quiz.questions || quiz.questions.length === 0 ? (
               <EmptyState
                 icon="clipboard"
@@ -774,19 +774,19 @@ export default function QuizDetailPage() {
             ) : (
               <div className="space-y-4">
                 {quiz.questions.map((question, qIndex) => (
-                  <div key={question.id} className="rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
+                  <div key={question.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500">Q{qIndex + 1}</span>
-                          <h4 className="text-sm font-medium text-gray-900">{question.prompt}</h4>
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Q{qIndex + 1}</span>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.prompt}</h4>
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">{question.points} pt(s) · {question.type.replace('_', ' ')}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{question.points} pt(s) · {question.type.replace('_', ' ')}</p>
                       </div>
                     </div>
                     <div className="mt-2 space-y-1">
                       {question.options.map((option) => (
-                        <div key={option.id} className={`text-sm flex items-center gap-2 ${option.isCorrect ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
+                        <div key={option.id} className={`text-sm flex items-center gap-2 ${option.isCorrect ? 'text-green-700 font-medium' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
                           <span>{option.isCorrect ? '✓' : '•'}</span>
                           <span>{option.optionText}</span>
                         </div>
@@ -800,7 +800,7 @@ export default function QuizDetailPage() {
 
           {/* Teacher results */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Results ({attempts.length})</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Results ({attempts.length})</h3>
             {attempts.length === 0 ? (
               <EmptyState
                 icon="users"
@@ -810,21 +810,21 @@ export default function QuizDetailPage() {
             ) : (
               <div className="space-y-3">
                 {attempts.map((attempt) => (
-                  <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
+                  <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {attempt.student?.user?.fullName || 'Unknown student'}
                       </p>
-                      <p className="text-xs text-gray-400">Started: {formatStart(attempt.startedAt)}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Started: {formatStart(attempt.startedAt)}</p>
                       {attempt.submittedAt && (
-                        <p className="text-xs text-gray-400">Submitted: {formatStart(attempt.submittedAt)}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Submitted: {formatStart(attempt.submittedAt)}</p>
                       )}
                     </div>
                     <div className="text-right">
                       <StatusBadge status={attempt.status} />
                       {attempt.score !== null && attempt.score !== undefined && (
-                        <p className="mt-1 text-lg font-semibold text-gray-900">
-                          {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>
+                        <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
                         </p>
                       )}
                     </div>
@@ -839,7 +839,7 @@ export default function QuizDetailPage() {
       {/* Admin view */}
       {user?.role === 'ADMIN' && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Attempts ({attempts.length})</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Attempts ({attempts.length})</h3>
           {attempts.length === 0 ? (
             <EmptyState
               icon="users"
@@ -849,18 +849,18 @@ export default function QuizDetailPage() {
           ) : (
             <div className="space-y-3">
               {attempts.map((attempt) => (
-                <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 bg-white p-4 shadow-card">
+                <div key={attempt.id} className="flex items-center justify-between rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {attempt.student?.user?.fullName || 'Unknown student'}
                     </p>
-                    <p className="text-xs text-gray-400">Started: {formatStart(attempt.startedAt)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Started: {formatStart(attempt.startedAt)}</p>
                   </div>
                   <div className="text-right">
                     <StatusBadge status={attempt.status} />
                     {attempt.score !== null && attempt.score !== undefined && (
-                      <p className="mt-1 text-lg font-semibold text-gray-900">
-                        {attempt.score} <span className="text-sm text-gray-500">/ {attempt.maxScore}</span>
+                      <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
                       </p>
                     )}
                   </div>
