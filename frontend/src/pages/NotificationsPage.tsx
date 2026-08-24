@@ -122,8 +122,10 @@ export default function NotificationsPage() {
           {notifications.map((n) => (
             <li
               key={n.id}
-              className={`flex items-start justify-between gap-4 rounded-xl border bg-white dark:bg-gray-900 p-4 shadow-card ${
-                n.isRead ? 'border-gray-200 dark:border-gray-700' : 'border-l-4 border-l-primary-600'
+              className={`flex items-start justify-between gap-4 rounded-2xl border bg-white p-4 shadow-card transition-colors duration-150 dark:bg-gray-900 ${
+                n.isRead
+                  ? 'border-gray-200 dark:border-gray-800'
+                  : 'border-l-4 border-l-primary-600 border-y-transparent border-r-transparent bg-primary-50/40 dark:border-l-primary-500 dark:bg-primary-500/10'
               }`}
             >
               <div className="min-w-0">
@@ -134,7 +136,10 @@ export default function NotificationsPage() {
                     {n.type}
                   </span>
                   {!n.isRead && (
-                    <span className="text-xs font-semibold text-primary-700">New</span>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-primary-700 dark:text-primary-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary-600 dark:bg-primary-400" aria-hidden="true" />
+                      New
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{n.title}</p>
