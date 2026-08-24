@@ -10,6 +10,8 @@ import {
   inputStyles,
   labelStyles,
   LoadingState,
+  Banner,
+  Spinner,
 } from '../components/ui';
 import type { Quiz, QuizQuestion, QuizAttempt } from '../types';
 
@@ -377,7 +379,7 @@ export default function QuizDetailPage() {
         {quiz.shuffleOptions && <span>Shuffled options</span>}
       </div>
 
-      {message && <div className="mt-4 mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">{message}</div>}
+      {message && <div className="mt-4 mb-4"><Banner tone="success" message={message} /></div>}
       {error && <div className="mt-4 mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       {/* -----------------------------------------------------
@@ -447,7 +449,9 @@ export default function QuizDetailPage() {
             </span>
             <span
               className={`rounded-lg px-2.5 py-1 font-mono text-lg font-bold tabular-nums ${
-                secondsLeft <= 60 ? 'bg-red-50 text-red-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                secondsLeft <= 60
+                  ? 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse'
+                  : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
               }`}
               role="timer"
               aria-live="off"
@@ -503,7 +507,7 @@ export default function QuizDetailPage() {
                                 return { ...prev, [question.id]: [option.id] };
                               });
                             }}
-                            className="mt-1"
+                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary-600"
                           />
                           <span className="text-sm text-gray-700 dark:text-gray-300">{option.optionText}</span>
                         </label>
@@ -519,7 +523,8 @@ export default function QuizDetailPage() {
               disabled={submitting}
               className={`${buttonPrimary} px-6`}
             >
-              {submitting ? 'Submitting...' : 'Submit Quiz'}
+              {submitting && <Spinner />}
+              {submitting ? 'Submitting…' : 'Submit Quiz'}
             </button>
           </form>
         </div>
@@ -529,16 +534,16 @@ export default function QuizDetailPage() {
       Student view — result after submission
       ----------------------------------------------------- */}
       {isStudent && result && (
-        <div className="mt-8 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 p-6 shadow-card">
-          <h3 className="text-base font-semibold text-green-900">Quiz submitted</h3>
+        <div className="mt-8 rounded-xl border border-green-200 bg-green-50 p-6 shadow-card dark:border-green-500/30 dark:bg-green-500/10">
+          <h3 className="text-base font-semibold text-green-900 dark:text-green-300">Quiz submitted</h3>
           {result.expired && (
-            <p className="mt-1 text-xs font-medium text-orange-600">
+            <p className="mt-1 text-xs font-medium text-orange-600 dark:text-orange-400">
               Time expired — attempt was auto-submitted
             </p>
           )}
           <p className="mt-4 text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
             {result.score}
-            <span className="text-lg font-normal text-gray-500 dark:text-gray-400 dark:text-gray-500"> / {result.maxScore}</span>
+            <span className="text-lg font-normal text-gray-500 dark:text-gray-400"> / {result.maxScore}</span>
           </p>
           <p className="mt-2 inline-block rounded-full bg-white dark:bg-gray-900 px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04]">
             Status: {result.status.replace('_', ' ')}
@@ -636,19 +641,21 @@ export default function QuizDetailPage() {
                 </select>
               </div>
               <div className="flex items-end gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={editForm.shuffleQuestions}
                     onChange={(e) => setEditForm({ ...editForm, shuffleQuestions: e.target.checked })}
+                    className="h-4 w-4 accent-primary-600"
                   />
                   Shuffle questions
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={editForm.shuffleOptions}
                     onChange={(e) => setEditForm({ ...editForm, shuffleOptions: e.target.checked })}
+                    className="h-4 w-4 accent-primary-600"
                   />
                   Shuffle options
                 </label>
@@ -659,7 +666,8 @@ export default function QuizDetailPage() {
                   disabled={saving}
                   className={buttonPrimary}
                 >
-                  {saving ? 'Saving...' : 'Save Quiz'}
+                  {saving && <Spinner />}
+                  {saving ? 'Saving…' : 'Save Quiz'}
                 </button>
               </div>
             </form>
@@ -720,7 +728,7 @@ export default function QuizDetailPage() {
                             ),
                           }))
                         }
-                        className="mt-0.5 shrink-0"
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-primary-600"
                         title="Correct"
                       />
                       <input
@@ -757,7 +765,8 @@ export default function QuizDetailPage() {
                 disabled={addingQuestion}
                 className={buttonPrimary}
               >
-                {addingQuestion ? 'Adding...' : 'Add Question'}
+                {addingQuestion && <Spinner />}
+                {addingQuestion ? 'Adding…' : 'Add Question'}
               </button>
             </form>
           )}
