@@ -179,7 +179,7 @@ export default function AttendancePage() {
           />
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
+        <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card">
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {data.enrolledStudents.map((student) => {
               const record = data.attendance.find((a) => a.studentId === student.id);

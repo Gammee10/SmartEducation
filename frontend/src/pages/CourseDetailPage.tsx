@@ -433,7 +433,7 @@ export default function CourseDetailPage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5"
+            className="flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5"
           >
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
               <svg
@@ -471,7 +471,7 @@ export default function CourseDetailPage() {
 
       {/* Admin: enrolled students */}
       {isAdmin && course.enrollments && course.enrollments.length > 0 && (
-        <div className="mt-8 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
+        <div className="mt-8 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card sm:p-6">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Enrolled Students{' '}
             <span className="ml-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-400">
@@ -549,7 +549,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showUpload && isTeacher && (
-            <form onSubmit={handleUpload} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleUpload} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -609,7 +609,7 @@ export default function CourseDetailPage() {
           )}
 
           {!sectionErrors.content && content.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
+            <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card">
               <EmptyState
                 icon="book"
                 title="No content available yet"
@@ -625,7 +625,7 @@ export default function CourseDetailPage() {
               {content.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                  className="flex flex-col gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-center sm:justify-between sm:p-5"
                 >
                   <div className="flex min-w-0 items-start gap-3.5">
                     <TypeIcon type={item.type} />
@@ -685,7 +685,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showCreateAssignment && isTeacher && (
-            <form onSubmit={handleCreateAssignment} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleCreateAssignment} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -752,7 +752,7 @@ export default function CourseDetailPage() {
           )}
 
           {!sectionErrors.assignments && assignments.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
+            <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card">
               <EmptyState
                 icon="clipboard"
                 title="No assignments yet"
@@ -774,7 +774,7 @@ export default function CourseDetailPage() {
                   <Link
                     key={assignment.id}
                     to={`/courses/${id}/assignments/${assignment.id}`}
-                    className="group block rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                    className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3.5">
@@ -852,7 +852,7 @@ export default function CourseDetailPage() {
           </div>
 
           {showCreateQuiz && isTeacher && (
-            <form onSubmit={handleCreateQuiz} className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
+            <form onSubmit={handleCreateQuiz} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
                 <label className={labelStyles}>Title *</label>
                 <input
@@ -942,7 +942,7 @@ export default function CourseDetailPage() {
           )}
 
           {!sectionErrors.quizzes && quizzes.length === 0 ? (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
+            <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] shadow-card">
               <EmptyState
                 icon="cap"
                 title="No quizzes yet"
@@ -959,7 +959,7 @@ export default function CourseDetailPage() {
                 <Link
                   key={quiz.id}
                   to={`/courses/${id}/quizzes/${quiz.id}`}
-                  className="group block rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                  className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3.5">

@@ -124,7 +124,7 @@ export default function StudentProfilePage() {
 
       {/* Animated stats strip — overlaps the hero */}
       <div className="-mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5">
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5">
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="book" className="h-[18px] w-[18px]" />
           </span>
@@ -136,7 +136,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
           <div>
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.attendanceRate} suffix="%" />
@@ -146,7 +146,7 @@ export default function StudentProfilePage() {
           <ProgressRing percent={summary.stats.attendanceRate} size={52} strokeWidth={6} />
         </div>
 
-        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name="chart" className="h-[18px] w-[18px]" />
           </span>
@@ -158,7 +158,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
           <div>
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.avgQuizScore} suffix="%" />

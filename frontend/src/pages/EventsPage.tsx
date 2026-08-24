@@ -134,7 +134,7 @@ export default function EventsPage() {
       {canPost && showForm && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
+          className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div className="sm:col-span-2">
             <label className={labelStyles}>Title *</label>
@@ -227,7 +227,7 @@ export default function EventsPage() {
           {events.map((ev) => {
             const past = new Date(ev.startsAt).getTime() < Date.now();
             return (
-              <li key={ev.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card">
+              <li key={ev.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">

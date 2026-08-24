@@ -168,7 +168,7 @@ export default function AdminUsersPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
+          className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Full name *</label>
@@ -354,7 +354,7 @@ export default function AdminUsersPage() {
       )}
 
       {/* CSV import */}
-      <div className="mt-10 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
+      <div className="mt-10 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card sm:p-6">
         <h2 className="mb-2 text-base font-semibold text-gray-900 dark:text-gray-100">CSV Bulk Import</h2>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           Header row required:{' '}

@@ -156,7 +156,7 @@ export default function AssignmentDetailPage() {
       </div>
 
       {assignment.instructions && (
-        <div className="mt-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card">
+        <div className="mt-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 shadow-card">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Instructions</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{assignment.instructions}</p>
         </div>
@@ -185,7 +185,7 @@ export default function AssignmentDetailPage() {
       {isStudent && (
         <div className="mt-8">
           {mySubmission ? (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card">
+            <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Your Submission</h3>
                 <StatusBadge status={mySubmission.status} />
@@ -237,7 +237,7 @@ export default function AssignmentDetailPage() {
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-6 shadow-card">
+            <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-6 shadow-card">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Submit Your Work</h3>
               {assignment.status !== 'PUBLISHED' ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">This assignment is not open for submissions.</p>
@@ -293,7 +293,7 @@ export default function AssignmentDetailPage() {
           ) : (
             <div className="space-y-4">
               {submissions.map((sub) => (
-                <div key={sub.id} className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-4 shadow-card">
+                <div key={sub.id} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 shadow-card">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
