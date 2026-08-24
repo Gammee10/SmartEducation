@@ -8,6 +8,8 @@ import {
   inputStyles,
   LoadingState,
   PageHeader,
+  Banner,
+  Spinner,
 } from '../components/ui';
 import type { TimetableSlot, DayOfWeek, Course } from '../types';
 
@@ -116,13 +118,13 @@ export default function TimetablePage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {message}
+        <div className="mb-4">
+          <Banner tone="success" message={message} />
         </div>
       )}
 
@@ -132,12 +134,12 @@ export default function TimetablePage() {
           className="mb-6 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-5"
         >
           {formError && (
-            <p className="sm:col-span-2 lg:col-span-5 rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {formError}
-            </p>
+            <div className="sm:col-span-2 lg:col-span-5">
+              <Banner tone="error" message={formError} />
+            </div>
           )}
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Course</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Course</label>
             <select
               required
               value={form.courseId}
@@ -153,7 +155,7 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Day</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Day</label>
             <select
               value={form.dayOfWeek}
               onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value as DayOfWeek })}
@@ -167,7 +169,7 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Start Time</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Start Time</label>
             <input
               type="time"
               required
@@ -177,7 +179,7 @@ export default function TimetablePage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">End Time</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">End Time</label>
             <input
               type="time"
               required
@@ -187,7 +189,7 @@ export default function TimetablePage() {
             />
           </div>
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500">Room (optional)</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Room (optional)</label>
             <input
               type="text"
               value={form.room}
@@ -202,7 +204,8 @@ export default function TimetablePage() {
               disabled={saving}
               className={buttonPrimary}
             >
-              {saving ? 'Saving...' : 'Create Slot'}
+              {saving && <Spinner />}
+              {saving ? 'Saving…' : 'Create Slot'}
             </button>
           </div>
         </form>
@@ -236,14 +239,14 @@ export default function TimetablePage() {
                   {daySlots.map((slot) => (
                     <li
                       key={slot.id}
-                      className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6"
+                      className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/40 sm:px-6"
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {slot.startTime} – {slot.endTime}
                           {slot.room ? ` · ${slot.room}` : ''}
                         </p>
-                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                           {slot.course?.title} ({slot.course?.subject})
                           {slot.teacher?.user?.fullName ? ` · ${slot.teacher.user.fullName}` : ''}
                         </p>
@@ -251,7 +254,7 @@ export default function TimetablePage() {
                       {isAdmin && (
                         <button
                           onClick={() => handleDelete(slot.id)}
-                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors duration-150 hover:bg-red-50 hover:text-red-700"
+                          className="rounded-lg border border-transparent px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors duration-150 hover:border-red-200 hover:bg-red-50 dark:hover:border-red-500/30 dark:hover:bg-red-500/10"
                         >
                           Delete
                         </button>
