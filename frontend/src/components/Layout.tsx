@@ -3,21 +3,19 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
+import { Icon, type IconName } from './ui';
 
 interface NavItem {
   to: string;
   label: string;
   end?: boolean;
+  icon: IconName;
 }
 
-const navItems: NavItem[] = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/courses', label: 'Courses' },
-  { to: '/timetable', label: 'Timetable' },
-  { to: '/announcements', label: 'Announcements' },
-  { to: '/events', label: 'Events' },
-  { to: '/library', label: 'Library Catalog' },
-];
+interface NavGroup {
+  heading?: string;
+  items: NavItem[];
+}
 
 const ROLE_BADGE_STYLES: Record<string, string> = {
   ADMIN: 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400',
@@ -35,9 +33,11 @@ function getInitials(fullName?: string): string {
     .join('');
 }
 
-function BrandMark() {
+function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
-    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-card">
+    <span
+      className={`flex ${className} flex-shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-glow`}
+    >
       {/* Graduation cap */}
       <svg
         className="h-5 w-5"
@@ -57,11 +57,55 @@ function BrandMark() {
   );
 }
 
+function ThemeToggleButton() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="rounded-full p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+    >
+      {theme === 'dark' ? (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      ) : (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function Layout() {
   const { user, logout, isStudent, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -122,25 +166,62 @@ export default function Layout() {
     };
   }, [userMenuOpen]);
 
+  // Close the mobile drawer on Escape.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDrawerOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [drawerOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const items = [...navItems];
+  const overview: NavItem[] = [{ to: '/', label: 'Dashboard', end: true, icon: 'chart' }];
+
+  const learning: NavItem[] = [
+    { to: '/courses', label: 'Courses', icon: 'book' },
+    { to: '/timetable', label: 'Timetable', icon: 'calendar' },
+  ];
   if (isStudent && user?.student?.id) {
-    items.push({ to: `/students/${user.student.id}`, label: 'My Profile' });
-    items.push({ to: '/library/my-borrowing', label: 'My Borrowing' });
-  }
-  if (isAdmin) {
-    items.push({ to: '/admin/users', label: 'Users' });
-    items.push({ to: '/library/admin', label: 'Library Admin' });
+    learning.push({ to: `/students/${user.student.id}`, label: 'My Profile', icon: 'cap' });
   }
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `block rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+  const school: NavItem[] = [
+    { to: '/announcements', label: 'Announcements', icon: 'bell' },
+    { to: '/events', label: 'Events', icon: 'calendar' },
+  ];
+
+  const library: NavItem[] = [{ to: '/library', label: 'Library Catalog', icon: 'book' }];
+  if (isStudent && user?.student?.id) {
+    library.push({ to: '/library/my-borrowing', label: 'My Borrowing', icon: 'clipboard' });
+  }
+  if (isAdmin) {
+    library.push({ to: '/library/admin', label: 'Library Admin', icon: 'clipboard' });
+  }
+
+  const adminGroup: NavItem[] = isAdmin
+    ? [{ to: '/admin/users', label: 'Users', icon: 'users' }]
+    : [];
+
+  const groups: NavGroup[] = [
+    { items: overview },
+    { heading: 'Learning', items: learning },
+    { heading: 'School', items: school },
+    { heading: 'Library', items: library },
+    ...(adminGroup.length > 0 ? [{ heading: 'Administration', items: adminGroup }] : []),
+  ];
+
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
       isActive
-        ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400'
+        ? 'bg-brand text-white shadow-glow'
         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
     }`;
 
@@ -148,87 +229,167 @@ export default function Layout() {
     (user?.role && ROLE_BADGE_STYLES[user.role]) ||
     'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
 
+  const renderNavItems = (onNavigate?: () => void) =>
+    groups.map((group, gi) => (
+      <div key={group.heading ?? gi}>
+        {group.heading && (
+          <p className="mb-1.5 px-3 pt-4 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-600">
+            {group.heading}
+          </p>
+        )}
+        <div className="space-y-0.5">
+          {group.items.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={onNavigate}
+              className={navLinkClass}
+            >
+              <Icon name={item.icon} className="h-[18px] w-[18px]" />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      </div>
+    ));
+
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-800/50">
-      <nav className="sticky top-0 z-40 border-b border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3 lg:gap-8">
-              <Link
-                to="/"
-                className="flex flex-shrink-0 items-center gap-2.5"
-                aria-label="Smart Education home"
+    <div className="min-h-screen">
+      {/* ------------------------------------------------ desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900 lg:flex">
+        <div className="flex h-16 items-center gap-2.5 px-5">
+          <BrandMark />
+          <span className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Smart Education
+          </span>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4" aria-label="Main navigation">
+          {renderNavItems()}
+        </nav>
+
+        <div className="border-t border-gray-100 p-3 dark:border-gray-800">
+          <div className="flex items-center gap-3 rounded-xl p-2">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-xs font-bold text-white shadow-md">
+              {getInitials(user?.fullName)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100">
+                {user?.fullName}
+              </p>
+              <span
+                className={`mt-1 inline-block rounded-full px-2 py-px text-[10px] font-bold uppercase tracking-wide ${roleBadgeClass}`}
               >
+                {user?.role}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Log out"
+              aria-label="Log out"
+              className="rounded-lg p-2 text-gray-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-red-500/10"
+            >
+              <svg className="h-4.5 w-4.5 h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ------------------------------------------------ mobile drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setDrawerOpen(false)}
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
+          />
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-dropdown dark:bg-gray-900 animate-fade-up">
+            <div className="flex h-16 items-center justify-between px-4">
+              <div className="flex items-center gap-2.5">
                 <BrandMark />
-                <span className="hidden text-base font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:block">
+                <span className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
+                  Smart Education
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Close menu"
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4" aria-label="Mobile navigation">
+              {renderNavItems(() => setDrawerOpen(false))}
+            </nav>
+            <div className="border-t border-gray-100 p-3 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors duration-150 hover:bg-red-50 dark:hover:bg-red-500/10"
+              >
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  />
+                </svg>
+                Log out
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ------------------------------------------------ main column */}
+      <div className="flex min-h-screen flex-col lg:pl-64">
+        <header className="sticky top-0 z-30 border-b border-gray-200/70 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80">
+          <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                aria-label="Open menu"
+                className="rounded-xl p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link to="/" aria-label="Smart Education home" className="flex items-center gap-2">
+                <BrandMark className="h-8 w-8" />
+                <span className="text-sm font-extrabold tracking-tight text-gray-900 dark:text-white sm:block">
                   Smart Education
                 </span>
               </Link>
-              {/* Desktop navigation */}
-              <div className="hidden items-center gap-1 lg:flex">
-                {items.map((item) => (
-                  <NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
             </div>
+
+            <div className="hidden lg:block" />
+
             <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2">
-              {/* Theme toggle */}
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                className="rounded-full p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-              >
-                {theme === 'dark' ? (
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                )}
-              </button>
+              <ThemeToggleButton />
 
               {/* Notification bell */}
-              <Link
-                to="/notifications"
-                onClick={refreshUnread}
+              <button
+                type="button"
+                onClick={() => navigate('/notifications')}
                 className="relative rounded-full p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
                 aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -236,37 +397,35 @@ export default function Layout() {
                   />
                 </svg>
                 {unreadCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                  <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-950">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {/* User avatar + dropdown */}
-              <div className="relative hidden md:block" ref={userMenuRef}>
+              <div className="relative" ref={userMenuRef}>
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen((open) => !open)}
                   aria-haspopup="menu"
                   aria-expanded={userMenuOpen}
                   aria-label="User menu"
-                  className="flex items-center gap-2.5 rounded-full p-1 pr-2 transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-primary-500"
+                  className="flex items-center gap-2.5 rounded-full p-1 pr-2 transition-colors duration-150 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-800"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-sm font-semibold text-white shadow-card">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-sm font-bold text-white shadow-md">
                     {getInitials(user?.fullName)}
                   </span>
                   <span className="hidden text-left xl:block">
                     <span className="block max-w-[160px] truncate text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100">
                       {user?.fullName}
                     </span>
-                    <span
-                      className={`mt-0.5 inline-block rounded-full px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClass}`}
-                    >
+                    <span className="block text-[11px] font-medium leading-tight text-gray-400 dark:text-gray-500">
                       {user?.role}
                     </span>
                   </span>
                   <svg
-                    className={`h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500 transition-transform duration-150 ${
+                    className={`hidden h-4 w-4 flex-shrink-0 text-gray-400 transition-transform duration-150 sm:block ${
                       userMenuOpen ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -282,13 +441,13 @@ export default function Layout() {
                 {userMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl bg-white dark:bg-gray-900 p-1.5 shadow-dropdown ring-1 ring-black/5"
+                    className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl bg-white p-1.5 shadow-dropdown ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10"
                   >
-                    <div className="border-b border-gray-100 dark:border-gray-800 px-3 py-2.5">
+                    <div className="border-b border-gray-100 px-3 py-2.5 dark:border-gray-800">
                       <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.fullName}</p>
                       <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                       <span
-                        className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClass}`}
+                        className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${roleBadgeClass}`}
                       >
                         {user?.role}
                       </span>
@@ -297,16 +456,9 @@ export default function Layout() {
                       type="button"
                       role="menuitem"
                       onClick={handleLogout}
-                      className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
+                      className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:text-gray-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -318,83 +470,22 @@ export default function Layout() {
                   </div>
                 )}
               </div>
-
-              {/* Mobile hamburger */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="Toggle menu"
-                aria-expanded={menuOpen}
-                className="rounded-lg p-2 text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
-              >
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  {menuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="border-t border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 px-4 pb-4 pt-3 lg:hidden">
-            <div className="space-y-1">
-              {items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  onClick={() => setMenuOpen(false)}
-                  className={linkClass}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-            <div className="mt-3 flex items-center gap-3 border-t border-gray-100 dark:border-gray-800 pt-3 md:hidden">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-semibold text-white">
-                {getInitials(user?.fullName)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.fullName}</p>
-                <span
-                  className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClass}`}
-                >
-                  {user?.role}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex-shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
-              >
-                Log out
-              </button>
-            </div>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <Outlet />
+        </main>
+
+        <footer className="border-t border-gray-200/70 bg-white dark:border-gray-800 dark:bg-gray-950">
+          <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 lg:px-8">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              © {new Date().getFullYear()} Smart Education System · Ethiopian High Schools
+            </p>
           </div>
-        )}
-      </nav>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <Outlet />
-      </main>
-
-      <footer className="border-t border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            © {new Date().getFullYear()} Smart Education System · Ethiopian High Schools
-          </p>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
