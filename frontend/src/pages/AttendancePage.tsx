@@ -171,7 +171,7 @@ export default function AttendancePage() {
       {loading ? (
         <LoadingState label="Loading attendance…" />
       ) : !data ? null : data.enrolledStudents.length === 0 ? (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
+        <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
           <EmptyState
             icon="users"
             title="No students enrolled"

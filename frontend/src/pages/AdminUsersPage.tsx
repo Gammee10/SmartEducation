@@ -285,7 +285,7 @@ export default function AdminUsersPage() {
       {loading ? (
         <LoadingState label="Loading users…" />
       ) : users.length === 0 ? (
-        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
+        <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
           <EmptyState
             icon="users"
             title="No users found"
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
           />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
+        <div className="overflow-x-auto rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
