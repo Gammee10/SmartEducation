@@ -101,7 +101,7 @@ export function PageHeader({
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] ${className}`}
+      className={`rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] transition-colors duration-300 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.06] ${className}`}
     >
       {children}
     </div>
@@ -153,11 +153,11 @@ export function StatCard({
 }) {
   const gradient = STAT_TONES[Math.abs(tone) % STAT_TONES.length];
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
+    <div className="group relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900 dark:ring-1 dark:ring-white/[0.06]">
       {/* Soft corner glow */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.15]`}
+        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.15] dark:opacity-[0.16] dark:group-hover:opacity-[0.28]`}
       />
       <div className="relative flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
@@ -322,7 +322,7 @@ export function LinkButton({
 /* ------------------------------ Form controls ----------------------------- */
 
 export const inputStyles =
-  'block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all duration-150 hover:border-gray-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:hover:border-gray-600 dark:focus:border-primary-500 dark:disabled:bg-gray-800/50';
+  'block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all duration-150 hover:border-gray-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:placeholder-gray-500 dark:hover:border-gray-600 dark:focus:border-primary-500 dark:disabled:bg-gray-800/50';
 
 export const selectStyles = inputStyles;
 

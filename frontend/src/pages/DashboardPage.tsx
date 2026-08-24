@@ -53,7 +53,7 @@ function CountStatCard({
     <div className="group animate-fade-up relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.16]`}
+        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.16] dark:opacity-[0.16] dark:group-hover:opacity-[0.28]`}
       />
       <div className="relative flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
@@ -449,6 +449,11 @@ export default function DashboardPage() {
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-brand dark:hidden"
+        />
+        {/* Subtle dark-mode sheen */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 hidden bg-gradient-to-br from-primary-500/10 via-transparent to-indigo-500/10 dark:block"
         />
         <div
           aria-hidden="true"

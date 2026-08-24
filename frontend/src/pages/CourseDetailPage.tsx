@@ -347,6 +347,8 @@ export default function CourseDetailPage() {
       <div className="relative overflow-hidden rounded-2xl bg-primary-700 shadow-glow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
         {/* Gradient layer — light mode only */}
         <div aria-hidden="true" className="absolute inset-0 bg-brand dark:hidden" />
+        {/* Subtle dark-mode sheen */}
+        <div aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-br from-primary-500/10 via-transparent to-indigo-500/10 dark:block" />
         {/* Decorative shapes */}
         <div
           className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl dark:hidden"

@@ -224,7 +224,7 @@ export default function Layout() {
     `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
       isActive
         ? 'bg-brand bg-primary-600 text-white shadow-glow'
-        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-100'
     }`;
 
   const roleBadgeClass =
@@ -259,7 +259,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen">
       {/* ------------------------------------------------ desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-gray-200/80 bg-white dark:border-gray-800 dark:bg-gray-900 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-gray-200/80 bg-white transition-colors duration-300 dark:border-gray-800/80 dark:bg-gray-950 lg:flex">
         <div className="flex h-16 items-center gap-2.5 px-5">
           <BrandMark />
           <span className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -272,7 +272,7 @@ export default function Layout() {
         </nav>
 
         <div className="border-t border-gray-100 p-3 dark:border-gray-800">
-          <div className="flex items-center gap-3 rounded-xl p-2">
+          <div className="flex items-center gap-3 rounded-xl p-2 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-900">
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-xs font-bold text-white shadow-md">
               {getInitials(user?.fullName)}
             </span>
@@ -314,7 +314,7 @@ export default function Layout() {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
           />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-dropdown dark:bg-gray-900 animate-fade-up">
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-dropdown dark:bg-gray-950 animate-fade-up">
             <div className="flex h-16 items-center justify-between px-4">
               <div className="flex items-center gap-2.5">
                 <BrandMark />
