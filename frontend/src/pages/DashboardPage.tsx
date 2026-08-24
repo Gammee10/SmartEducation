@@ -11,13 +11,210 @@ import {
   Icon,
   LoadingState,
   PageHeader,
-  StatCard,
 } from '../components/ui';
+import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type {
   AdminDashboardData,
   TeacherDashboardData,
   StudentDashboardData,
 } from '../types';
+
+function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+/* ------------------------------------------------- Interactive cards --- */
+
+function CountStatCard({
+  label,
+  value,
+  suffix = '',
+  decimals = 0,
+  icon,
+}: {
+  label: string;
+  value: number;
+  suffix?: string;
+  decimals?: number;
+  icon: 'book' | 'users' | 'cap' | 'clipboard' | 'chart';
+}) {
+  return (
+    <div className="animate-fade-up rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+          <Icon name={icon} />
+        </span>
+      </div>
+      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+        <AnimatedNumber value={value} decimals={decimals} suffix={suffix} />
+      </p>
+    </div>
+  );
+}
+
+function RingStatCard({
+  label,
+  percent,
+  caption,
+}: {
+  label: string;
+  percent: number;
+  caption: string;
+}) {
+  return (
+    <div className="animate-fade-up rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <div className="mt-2 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+            <AnimatedNumber value={percent} suffix="%" />
+          </p>
+          <p className="mt-1 text-xs text-gray-400">{caption}</p>
+        </div>
+        <ProgressRing percent={percent} size={64} />
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------- Interactive course list --- */
+
+function InteractiveCourseList<
+  T extends { id: string; title: string; subject: string; gradeLevel?: string }
+>({
+  title,
+  courses,
+  renderMeta,
+  emptyTitle,
+  emptyMessage,
+}: {
+  title: string;
+  courses: T[];
+  renderMeta?: (course: T) => string | undefined;
+  emptyTitle: string;
+  emptyMessage: string;
+}) {
+  const [query, setQuery] = useState('');
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_COUNT = 4;
+
+  const normalized = query.trim().toLowerCase();
+  const filtered = normalized
+    ? courses.filter(
+        (c) =>
+          c.title.toLowerCase().includes(normalized) ||
+          c.subject.toLowerCase().includes(normalized) ||
+          c.gradeLevel?.toLowerCase().includes(normalized)
+      )
+    : courses;
+  const visible = expanded ? filtered : filtered.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = filtered.length - visible.length;
+
+  if (courses.length === 0) {
+    return (
+      <Card className="animate-fade-up mt-8">
+        <CardHeader title={title} />
+        <EmptyState icon="book" title={emptyTitle} message={emptyMessage} />
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="animate-fade-up mt-8">
+      <CardHeader
+        title={title}
+        subtitle={`${courses.length} course${courses.length === 1 ? '' : 's'}`}
+        actions={
+          courses.length > 3 ? (
+            <div className="relative">
+              <svg
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filter…"
+                aria-label={`Filter ${title.toLowerCase()}`}
+                className="block w-40 rounded-lg border border-gray-300 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 placeholder-gray-400 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-52"
+              />
+            </div>
+          ) : undefined
+        }
+      />
+
+      {filtered.length === 0 ? (
+        <EmptyState icon="search" title="No matching courses" message="Try a different search term." />
+      ) : (
+        <>
+          <ul className="divide-y divide-gray-100">
+            {visible.map((c, index) => (
+              <li key={c.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
+                <Link
+                  to={`/courses/${c.id}`}
+                  className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700">
+                      {c.title}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {c.subject} · {c.gradeLevel}
+                    </p>
+                  </div>
+                  {renderMeta && (
+                    <span className="flex-shrink-0 text-xs text-gray-500">{renderMeta(c)}</span>
+                  )}
+                  <svg
+                    className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60"
+            >
+              Show all {filtered.length} courses
+            </button>
+          )}
+          {expanded && filtered.length > COLLAPSED_COUNT && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-gray-500 transition-colors duration-150 hover:bg-gray-50"
+            >
+              Show fewer
+            </button>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/* ------------------------------------------------- Admin dashboard --- */
 
 function AdminDashboard() {
   const [data, setData] = useState<AdminDashboardData | null>(null);
@@ -41,22 +238,28 @@ function AdminDashboard() {
   ];
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
-        <StatCard label="Active Courses" value={s.courses} icon="book" />
-        <StatCard label="Students" value={s.students} icon="users" />
-        <StatCard label="Teachers" value={s.teachers} icon="cap" />
-        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} icon="clipboard" />
-        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} icon="chart" />
-        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} icon="chart" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <CountStatCard label="Active Courses" value={s.courses} icon="book" />
+        <CountStatCard label="Students" value={s.students} icon="users" />
+        <CountStatCard label="Teachers" value={s.teachers} icon="cap" />
+        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="school-wide today" />
+        <CountStatCard
+          label="Avg Assignment Score"
+          value={Number(s.avgAssignmentScore) || 0}
+          decimals={1}
+          icon="chart"
+        />
+        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="across all quizzes" />
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold text-gray-900">Quick Links</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
-        {quickLinks.map((l) => (
+        {quickLinks.map((l, index) => (
           <Link
             key={l.to}
             to={l.to}
-            className="group flex items-start gap-4 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+            className="group animate-fade-up flex items-start gap-4 rounded-xl border border-gray-200/80 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+            style={{ animationDelay: `${index * 60}ms` }}
           >
             <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100">
               <Icon name={l.icon} />
@@ -71,6 +274,8 @@ function AdminDashboard() {
     </>
   );
 }
+
+/* ----------------------------------------------- Teacher dashboard --- */
 
 function TeacherDashboard() {
   const [data, setData] = useState<TeacherDashboardData | null>(null);
@@ -90,57 +295,23 @@ function TeacherDashboard() {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
-        <StatCard label="My Courses" value={s.courses} icon="book" />
-        <StatCard label="Enrolled Students" value={s.students} icon="users" />
-        <StatCard label="Quizzes" value={s.quizzes} icon="clipboard" />
+        <CountStatCard label="My Courses" value={s.courses} icon="book" />
+        <CountStatCard label="Enrolled Students" value={s.students} icon="users" />
+        <CountStatCard label="Quizzes" value={s.quizzes} icon="clipboard" />
       </div>
 
-      <Card className="mt-8">
-        <CardHeader title="My Courses" />
-        {data.courses.length === 0 ? (
-          <EmptyState
-            icon="book"
-            title="No courses yet"
-            message="Courses you teach will appear here once they are created."
-          />
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {data.courses.map((c) => (
-              <li key={c.id}>
-                <Link
-                  to={`/courses/${c.id}`}
-                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{c.title}</p>
-                    <p className="text-xs text-gray-500">
-                      {c.subject} · {c.gradeLevel}
-                    </p>
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-4 text-xs text-gray-500">
-                    <span>{c.enrollments} students</span>
-                    <span className="hidden sm:inline">{c.assignments} assignments</span>
-                    <span className="hidden sm:inline">{c.quizzes} quizzes</span>
-                    <svg
-                      className="h-4 w-4 text-gray-300 transition-colors duration-150 hover:text-primary-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      aria-hidden="true"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <InteractiveCourseList
+        title="My Courses"
+        courses={data.courses}
+        renderMeta={(c) =>
+          `${c.enrollments} students · ${c.assignments} assignments · ${c.quizzes} quizzes`
+        }
+        emptyTitle="No courses yet"
+        emptyMessage="Courses you teach will appear here once they are created."
+      />
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5 sm:gap-5">
-        <Card>
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
+        <Card className="animate-fade-up">
           <CardHeader title="Recent Submissions" />
           {data.recentSubmissions.length === 0 ? (
             <EmptyState
@@ -150,8 +321,12 @@ function TeacherDashboard() {
             />
           ) : (
             <ul className="divide-y divide-gray-100">
-              {data.recentSubmissions.map((sub) => (
-                <li key={sub.id} className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
+              {data.recentSubmissions.map((sub, index) => (
+                <li
+                  key={sub.id}
+                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  style={{ animationDelay: `${index * 40}ms` }}
+                >
                   <div>
                     <p className="text-sm font-medium text-gray-900">{sub.student?.user?.fullName}</p>
                     <p className="text-xs text-gray-500">Assignment #{sub.assignmentId.slice(0, 8)}</p>
@@ -163,7 +338,7 @@ function TeacherDashboard() {
           )}
         </Card>
 
-        <Card>
+        <Card className="animate-fade-up">
           <CardHeader title="Recent Grades" />
           {data.recentGrades.length === 0 ? (
             <EmptyState
@@ -173,10 +348,14 @@ function TeacherDashboard() {
             />
           ) : (
             <ul className="divide-y divide-gray-100">
-              {data.recentGrades.map((sub) => (
-                <li key={sub.id} className="flex items-center justify-between gap-3 px-5 py-3 sm:px-6">
-                  <p className="text-sm text-gray-900">{sub.student?.user?.fullName}</p>
-                  <span className="inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700">
+              {data.recentGrades.map((sub, index) => (
+                <li
+                  key={sub.id}
+                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  style={{ animationDelay: `${index * 40}ms` }}
+                >
+                  <p className="min-w-0 truncate text-sm text-gray-900">{sub.student?.user?.fullName}</p>
+                  <span className="inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700">
                     {sub.score ?? '-'}
                   </span>
                 </li>
@@ -188,6 +367,8 @@ function TeacherDashboard() {
     </>
   );
 }
+
+/* ----------------------------------------------- Student dashboard --- */
 
 function StudentDashboard() {
   const [data, setData] = useState<StudentDashboardData | null>(null);
@@ -206,51 +387,24 @@ function StudentDashboard() {
   const s = data.stats;
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
-        <StatCard label="My Courses" value={s.enrollments} icon="book" />
-        <StatCard label="Attendance Rate" value={`${s.attendanceRate}%`} icon="clipboard" />
-        <StatCard label="Avg Assignment Score" value={s.avgAssignmentScore} icon="chart" />
-        <StatCard label="Avg Quiz Score" value={`${s.avgQuizScore}%`} icon="chart" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+        <CountStatCard label="My Courses" value={s.enrollments} icon="book" />
+        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="across all classes" />
+        <CountStatCard
+          label="Avg Assignment Score"
+          value={Number(s.avgAssignmentScore) || 0}
+          decimals={1}
+          icon="chart"
+        />
+        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="keep it up!" />
       </div>
 
-      <Card className="mt-8">
-        <CardHeader title="My Courses" />
-        {data.courses.length === 0 ? (
-          <EmptyState
-            icon="book"
-            title="Not enrolled in any courses yet"
-            message="Browse the course catalog to see what's available this term."
-          />
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {data.courses.map((c) => (
-              <li key={c.id}>
-                <Link
-                  to={`/courses/${c.id}`}
-                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{c.title}</p>
-                    <p className="text-xs text-gray-500">
-                      {c.subject} · {c.gradeLevel}
-                    </p>
-                  </div>
-                  <svg
-                    className="h-4 w-4 flex-shrink-0 text-gray-300 transition-colors duration-150 hover:text-primary-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <InteractiveCourseList
+        title="My Courses"
+        courses={data.courses}
+        emptyTitle="Not enrolled in any courses yet"
+        emptyMessage="Browse the course catalog to see what's available this term."
+      />
     </>
   );
 }
@@ -258,18 +412,24 @@ function StudentDashboard() {
 export default function DashboardPage() {
   const { user, isAdmin, isTeacher, isStudent } = useAuth();
 
+  const hour = new Date().getHours();
+  const greeting = greetingForHour(hour);
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const roleLine = isAdmin
+    ? "Here's an overview of your school today."
+    : isTeacher
+      ? "Here's what's happening across your classes."
+      : "Here's a snapshot of your learning progress.";
+
   return (
     <div>
-      <PageHeader
-        title={`Welcome back, ${user?.fullName}`}
-        description={
-          isAdmin
-            ? "Here's an overview of your school today."
-            : isTeacher
-              ? "Here's what's happening across your classes."
-              : "Here's a snapshot of your learning progress."
-        }
-      />
+      <PageHeader title={`${greeting}, ${user?.fullName}`} description={`${today} · ${roleLine}`} />
 
       {isAdmin && <AdminDashboard />}
       {isTeacher && <TeacherDashboard />}

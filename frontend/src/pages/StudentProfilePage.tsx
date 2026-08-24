@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import {
@@ -8,17 +8,30 @@ import {
   ErrorState,
   Icon,
   LoadingState,
-  PageHeader,
-  StatCard,
 } from '../components/ui';
+import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type { StudentSummary, StudentAttendanceView, AttendanceStatus } from '../types';
 
-const statusStyles: Record<AttendanceStatus, string> = {
-  PRESENT: 'bg-green-50 text-green-700',
-  ABSENT: 'bg-red-50 text-red-700',
-  LATE: 'bg-yellow-50 text-yellow-700',
-  EXCUSED: 'bg-blue-50 text-blue-700',
+const STATUS_META: Record<AttendanceStatus, { bar: string; pill: string }> = {
+  PRESENT: { bar: 'bg-emerald-500', pill: 'bg-green-50 text-green-700' },
+  LATE: { bar: 'bg-amber-400', pill: 'bg-yellow-50 text-yellow-700' },
+  ABSENT: { bar: 'bg-red-500', pill: 'bg-red-50 text-red-700' },
+  EXCUSED: { bar: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700' },
 };
+
+const ALL_STATUSES: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'];
+
+function getInitials(name?: string): string {
+  if (!name) return '?';
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
+
+type ProfileTab = 'courses' | 'attempts' | 'attendance';
 
 export default function StudentProfilePage() {
   const { id: studentId } = useParams<{ id: string }>();
@@ -27,6 +40,10 @@ export default function StudentProfilePage() {
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [attendanceError, setAttendanceError] = useState('');
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('courses');
+  const [statusFilter, setStatusFilter] = useState<AttendanceStatus | 'ALL'>('ALL');
+  const [showAllRecords, setShowAllRecords] = useState(false);
+  const VISIBLE_RECORDS = 8;
 
   useEffect(() => {
     if (!studentId) return;
@@ -47,29 +64,145 @@ export default function StudentProfilePage() {
       .finally(() => setAttendanceLoading(false));
   }, [studentId]);
 
+  const statusCounts = useMemo(() => {
+    const counts = new Map<AttendanceStatus, number>();
+    (attendance?.attendance || []).forEach((a) => {
+      counts.set(a.status, (counts.get(a.status) || 0) + 1);
+    });
+    return counts;
+  }, [attendance]);
+
+  const totalRecords = attendance?.attendance.length ?? 0;
+
   if (error) return <ErrorState message={error} />;
   if (!summary) return <LoadingState label="Loading profile…" />;
 
   const s = summary.student;
+  const initials = getInitials(s.user.fullName);
 
   return (
     <div>
-      <PageHeader
-        title={s.user.fullName}
-        description={`${s.studentCode} · Grade ${s.gradeLevel}${
-          s.section ? ` · Section ${s.section}` : ''
-        } · ${s.user.email}`}
-      />
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-2xl bg-primary-700 px-6 py-8 shadow-card sm:px-10">
+        {/* Decorative shapes */}
+        <div
+          className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-primary-500/40"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-primary-600/60 blur-3xl"
+          aria-hidden="true"
+        />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-        <StatCard label="Enrolled Courses" value={summary.stats.enrollments} icon="book" />
-        <StatCard label="Attendance Rate" value={`${summary.stats.attendanceRate}%`} icon="clipboard" />
-        <StatCard label="Avg Assignment Score" value={summary.stats.avgAssignmentScore} icon="chart" />
-        <StatCard label="Avg Quiz Score" value={`${summary.stats.avgQuizScore}%`} icon="cap" />
+        <div className="relative flex flex-wrap items-center gap-5">
+          <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/10 text-xl font-bold text-white ring-1 ring-inset ring-white/25">
+            {initials}
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              {s.user.fullName}
+            </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                {s.studentCode}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                Grade {s.gradeLevel}
+              </span>
+              {s.section && (
+                <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                  Section {s.section}
+                </span>
+              )}
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
+                {s.user.email}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
-        <Card>
+      {/* Animated stats strip — overlaps the hero */}
+      <div className="-mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+            <Icon name="book" className="h-[18px] w-[18px]" />
+          </span>
+          <div>
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+              <AnimatedNumber value={summary.stats.enrollments} />
+            </p>
+            <p className="mt-1 text-xs font-medium text-gray-500">Enrolled Courses</p>
+          </div>
+        </div>
+
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '60ms' }}>
+          <div>
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+              <AnimatedNumber value={summary.stats.attendanceRate} suffix="%" />
+            </p>
+            <p className="mt-1 text-xs font-medium text-gray-500">Attendance Rate</p>
+          </div>
+          <ProgressRing percent={summary.stats.attendanceRate} size={52} strokeWidth={6} />
+        </div>
+
+        <div className="animate-fade-up flex items-center gap-3.5 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '120ms' }}>
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+            <Icon name="chart" className="h-[18px] w-[18px]" />
+          </span>
+          <div>
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+              <AnimatedNumber value={Number(summary.stats.avgAssignmentScore) || 0} decimals={1} />
+            </p>
+            <p className="mt-1 text-xs font-medium text-gray-500">Avg Assignment Score</p>
+          </div>
+        </div>
+
+        <div className="animate-fade-up flex items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card sm:p-5" style={{ animationDelay: '180ms' }}>
+          <div>
+            <p className="text-xl font-bold leading-none tracking-tight text-gray-900 tabular-nums">
+              <AnimatedNumber value={summary.stats.avgQuizScore} suffix="%" />
+            </p>
+            <p className="mt-1 text-xs font-medium text-gray-500">Avg Quiz Score</p>
+          </div>
+          <ProgressRing percent={summary.stats.avgQuizScore} size={52} strokeWidth={6} />
+        </div>
+      </div>
+
+      {/* Section tabs */}
+      <div className="mt-8 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
+        {(
+          [
+            { key: 'courses' as const, label: 'Courses', count: summary.courses.length },
+            { key: 'attempts' as const, label: 'Quiz Attempts', count: summary.recentAttempts.length },
+            { key: 'attendance' as const, label: 'Attendance', count: totalRecords },
+          ]
+        ).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            aria-pressed={activeTab === t.key}
+            className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
+              activeTab === t.key
+                ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            {t.label}
+            <span
+              className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
+                activeTab === t.key ? 'bg-primary-50 text-primary-700' : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ----------------------------------------------- Courses panel --- */}
+      {activeTab === 'courses' && (
+        <Card className="mt-6">
           <CardHeader title="Courses" subtitle="Active enrollments this term" />
           {summary.courses.length === 0 ? (
             <EmptyState
@@ -79,9 +212,13 @@ export default function StudentProfilePage() {
             />
           ) : (
             <ul className="divide-y divide-gray-100">
-              {summary.courses.map((c) => (
-                <li key={c.id} className="flex items-start gap-3 px-5 py-3.5 sm:px-6">
-                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+              {summary.courses.map((c, index) => (
+                <li
+                  key={c.id}
+                  className="animate-fade-up flex items-start gap-3 px-5 py-3.5 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                  style={{ animationDelay: `${index * 40}ms` }}
+                >
+                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
                     <Icon name="book" className="h-4 w-4" />
                   </span>
                   <div>
@@ -95,8 +232,11 @@ export default function StudentProfilePage() {
             </ul>
           )}
         </Card>
+      )}
 
-        <Card>
+      {/* --------------------------------------- Recent attempts panel --- */}
+      {activeTab === 'attempts' && (
+        <Card className="mt-6">
           <CardHeader title="Recent Quiz Attempts" subtitle="Most recent submissions first" />
           {summary.recentAttempts.length === 0 ? (
             <EmptyState
@@ -106,72 +246,187 @@ export default function StudentProfilePage() {
             />
           ) : (
             <ul className="divide-y divide-gray-100">
-              {summary.recentAttempts.map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-4 px-5 py-3.5 sm:px-6">
-                  <p className="min-w-0 truncate text-sm text-gray-900">{a.quiz?.title || 'Quiz'}</p>
-                  <span className="inline-flex h-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2.5 text-xs font-bold text-primary-700">
-                    {a.score ?? '-'} / {a.maxScore ?? '-'}
-                  </span>
-                </li>
-              ))}
+              {summary.recentAttempts.map((a, index) => {
+                const pct =
+                  a.score !== null && a.score !== undefined && a.maxScore
+                    ? Math.round((a.score / a.maxScore) * 100)
+                    : null;
+                return (
+                  <li
+                    key={a.id}
+                    className="animate-fade-up px-5 py-4 transition-colors duration-150 hover:bg-gray-50 sm:px-6"
+                    style={{ animationDelay: `${index * 40}ms` }}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="min-w-0 truncate text-sm font-medium text-gray-900">
+                        {a.quiz?.title || 'Quiz'}
+                      </p>
+                      <span className="inline-flex h-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2.5 text-xs font-bold text-primary-700">
+                        {a.score ?? '-'} / {a.maxScore ?? '-'}
+                      </span>
+                    </div>
+                    {pct !== null && (
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className={`h-full rounded-full transition-[width] duration-700 ease-out ${
+                            pct >= 80
+                              ? 'bg-emerald-500'
+                              : pct >= 60
+                                ? 'bg-primary-500'
+                                : pct >= 40
+                                  ? 'bg-amber-500'
+                                  : 'bg-red-500'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Card>
-      </div>
+      )}
 
-      <Card className="mt-8">
-        <CardHeader title="Attendance History" />
-        {attendanceLoading ? (
-          <LoadingState label="Loading attendance…" />
-        ) : attendanceError ? (
-          <div className="px-5 py-6 sm:px-6">
-            <ErrorState message={attendanceError} />
-          </div>
-        ) : !attendance || attendance.attendance.length === 0 ? (
-          <EmptyState
-            icon="clipboard"
-            title="No attendance records yet"
-            message="Attendance records will appear here once teachers start taking the register."
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
-                    Date
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
-                    Course
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {attendance.attendance.map((a) => (
-                  <tr key={a.id} className="transition-colors duration-150 hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-5 py-3 text-sm text-gray-900 sm:px-6">
-                      {new Date(a.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-3 text-sm text-gray-700 sm:px-6">{a.course?.title}</td>
-                    <td className="px-5 py-3 sm:px-6">
-                      <span
-                        className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
-                          statusStyles[a.status]
-                        }`}
-                      >
-                        {a.status}
+      {/* --------------------------------------- Attendance history panel */}
+      {activeTab === 'attendance' && (
+        <Card className="mt-6">
+          <CardHeader title="Attendance History" subtitle="Filter by status to drill into specific records" />
+
+          {attendanceLoading ? (
+            <LoadingState label="Loading attendance…" />
+          ) : attendanceError ? (
+            <div className="px-5 py-6 sm:px-6">
+              <ErrorState message={attendanceError} />
+            </div>
+          ) : totalRecords === 0 ? (
+            <EmptyState
+              icon="clipboard"
+              title="No attendance records yet"
+              message="Attendance records will appear here once teachers start taking the register."
+            />
+          ) : (
+            <>
+              {/* Distribution bar */}
+              <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+                <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                  {ALL_STATUSES.filter((st) => (statusCounts.get(st) || 0) > 0).map((st) => (
+                    <div
+                      key={st}
+                      className={STATUS_META[st].bar}
+                      style={{ width: `${((statusCounts.get(st) || 0) / totalRecords) * 100}%` }}
+                      title={`${st}: ${statusCounts.get(st)}`}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
+                  {ALL_STATUSES.filter((st) => (statusCounts.get(st) || 0) > 0).map((st) => (
+                    <span key={st} className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                      <span className={`h-2 w-2 rounded-full ${STATUS_META[st].bar}`} />
+                      {st.charAt(0) + st.slice(1).toLowerCase()}:{' '}
+                      <strong className="text-gray-700">{statusCounts.get(st)}</strong>
+                    </span>
+                  ))}
+                  <span className="text-xs text-gray-400">Total: {totalRecords}</span>
+                </div>
+              </div>
+
+              {/* Status filter pills */}
+              <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-5 py-3 sm:px-6">
+                {(['ALL', ...ALL_STATUSES] as Array<AttendanceStatus | 'ALL'>).map((option) => {
+                  const count = option === 'ALL' ? totalRecords : statusCounts.get(option) || 0;
+                  if (count === 0 && option !== 'ALL') return null;
+                  const selected = statusFilter === option;
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => setStatusFilter(option)}
+                      aria-pressed={selected}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
+                        selected
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {option === 'ALL' ? 'All' : option.charAt(0) + option.slice(1).toLowerCase()}
+                      <span className={`ml-1.5 ${selected ? 'text-primary-100' : 'text-gray-400'}`}>
+                        {count}
                       </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Records table */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                        Date
+                      </th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                        Course
+                      </th>
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:px-6">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {(attendance?.attendance || [])
+                      .filter((a) => statusFilter === 'ALL' || a.status === statusFilter)
+                      .slice(0, showAllRecords ? undefined : VISIBLE_RECORDS)
+                      .map((a) => (
+                        <tr key={a.id} className="transition-colors duration-150 hover:bg-gray-50">
+                          <td className="whitespace-nowrap px-5 py-3 text-sm text-gray-900 sm:px-6">
+                            {new Date(a.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-5 py-3 text-sm text-gray-700 sm:px-6">{a.course?.title}</td>
+                          <td className="px-5 py-3 sm:px-6">
+                            <span
+                              className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
+                                STATUS_META[a.status].pill
+                              }`}
+                            >
+                              {a.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+
+                {(() => {
+                  const filteredCount = (attendance?.attendance || []).filter(
+                    (a) => statusFilter === 'ALL' || a.status === statusFilter
+                  ).length;
+                  if (filteredCount === 0) {
+                    return (
+                      <p className="px-5 py-8 text-center text-sm text-gray-500 sm:px-6">
+                        No records for this status.
+                      </p>
+                    );
+                  }
+                  if (filteredCount > VISIBLE_RECORDS) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllRecords(!showAllRecords)}
+                        className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60"
+                      >
+                        {showAllRecords ? 'Show fewer' : `Show all ${filteredCount} records`}
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            </>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
