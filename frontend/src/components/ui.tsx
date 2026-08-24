@@ -24,6 +24,9 @@ const ICON_PATHS: Record<string, string> = {
   bell: 'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
   search:
     'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+  pin: 'M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z',
+  check: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  plus: 'M12 4v16m8-8H4',
 };
 
 export type IconName = keyof typeof ICON_PATHS;
@@ -43,6 +46,26 @@ export function Icon({ name, className = 'h-5 w-5' }: { name: IconName; classNam
   );
 }
 
+/* --------------------------------- Spinner -------------------------------- */
+
+export function Spinner({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      className={`animate-spin ${className}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
 /* ------------------------------- Page header ------------------------------ */
 
 export function PageHeader({
@@ -58,7 +81,7 @@ export function PageHeader({
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{description}</p>}
+        {description && <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-3">{actions}</div>}
     </div>
@@ -90,7 +113,7 @@ export function CardHeader({
     <div className="flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-800 px-5 py-4 sm:px-6">
       <div>
         <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{subtitle}</p>}
+        {subtitle && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
       </div>
       {actions && <div className="flex-shrink-0">{actions}</div>}
     </div>
@@ -113,7 +136,7 @@ export function StatCard({
   return (
     <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
         {icon && (
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
             <Icon name={icon} />
@@ -141,12 +164,58 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
         <Icon name={icon} className="h-6 w-6" />
       </span>
       <p className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>
-      {message && <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{message}</p>}
+      {message && <p className="mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400">{message}</p>}
       {action && <div className="mt-4">{action}</div>}
+    </div>
+  );
+}
+
+/* -------------------------------- Banner ---------------------------------- */
+
+const BANNER_TONES: Record<'success' | 'error' | 'warning' | 'info', { box: string; icon: string; title: string }> = {
+  success: {
+    box: 'border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10',
+    icon: 'text-green-600 dark:text-green-400',
+    title: 'text-green-800 dark:text-green-300',
+  },
+  error: {
+    box: 'border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10',
+    icon: 'text-red-600 dark:text-red-400',
+    title: 'text-red-800 dark:text-red-300',
+  },
+  warning: {
+    box: 'border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10',
+    icon: 'text-amber-600 dark:text-amber-400',
+    title: 'text-amber-800 dark:text-amber-300',
+  },
+  info: {
+    box: 'border-primary-200 bg-primary-50 dark:border-primary-500/30 dark:bg-primary-500/10',
+    icon: 'text-primary-600 dark:text-primary-400',
+    title: 'text-primary-800 dark:text-primary-300',
+  },
+};
+
+export function Banner({
+  tone = 'info',
+  message,
+  children,
+}: {
+  tone?: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  children?: ReactNode;
+}) {
+  const tones = BANNER_TONES[tone];
+  return (
+    <div role="alert" className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${tones.box}`}>
+      <Icon name={tone === 'error' || tone === 'warning' ? 'warning' : 'check'} className={`mt-0.5 h-5 w-5 flex-shrink-0 ${tones.icon}`} />
+      <p className={`text-sm ${tones.title}`}>
+        {message}
+        {children}
+      </p>
     </div>
   );
 }
@@ -155,12 +224,12 @@ export function EmptyState({
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-6 py-10 text-center">
-      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500">
+    <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center dark:border-red-500/30 dark:bg-red-500/10">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-500/20 dark:text-red-400">
         <Icon name="warning" className="h-6 w-6" />
       </span>
-      <p className="mt-4 text-sm font-semibold text-red-800">Something went wrong</p>
-      <p className="mt-1 text-sm text-red-600">{message}</p>
+      <p className="mt-4 text-sm font-semibold text-red-800 dark:text-red-300">Something went wrong</p>
+      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{message}</p>
     </div>
   );
 }
@@ -170,20 +239,27 @@ export function ErrorState({ message }: { message: string }) {
 export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   return (
     <div className="flex items-center justify-center px-6 py-12" role="status" aria-live="polite">
-      <svg
-        className="h-6 w-6 animate-spin text-primary-600"
-        fill="none"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-      <span className="ml-3 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
+      <Spinner className="h-6 w-6 text-primary-600" />
+      <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">{label}</span>
+    </div>
+  );
+}
+
+/* -------------------------------- Skeletons ------------------------------- */
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-gray-200/80 dark:bg-gray-700/60 ${className}`} aria-hidden="true" />;
+}
+
+export function SkeletonCard() {
+  return (
+    <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-card dark:border-gray-700/60 dark:bg-gray-900 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-9 w-9 rounded-lg" />
+      </div>
+      <Skeleton className="mt-3 h-8 w-16" />
+      <Skeleton className="mt-2 h-3 w-32" />
     </div>
   );
 }
@@ -218,7 +294,7 @@ export function LinkButton({
 /* ------------------------------ Form controls ----------------------------- */
 
 export const inputStyles =
-  'block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 dark:bg-gray-800/50 disabled:text-gray-500 dark:text-gray-400 dark:text-gray-500';
+  'block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 dark:bg-gray-900 dark:disabled:bg-gray-800/50 dark:disabled:text-gray-400';
 
 export const selectStyles = inputStyles;
 
