@@ -83,18 +83,20 @@ export default function StudentProfilePage() {
   return (
     <div>
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
+      <div className="relative overflow-hidden rounded-2xl bg-primary-700 shadow-glow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
+        {/* Gradient layer — light mode only */}
+        <div aria-hidden="true" className="absolute inset-0 bg-brand dark:hidden" />
         {/* Decorative shapes */}
         <div
-          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl"
+          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl dark:hidden"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl dark:hidden"
           aria-hidden="true"
         />
 
-        <div className="relative flex flex-wrap items-center gap-5">
+        <div className="relative flex flex-wrap items-center gap-5 px-6 py-8 sm:px-10 sm:py-10">
           <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/15 text-xl font-bold text-white ring-1 ring-inset ring-white/25 backdrop-blur">
             {initials}
           </span>

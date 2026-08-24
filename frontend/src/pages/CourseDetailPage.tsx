@@ -344,21 +344,23 @@ export default function CourseDetailPage() {
   return (
     <div>
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
+      <div className="relative overflow-hidden rounded-2xl bg-primary-700 shadow-glow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
+        {/* Gradient layer — light mode only */}
+        <div aria-hidden="true" className="absolute inset-0 bg-brand dark:hidden" />
         {/* Decorative shapes */}
         <div
-          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl"
+          className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl dark:hidden"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl dark:hidden"
           aria-hidden="true"
         />
 
-        <div className="relative">
+        <div className="relative px-6 py-8 sm:px-10 sm:py-10">
           <Link
             to="/courses"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-200 transition-colors duration-150 hover:text-white"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-200 transition-colors duration-150 hover:text-white dark:text-gray-400 dark:hover:text-white"
           >
             <svg
               className="h-4 w-4"

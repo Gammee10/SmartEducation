@@ -444,22 +444,26 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Gradient hero banner */}
-      <div className="relative mb-8 overflow-hidden rounded-2xl bg-brand px-6 py-8 shadow-glow sm:px-10 sm:py-10">
+      {/* Hero banner — brand gradient in light mode, calm solid surface in dark */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-primary-700 shadow-glow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl"
+          className="absolute inset-0 bg-brand dark:hidden"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl dark:hidden"
         />
-        <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-200">{today}</p>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl dark:hidden"
+        />
+        <div className="relative px-6 py-8 sm:px-10 sm:py-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-100">{today}</p>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             {greeting}, {user?.fullName?.split(' ')[0]}
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-blue-100">{roleLine}</p>
+          <p className="mt-2 max-w-xl text-sm text-blue-50 dark:text-gray-300">{roleLine}</p>
         </div>
       </div>
 
