@@ -229,11 +229,17 @@ export default function TimetablePage() {
             const daySlots = slots.filter((s) => s.dayOfWeek === day);
             if (daySlots.length === 0) return null;
             return (
-              <div key={day} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
-                <div className="border-b border-gray-100 dark:border-gray-800 px-5 py-3 sm:px-6">
+              <div key={day} className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
+                <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-3 dark:border-gray-800 sm:px-6">
+                  <span className="flex h-8 items-center rounded-lg bg-brand px-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
+                    {day.slice(0, 3)}
+                  </span>
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
                     {day}
                   </h2>
+                  <span className="ml-auto text-xs font-medium text-gray-400 dark:text-gray-500">
+                    {daySlots.length} class{daySlots.length === 1 ? '' : 'es'}
+                  </span>
                 </div>
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                   {daySlots.map((slot) => (
