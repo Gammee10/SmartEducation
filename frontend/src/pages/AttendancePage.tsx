@@ -2,17 +2,27 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { buttonPrimary, inputStyles, LoadingState, PageHeader } from '../components/ui';
+import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner } from '../components/ui';
 import type { CourseAttendanceView, AttendanceStatus } from '../types';
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'];
 
 const statusStyles: Record<AttendanceStatus, string> = {
-  PRESENT: 'bg-green-100 text-green-800',
-  ABSENT: 'bg-red-100 text-red-800',
-  LATE: 'bg-yellow-100 text-yellow-800',
-  EXCUSED: 'bg-blue-100 text-blue-800',
+  PRESENT: 'bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-400',
+  ABSENT: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400',
+  LATE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400',
+  EXCUSED: 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400',
 };
+
+function getInitials(fullName?: string): string {
+  if (!fullName) return '?';
+  return fullName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -104,7 +114,7 @@ export default function AttendancePage() {
       <div className="mb-6">
         <Link
           to={`/courses/${courseId}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:text-primary-700"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-primary-700 dark:text-gray-400 dark:hover:text-primary-400"
         >
           <svg
             className="h-4 w-4"
@@ -143,38 +153,51 @@ export default function AttendancePage() {
       />
 
       {error && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+        <div className="mb-4">
+          <Banner tone="error" message={error} />
         </div>
       )}
       {actionError && (
-        <div className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {actionError}
+        <div className="mb-4">
+          <Banner tone="error" message={actionError} />
         </div>
       )}
       {savedMsg && (
-        <div className="mb-4 rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {savedMsg}
+        <div className="mb-4">
+          <Banner tone="success" message={savedMsg} />
         </div>
       )}
 
       {loading ? (
         <LoadingState label="Loading attendance…" />
-      ) : !data ? null : (
+      ) : !data ? null : data.enrolledStudents.length === 0 ? (
+        <div className="rounded-xl border border-gray-200/80 bg-white shadow-card dark:border-gray-700/60 dark:bg-gray-900">
+          <EmptyState
+            icon="users"
+            title="No students enrolled"
+            message={isTeacher ? 'Once students enroll in this course, you can mark their attendance here.' : 'You are not enrolled in this course.'}
+          />
+        </div>
+      ) : (
         <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 shadow-card">
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {data.enrolledStudents.map((student) => {
               const record = data.attendance.find((a) => a.studentId === student.id);
               return (
-                <li key={student.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {student.user?.fullName}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                      {student.studentCode}
-                      {record?.markedBy ? ` · marked by ${record.markedBy.fullName}` : ''}
-                    </p>
+                <li key={student.id} className="flex items-center justify-between gap-4 px-6 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-400">
+                      {getInitials(student.user?.fullName)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {student.user?.fullName}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {student.studentCode}
+                        {record?.markedBy ? ` · marked by ${record.markedBy.fullName}` : ''}
+                      </p>
+                    </div>
                   </div>
 
                   {isTeacher ? (
@@ -199,7 +222,7 @@ export default function AttendancePage() {
                           onClick={() =>
                             handleCorrect(record.id, drafts[student.id] ?? record.status)
                           }
-                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 shadow-sm transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          className={buttonSecondary + ' px-3 py-1.5 text-xs'}
                         >
                           Correct
                         </button>
@@ -228,7 +251,8 @@ export default function AttendancePage() {
             disabled={saving}
             className={buttonPrimary}
           >
-            {saving ? 'Saving...' : `Save Attendance (${data.enrolledStudents.filter((s) => drafts[s.id]).length})`}
+            {saving && <Spinner />}
+            {saving ? 'Saving…' : `Save Attendance (${data.enrolledStudents.filter((s) => drafts[s.id]).length})`}
           </button>
         </div>
       )}
