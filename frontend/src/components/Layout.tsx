@@ -36,11 +36,13 @@ function getInitials(fullName?: string): string {
 function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
     <span
-      className={`flex ${className} flex-shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-glow`}
+      className={`relative flex ${className} flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-600 text-white shadow-glow`}
     >
+      {/* Gradient sheen — light-mode flourish over the solid brand blue */}
+      <span aria-hidden="true" className="absolute inset-0 bg-brand dark:hidden" />
       {/* Graduation cap */}
       <svg
-        className="h-5 w-5"
+        className="relative h-5 w-5"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -221,7 +223,7 @@ export default function Layout() {
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
       isActive
-        ? 'bg-brand text-white shadow-glow'
+        ? 'bg-brand bg-primary-600 text-white shadow-glow'
         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
     }`;
 

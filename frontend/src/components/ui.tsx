@@ -82,7 +82,7 @@ export function PageHeader({
       <div>
         <div className="flex items-center gap-3">
           {/* Brand accent bar */}
-          <span className="hidden h-9 w-1.5 rounded-full bg-brand sm:block" aria-hidden="true" />
+          <span className="hidden h-9 w-1.5 rounded-full bg-primary-600 bg-brand sm:block" aria-hidden="true" />
           <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight text-gray-900 dark:text-white sm:text-4xl">
             {title}
           </h1>
@@ -192,7 +192,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-soft text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
+      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 bg-brand-soft text-primary-600 dark:bg-primary-500/10 dark:bg-none dark:text-primary-400">
         <Icon name={icon} className="h-8 w-8" />
       </span>
       <p className="mt-5 text-base font-semibold text-gray-900 dark:text-gray-100">{title}</p>

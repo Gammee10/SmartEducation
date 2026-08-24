@@ -24,7 +24,7 @@ function CapIcon({ className = 'h-5 w-5' }: { className?: string }) {
 
 function BrandPanel() {
   return (
-    <div className="relative hidden overflow-hidden bg-brand lg:flex lg:w-1/2 xl:w-[55%]">
+    <div className="relative hidden overflow-hidden bg-primary-700 lg:flex lg:w-1/2 xl:w-[55%]">
       {/* Decorative glows */}
       <div
         className="absolute -left-32 -top-32 h-[30rem] w-[30rem] rounded-full bg-blue-400/20 blur-3xl"
@@ -132,8 +132,9 @@ export default function LoginPage() {
         <div className="relative mx-auto w-full max-w-md">
           {/* Compact brand for mobile / tablet */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand text-white shadow-glow">
-              <CapIcon />
+            <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-primary-600 text-white shadow-glow">
+              <span aria-hidden="true" className="absolute inset-0 bg-brand" />
+              <CapIcon className="relative h-5 w-5" />
             </span>
             <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
               Smart Education
@@ -211,7 +212,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/25 transition-all duration-150 hover:shadow-xl hover:shadow-primary-600/30 hover:brightness-110 disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 bg-brand px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/25 transition-all duration-150 hover:shadow-xl hover:shadow-primary-600/30 hover:brightness-110 disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
               {submitting && <Spinner />}
               {submitting ? 'Signing in…' : 'Sign in'}

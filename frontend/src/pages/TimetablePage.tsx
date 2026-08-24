@@ -231,7 +231,7 @@ export default function TimetablePage() {
             return (
               <div key={day} className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
                 <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-3 dark:border-gray-800 sm:px-6">
-                  <span className="flex h-8 items-center rounded-lg bg-brand px-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
+                  <span className="flex h-8 items-center rounded-lg bg-primary-700 bg-brand px-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
                     {day.slice(0, 3)}
                   </span>
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-300">
