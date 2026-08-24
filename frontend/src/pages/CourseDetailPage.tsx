@@ -89,7 +89,7 @@ const CONTENT_TYPE_META: Record<string, { path: string; tile: string }> = {
   },
   OTHER: {
     path: 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4',
-    tile: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500',
+    tile: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
   },
 };
 
@@ -99,7 +99,7 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   PDF: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
   IMAGE: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
   LINK: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
-  OTHER: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
+  OTHER: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 };
 
 function TypeIcon({ type }: { type: string }) {
@@ -124,7 +124,7 @@ function typeBadge(type: string) {
   return (
     <span
       className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
-        TYPE_BADGE_STYLES[type] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500'
+        TYPE_BADGE_STYLES[type] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
       }`}
     >
       {type}
@@ -463,7 +463,7 @@ export default function CourseDetailPage() {
               <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100">
                 {stat.value}
               </p>
-              <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">{stat.label}</p>
+              <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -474,7 +474,7 @@ export default function CourseDetailPage() {
         <div className="mt-8 rounded-xl border border-gray-200/80 dark:border-gray-700/60 bg-white dark:bg-gray-900 p-5 shadow-card sm:p-6">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             Enrolled Students{' '}
-            <span className="ml-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-400 dark:text-gray-500">
+            <span className="ml-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-400">
               {course.enrollments.length}
             </span>
           </h2>
@@ -518,13 +518,13 @@ export default function CourseDetailPage() {
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
               activeTab === t.key
                 ? 'bg-white dark:bg-gray-900 text-primary-700 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
-                : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
             }`}
           >
             {t.label}
             <span
               className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400 dark:text-gray-500'
+                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400'
               }`}
             >
               {t.count}
@@ -537,7 +537,7 @@ export default function CourseDetailPage() {
       {activeTab === 'content' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Learning materials uploaded for this course.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Learning materials uploaded for this course.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowUpload(!showUpload)}
@@ -673,7 +673,7 @@ export default function CourseDetailPage() {
       {activeTab === 'assignments' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Coursework with due dates and scoring.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Coursework with due dates and scoring.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowCreateAssignment(!showCreateAssignment)}
@@ -795,7 +795,7 @@ export default function CourseDetailPage() {
                             {assignment.title}
                           </h3>
                           {assignment.instructions && (
-                            <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{assignment.instructions}</p>
+                            <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400">{assignment.instructions}</p>
                           )}
                         </div>
                       </div>
@@ -840,7 +840,7 @@ export default function CourseDetailPage() {
       {activeTab === 'quizzes' && (
         <section className="mt-6">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Timed assessments with auto-grading.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Timed assessments with auto-grading.</p>
             {isTeacher && (
               <button
                 onClick={() => setShowCreateQuiz(!showCreateQuiz)}
@@ -980,7 +980,7 @@ export default function CourseDetailPage() {
                           {quiz.title}
                         </h3>
                         {quiz.description && (
-                          <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{quiz.description}</p>
+                          <p className="mt-0.5 line-clamp-1 text-sm text-gray-500 dark:text-gray-400">{quiz.description}</p>
                         )}
                       </div>
                     </div>

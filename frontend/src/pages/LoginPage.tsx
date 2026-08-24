@@ -140,7 +140,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">Sign in to access your school portal.</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Sign in to access your school portal.</p>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             {error && (
@@ -228,7 +228,7 @@ export default function LoginPage() {
           </form>
 
           {import.meta.env.DEV && (
-            <div className="mt-8 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <div className="mt-8 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
               <p className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Demo accounts (seeded, dev only)</p>
               <p>admin@school.edu / Password123!</p>
               <p>teacher@school.edu / Password123!</p>

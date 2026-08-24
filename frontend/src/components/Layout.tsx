@@ -286,7 +286,7 @@ export default function Layout() {
                   >
                     <div className="border-b border-gray-100 dark:border-gray-800 px-3 py-2.5">
                       <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.fullName}</p>
-                      <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{user?.email}</p>
+                      <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                       <span
                         className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${roleBadgeClass}`}
                       >
@@ -375,7 +375,7 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex-shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
+                className="flex-shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
               >
                 Log out
               </button>

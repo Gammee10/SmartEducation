@@ -132,7 +132,7 @@ export default function StudentProfilePage() {
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.enrollments} />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Enrolled Courses</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Enrolled Courses</p>
           </div>
         </div>
 
@@ -141,7 +141,7 @@ export default function StudentProfilePage() {
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.attendanceRate} suffix="%" />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Attendance Rate</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Attendance Rate</p>
           </div>
           <ProgressRing percent={summary.stats.attendanceRate} size={52} strokeWidth={6} />
         </div>
@@ -154,7 +154,7 @@ export default function StudentProfilePage() {
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={Number(summary.stats.avgAssignmentScore) || 0} decimals={1} />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Assignment Score</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Avg Assignment Score</p>
           </div>
         </div>
 
@@ -163,7 +163,7 @@ export default function StudentProfilePage() {
             <p className="text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 tabular-nums">
               <AnimatedNumber value={summary.stats.avgQuizScore} suffix="%" />
             </p>
-            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Quiz Score</p>
+            <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Avg Quiz Score</p>
           </div>
           <ProgressRing percent={summary.stats.avgQuizScore} size={52} strokeWidth={6} />
         </div>
@@ -185,13 +185,13 @@ export default function StudentProfilePage() {
             className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 ${
               activeTab === t.key
                 ? 'bg-white dark:bg-gray-900 text-primary-700 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700'
-                : 'text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:text-gray-100'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100'
             }`}
           >
             {t.label}
             <span
               className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400 dark:text-gray-500'
+                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400'
               }`}
             >
               {t.count}
@@ -223,7 +223,7 @@ export default function StudentProfilePage() {
                   </span>
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{c.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {c.subject} · {c.gradeLevel}
                     </p>
                   </div>
@@ -322,7 +322,7 @@ export default function StudentProfilePage() {
                 </div>
                 <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
                   {ALL_STATUSES.filter((st) => (statusCounts.get(st) || 0) > 0).map((st) => (
-                    <span key={st} className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                    <span key={st} className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                       <span className={`h-2 w-2 rounded-full ${STATUS_META[st].bar}`} />
                       {st.charAt(0) + st.slice(1).toLowerCase()}:{' '}
                       <strong className="text-gray-700 dark:text-gray-300">{statusCounts.get(st)}</strong>
@@ -346,7 +346,7 @@ export default function StudentProfilePage() {
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
                         selected
                           ? 'bg-primary-600 text-white shadow-sm'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                     >
                       {option === 'ALL' ? 'All' : option.charAt(0) + option.slice(1).toLowerCase()}
@@ -363,13 +363,13 @@ export default function StudentProfilePage() {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-800/50">
                     <tr>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:px-6">
                         Date
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:px-6">
                         Course
                       </th>
-                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
+                      <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:px-6">
                         Status
                       </th>
                     </tr>
@@ -404,7 +404,7 @@ export default function StudentProfilePage() {
                   ).length;
                   if (filteredCount === 0) {
                     return (
-                      <p className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 sm:px-6">
+                      <p className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400 sm:px-6">
                         No records for this status.
                       </p>
                     );

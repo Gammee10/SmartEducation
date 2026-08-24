@@ -23,16 +23,16 @@ const STATUS_STYLES: Record<string, string> = {
   DAMAGED: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400',
   TIME_EXPIRED: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400',
   // Neutral
-  CLOSED: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
-  CANCELLED: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500',
-  ARCHIVED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500',
+  CLOSED: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+  CANCELLED: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+  ARCHIVED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
 };
 
 export default function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
-        STATUS_STYLES[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 dark:text-gray-500'
+        STATUS_STYLES[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
       }`}
     >
       {status.replace(/_/g, ' ')}

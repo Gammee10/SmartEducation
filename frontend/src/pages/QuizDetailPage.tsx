@@ -342,7 +342,7 @@ export default function QuizDetailPage() {
     <div>
       <Link
         to={`/courses/${courseId}`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-colors duration-150 hover:text-primary-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors duration-150 hover:text-primary-700"
       >
         <svg
           className="h-4 w-4"
@@ -360,7 +360,7 @@ export default function QuizDetailPage() {
       <div className="mt-3 flex justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl">{quiz.title}</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {quiz.course?.subject} · Grade {quiz.course?.gradeLevel}
           </p>
         </div>
@@ -368,10 +368,10 @@ export default function QuizDetailPage() {
       </div>
 
       {quiz.description && (
-        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">{quiz.description}</p>
+        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{quiz.description}</p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
         <span className="font-medium text-gray-900 dark:text-gray-100">Time limit: {quiz.timeLimit} min</span>
         <span>Attempts allowed: {quiz.maxAttempts}</span>
         <span>{quiz.questions?.length || 0} question(s)</span>
@@ -395,7 +395,7 @@ export default function QuizDetailPage() {
               Start Quiz
             </button>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">This quiz is not available yet.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">This quiz is not available yet.</p>
           )}
 
           {attempts.length > 0 && (
@@ -415,7 +415,7 @@ export default function QuizDetailPage() {
                         <StatusBadge status={attempt.status} />
                         {attempt.score !== null && attempt.score !== undefined && (
                           <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
+                            {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400">/ {attempt.maxScore}</span>
                           </p>
                         )}
                       </div>
@@ -787,7 +787,7 @@ export default function QuizDetailPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Q{qIndex + 1}</span>
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Q{qIndex + 1}</span>
                           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.prompt}</h4>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{question.points} pt(s) · {question.type.replace('_', ' ')}</p>
@@ -795,7 +795,7 @@ export default function QuizDetailPage() {
                     </div>
                     <div className="mt-2 space-y-1">
                       {question.options.map((option) => (
-                        <div key={option.id} className={`text-sm flex items-center gap-2 ${option.isCorrect ? 'text-green-700 font-medium' : 'text-gray-600 dark:text-gray-400 dark:text-gray-500'}`}>
+                        <div key={option.id} className={`text-sm flex items-center gap-2 ${option.isCorrect ? 'text-green-700 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
                           <span>{option.isCorrect ? '✓' : '•'}</span>
                           <span>{option.optionText}</span>
                         </div>
@@ -833,7 +833,7 @@ export default function QuizDetailPage() {
                       <StatusBadge status={attempt.status} />
                       {attempt.score !== null && attempt.score !== undefined && (
                         <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
+                          {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400">/ {attempt.maxScore}</span>
                         </p>
                       )}
                     </div>
@@ -869,7 +869,7 @@ export default function QuizDetailPage() {
                     <StatusBadge status={attempt.status} />
                     {attempt.score !== null && attempt.score !== undefined && (
                       <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">/ {attempt.maxScore}</span>
+                        {attempt.score} <span className="text-sm text-gray-500 dark:text-gray-400">/ {attempt.maxScore}</span>
                       </p>
                     )}
                   </div>
