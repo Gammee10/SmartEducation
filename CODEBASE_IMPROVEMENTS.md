@@ -88,6 +88,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 1.3 Rate limiting breaks or is bypassable behind the production reverse proxy
 
+- **Status: Completed**
+
 - **Category:** Security / Reliability / DevOps
 - **Severity:** Critical
 - **Location:** `backend/src/app.ts:22–25`, `backend/src/middleware/rateLimit.ts:5–28`, `backend/src/index.ts`

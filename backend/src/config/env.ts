@@ -23,6 +23,11 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  // Number of proxy hops in front of the API (e.g. "1" for one reverse
+  // proxy). Empty string means direct exposure - never guess "true", a
+  // client-controlled X-Forwarded-For would make rate limits bypassable and
+  // audit IPs forgeable.
+  trustProxy: process.env.TRUST_PROXY || '',
   databaseUrl: process.env.DATABASE_URL,
   directUrl: process.env.DIRECT_URL,
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',

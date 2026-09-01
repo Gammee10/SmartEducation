@@ -18,6 +18,15 @@ import { apiLimiter } from './middleware/rateLimit';
 
 const app = express();
 
+// Behind a reverse proxy, req.ip resolves to the proxy's IP unless trust
+// proxy is configured - which would bucket every user into one rate-limit
+// key and record the proxy IP in audit logs. Set TRUST_PROXY to the number
+// of proxy hops (e.g. TRUST_PROXY=1). Never default to true: a
+// client-controlled X-Forwarded-For would make limits bypassable.
+if (env.trustProxy !== '') {
+  app.set('trust proxy', Number(env.trustProxy));
+}
+
 // Middleware
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 app.use(express.json());
