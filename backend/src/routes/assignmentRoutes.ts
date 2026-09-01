@@ -28,7 +28,9 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB - matches Cloudinary storage service limit
+  // 20MB - submissions are documents; smaller buffers also reduce the memory
+  // cost of the base64 upload path (content upload is URL-based).
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
       cb(new ValidationError('File type not allowed. Please upload a document, image, or archive.'));

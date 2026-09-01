@@ -254,7 +254,7 @@ export default function AssignmentDetailPage() {
                     />
                   </div>
                   <div>
-                    <label className={labelStyles}>Attach a file (optional, max 50MB)</label>
+                    <label className={labelStyles}>Attach a file (optional, max 20MB)</label>
                     <input
                       type="file"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}

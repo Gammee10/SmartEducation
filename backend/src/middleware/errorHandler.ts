@@ -56,7 +56,7 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
     const multerErr = err as Error & { code?: string };
     const message =
       multerErr.code === 'LIMIT_FILE_SIZE'
-        ? 'File is too large (maximum 50MB)'
+        ? 'File is too large (maximum 20MB)'
         : 'File upload failed';
     return res.status(422).json({
       success: false,

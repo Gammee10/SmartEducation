@@ -214,6 +214,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.6 File upload pipeline: 50 MB buffered in RAM, base64-doubled, mimetype-only validation
 
+- **Status: Completed**
+
 - **Category:** Security / Performance
 - **Severity:** High
 - **Location:** `backend/src/routes/assignmentRoutes.ts:27–44` (multer memoryStorage, 50 MB), `backend/src/services/fileStorageService.ts:51` (`file.buffer.toString('base64')`), `backend/src/services/assignmentService.ts:402–412`
