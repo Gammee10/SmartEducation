@@ -117,32 +117,41 @@ async function createUser(opts: {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new ConflictError('A user with this email already exists');
 
-  const user = await prisma.$transaction(async (tx: any) => {
-    const created = await tx.user.create({
-      data: { email, fullName, role, phone: data.phone || null, passwordHash },
+  let user;
+  try {
+    user = await prisma.$transaction(async (tx: any) => {
+      const created = await tx.user.create({
+        data: { email, fullName, role, phone: data.phone || null, passwordHash },
+      });
+      if (role === 'STUDENT') {
+        if (!data.gradeLevel) throw new ValidationError('gradeLevel is required for students');
+        const studentCode = await generateCode('STU');
+        await tx.student.create({
+          data: {
+            userId: created.id,
+            studentCode,
+            gradeLevel: data.gradeLevel,
+            section: data.section || null,
+          },
+        });
+      } else if (role === 'TEACHER') {
+        const employeeCode = await generateCode('TCH');
+        await tx.teacher.create({
+          data: { userId: created.id, employeeCode, subject: data.subject || null },
+        });
+      }
+      return tx.user.findUnique({
+        where: { id: created.id },
+        include: { student: true, teacher: true },
+      });
     });
-    if (role === 'STUDENT') {
-      if (!data.gradeLevel) throw new ValidationError('gradeLevel is required for students');
-      const studentCode = await generateCode('STU');
-      await tx.student.create({
-        data: {
-          userId: created.id,
-          studentCode,
-          gradeLevel: data.gradeLevel,
-          section: data.section || null,
-        },
-      });
-    } else if (role === 'TEACHER') {
-      const employeeCode = await generateCode('TCH');
-      await tx.teacher.create({
-        data: { userId: created.id, employeeCode, subject: data.subject || null },
-      });
+  } catch (err: any) {
+    // Concurrent creations with the same email race past the pre-check
+    if (err?.code === 'P2002') {
+      throw new ConflictError('A user with this email already exists');
     }
-    return tx.user.findUnique({
-      where: { id: created.id },
-      include: { student: true, teacher: true },
-    });
-  });
+    throw err;
+  }
 
   await writeAuditLog({
     actorId,

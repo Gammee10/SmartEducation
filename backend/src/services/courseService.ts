@@ -272,16 +272,24 @@ async function enrollStudent({ actorId, courseId, studentId, ipAddress }: Enroll
     return reactivated;
   }
 
-  const enrollment = await prisma.courseEnrollment.create({
-    data: {
-      courseId,
-      studentId,
-      enrolledById: actorId,
-    },
-    include: {
-      student: { include: { user: { select: { id: true, fullName: true, email: true } } } },
-    },
-  });
+  let enrollment;
+  try {
+    enrollment = await prisma.courseEnrollment.create({
+      data: {
+        courseId,
+        studentId,
+        enrolledById: actorId,
+      },
+      include: {
+        student: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      throw new ConflictError('Student is already enrolled in this course');
+    }
+    throw err;
+  }
 
   await writeAuditLog({
     actorId,

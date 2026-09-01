@@ -330,7 +330,9 @@ The codebase is well organized for a modular monolith: consistent controller →
   3. Document the chosen policy in the API response (`expired: true` is already returned) and in `QuizDetailPage` result banner (already shown).
 - **Suggested Validation:** Unit test: expired submit → `status === 'TIME_EXPIRED'`, excluded from `avgQuizScore` dashboard aggregation.
 
-## 2.12 Assignment submit-to-unique race yields confusing 409 "A record with this value already exists"
+## 2.12 Assignment submit-to-unique race yields confusing 409
+
+- **Status: Completed** "A record with this value already exists"
 
 - **Category:** Backend / API
 - **Severity:** High

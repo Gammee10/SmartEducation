@@ -366,7 +366,9 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
     }
 
     // Transaction: approve request + create loan + claim copy + audit
-    const result = await prisma.$transaction(async (tx) => {
+    let result;
+    try {
+      result = await prisma.$transaction(async (tx) => {
       // Atomically claim the copy so two admins approving two different
       // pending requests for the same copy cannot both succeed.
       const claimed = await tx.libraryBookCopy.updateMany({
@@ -410,6 +412,14 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
 
       return { request: updatedRequest, loan };
     });
+    } catch (err: any) {
+      // Two concurrent approvals of the same request: the loan's unique
+      // borrowReqId is the authoritative guard.
+      if (err?.code === 'P2002') {
+        throw new ConflictError('This request has already been approved');
+      }
+      throw err;
+    }
 
     return result;
   }

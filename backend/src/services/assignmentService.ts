@@ -413,18 +413,28 @@ async function submitAssignment({ actorId, assignmentId, data, file, ipAddress }
 
   const isLate = Boolean(assignment.dueDate) && new Date() > new Date(assignment.dueDate);
 
-  const submission = await prisma.assignmentSubmission.create({
-    data: {
-      assignmentId,
-      studentId: student.id,
-      content: content || null,
-      ...fileFields,
-      isLate,
-    },
-    include: {
-      assignment: { include: { course: true } },
-    },
-  });
+  let submission;
+  try {
+    submission = await prisma.assignmentSubmission.create({
+      data: {
+        assignmentId,
+        studentId: student.id,
+        content: content || null,
+        ...fileFields,
+        isLate,
+      },
+      include: {
+        assignment: { include: { course: true } },
+      },
+    });
+  } catch (err: any) {
+    // Double-click / retry races pass the pre-check above; the unique
+    // constraint is the authoritative guard.
+    if (err?.code === 'P2002') {
+      throw new ConflictError('You have already submitted this assignment');
+    }
+    throw err;
+  }
 
   await writeAuditLog({
     actorId,
