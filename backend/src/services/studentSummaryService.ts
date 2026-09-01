@@ -5,9 +5,15 @@ const prisma = prismaModule as any;
 
 export async function getStudentSummary(opts: { studentId: string; role: string; userId: string }): Promise<any> {
   const { studentId, role, userId } = opts;
+  // Privacy: teachers share one course with the student - they get the name,
+  // not contact details. Students only access their own summary; admins see all.
+  const userSelect =
+    role === 'TEACHER'
+      ? { id: true, fullName: true }
+      : { id: true, fullName: true, email: true, phone: true };
   const student = await prisma.student.findUnique({
     where: { id: studentId },
-    include: { user: { select: { id: true, fullName: true, email: true, phone: true } } },
+    include: { user: { select: userSelect } },
   });
   if (!student) throw new NotFoundError('Student not found');
 

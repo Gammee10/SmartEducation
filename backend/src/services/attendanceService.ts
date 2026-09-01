@@ -78,12 +78,22 @@ export async function listCourseAttendance({
   const where: Record<string, unknown> = { courseId };
   if (date) where.date = assertValidDate(date);
 
+  // Privacy: staff get the roster with contact details (needed for marking);
+  // students get the roster names only (no emails), and classmate emails are
+  // stripped from the attendance records themselves.
+  const isStaff = role === 'TEACHER' || role === 'ADMIN';
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     include: {
       enrollments: {
         where: { status: 'ACTIVE' },
-        select: { student: { include: { user: { select: userInfoSelect } } } },
+        select: {
+          student: {
+            include: {
+              user: { select: isStaff ? userInfoSelect : { id: true, fullName: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -104,10 +114,19 @@ export async function listCourseAttendance({
     prisma.attendance.count({ where }),
   ]);
 
+  const attendanceForRole = isStaff
+    ? attendance
+    : attendance.map((record: any) => ({
+        ...record,
+        student: record.student
+          ? { ...record.student, user: { id: record.student.user.id, fullName: record.student.user.fullName } }
+          : record.student,
+      }));
+
   return {
     course: { id: course.id, title: course.title, subject: course.subject, gradeLevel: course.gradeLevel },
     enrolledStudents: course.enrollments.map((e: any) => e.student),
-    attendance,
+    attendance: attendanceForRole,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }

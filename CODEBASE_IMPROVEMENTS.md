@@ -149,6 +149,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.3 Student PII over-exposure: classmates' emails and phone numbers returned to students
 
+- **Status: Completed**
+
 - **Category:** Security / Privacy
 - **Severity:** High
 - **Location:**

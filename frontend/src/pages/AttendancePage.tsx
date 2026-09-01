@@ -52,9 +52,10 @@ export default function AttendancePage() {
       .then((res) => {
         const view: CourseAttendanceView = res.data.data;
         setData(view);
-        // Pre-fill drafts from existing records
+        // Pre-fill drafts from existing records (roster is only present for
+        // teacher/admin responses)
         const next: Record<string, AttendanceStatus | undefined> = {};
-        view.enrolledStudents.forEach((s) => {
+        view.enrolledStudents?.forEach((s) => {
           const rec = view.attendance.find((a) => a.studentId === s.id);
           next[s.id] = rec ? rec.status : undefined;
         });
@@ -75,7 +76,7 @@ export default function AttendancePage() {
     setSaving(true);
     try {
       // Only submit students the teacher has explicitly marked.
-      const records = data.enrolledStudents
+      const records = (data.enrolledStudents || [])
         .filter((s) => drafts[s.id])
         .map((s) => ({
           studentId: s.id,
@@ -170,7 +171,7 @@ export default function AttendancePage() {
 
       {loading ? (
         <LoadingState label="Loading attendance…" />
-      ) : !data ? null : data.enrolledStudents.length === 0 ? (
+      ) : !data ? null : !!data.enrolledStudents && data.enrolledStudents.length === 0 ? (
         <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
           <EmptyState
             icon="users"
@@ -181,7 +182,7 @@ export default function AttendancePage() {
       ) : (
         <div className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]">
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {data.enrolledStudents.map((student) => {
+            {(data.enrolledStudents || []).map((student) => {
               const record = data.attendance.find((a) => a.studentId === student.id);
               return (
                 <li key={student.id} className="flex items-center justify-between gap-4 px-6 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/40">
@@ -244,7 +245,7 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {isTeacher && data && data.enrolledStudents.length > 0 && (
+      {isTeacher && data && (data.enrolledStudents?.length ?? 0) > 0 && (
         <div className="mt-4 flex justify-end">
           <button
             onClick={handleSaveAll}
@@ -252,7 +253,7 @@ export default function AttendancePage() {
             className={buttonPrimary}
           >
             {saving && <Spinner />}
-            {saving ? 'Saving…' : `Save Attendance (${data.enrolledStudents.filter((s) => drafts[s.id]).length})`}
+            {saving ? 'Saving…' : `Save Attendance (${(data.enrolledStudents || []).filter((s) => drafts[s.id]).length})`}
           </button>
         </div>
       )}

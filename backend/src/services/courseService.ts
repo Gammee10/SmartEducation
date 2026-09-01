@@ -97,17 +97,26 @@ interface GetCourseParams {
 }
 
 async function getCourse({ courseId, role, userId }: GetCourseParams) {
+  // Privacy: students must not receive the roster with classmates' contact
+  // details - only staff get the enrollment list with user info.
+  const studentUserInfo = { id: true, fullName: true, email: true };
+  const include: Record<string, unknown> = {
+    teacher: { include: { user: { select: studentUserInfo } } },
+    ...(role !== 'STUDENT'
+      ? {
+          enrollments: {
+            include: {
+              student: { include: { user: { select: studentUserInfo } } },
+            },
+          },
+        }
+      : {}),
+    _count: { select: { enrollments: true, content: true } },
+  };
+
   const course = await prisma.course.findUnique({
     where: { id: courseId },
-    include: {
-      teacher: { include: { user: { select: { id: true, fullName: true, email: true } } } },
-      enrollments: {
-        include: {
-          student: { include: { user: { select: { id: true, fullName: true, email: true } } } },
-        },
-      },
-      _count: { select: { enrollments: true, content: true } },
-    },
+    include,
   });
   if (!course) throw new NotFoundError('Course not found');
 

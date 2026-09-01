@@ -363,7 +363,7 @@ export interface CourseAttendanceView {
     subject: string;
     gradeLevel: string;
   };
-  enrolledStudents: Array<{
+  enrolledStudents?: Array<{
     id: string;
     studentCode: string;
     gradeLevel: string;
