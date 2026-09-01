@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Assignment controller - handles assignment, submission, and grading HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as assignmentService from '../services/assignmentService';
@@ -14,14 +15,13 @@ function getIp(req: Request): string | null {
 
 async function listCourseAssignments(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status } = req.query;
     const result = await assignmentService.listCourseAssignments({
       courseId: req.params.id as string,
       role: req.user!.role,
       userId: req.user!.id,
       status: status as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.assignments, result.pagination, 'Assignments retrieved');
   } catch (err) {
@@ -118,12 +118,10 @@ async function submitAssignment(req: Request, res: Response, next: NextFunction)
 
 async function listSubmissions(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await assignmentService.listSubmissions({
       actorId: req.user!.id,
       assignmentId: req.params.id as string,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.submissions, result.pagination, 'Submissions retrieved');
   } catch (err) {

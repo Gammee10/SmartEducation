@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Library controller - handles book, request, and loan HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as libraryService from '../services/libraryService';
@@ -14,12 +15,11 @@ function getIp(req: Request): string | null {
 
 async function listBooks(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { search, category, page = 1, pageSize = 20 } = req.query;
+    const { search, category } = req.query;
     const result = await libraryService.listBooks({
       search: search as string | undefined,
       category: category as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.books, result.pagination, 'Books retrieved');
   } catch (err) {
@@ -102,11 +102,10 @@ async function createBorrowRequest(req: Request, res: Response, next: NextFuncti
 
 async function listBorrowRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status } = req.query;
     const result = await libraryService.listBorrowRequests({
       status: status as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.requests, result.pagination, 'Borrow requests retrieved');
   } catch (err) {
@@ -120,11 +119,9 @@ async function listMyBorrowRequests(req: Request, res: Response, next: NextFunct
       next(new ForbiddenError('Only students can view their borrow requests'));
       return;
     }
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await libraryService.listMyBorrowRequests({
       studentId: req.user!.student.id,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.requests, result.pagination, 'Your borrow requests retrieved');
   } catch (err) {
@@ -155,11 +152,10 @@ async function decideBorrowRequest(req: Request, res: Response, next: NextFuncti
 
 async function listLoans(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status } = req.query;
     const result = await libraryService.listLoans({
       status: status as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.loans, result.pagination, 'Loans retrieved');
   } catch (err) {
@@ -173,11 +169,9 @@ async function listMyLoans(req: Request, res: Response, next: NextFunction): Pro
       next(new ForbiddenError('Only students can view their loans'));
       return;
     }
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await libraryService.listMyLoans({
       studentId: req.user!.student.id,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.loans, result.pagination, 'Your loans retrieved');
   } catch (err) {

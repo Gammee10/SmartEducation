@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Quiz controller - handles quiz, question, attempt, and result HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as quizService from '../services/quizService';
@@ -14,13 +15,11 @@ function getIp(req: Request): string | null {
 
 async function listCourseQuizzes(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await quizService.listCourseQuizzes({
       courseId: req.params.id as string,
       role: req.user!.role,
       userId: req.user!.id,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.quizzes, result.pagination, 'Quizzes retrieved');
   } catch (err) {

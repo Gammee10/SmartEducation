@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // User admin controller - admin user management and CSV import (Member 6).
 import { Request, Response, NextFunction } from 'express';
 import * as userAdminService from '../services/userAdminService';
@@ -9,13 +10,12 @@ function getIp(req: Request): string | null {
 
 export async function listUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { role, status, search, page = 1, pageSize = 20 } = req.query;
+    const { role, status, search } = req.query;
     const result = await userAdminService.listUsers({
       role: role as string | undefined,
       status: status as string | undefined,
       search: search as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Users retrieved');
   } catch (err) {

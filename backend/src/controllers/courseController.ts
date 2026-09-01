@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Course controller - handles course, enrollment, and content HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as courseService from '../services/courseService';
@@ -14,13 +15,12 @@ function getIp(req: Request): string | null {
 
 async function listCourses(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { status, page = 1, pageSize = 20 } = req.query;
+    const { status } = req.query;
     const result = await courseService.listCourses({
       role: req.user!.role,
       userId: req.user!.id,
       status: status as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.courses, result.pagination, 'Courses retrieved');
   } catch (err) {
@@ -118,13 +118,11 @@ async function unenrollStudent(req: Request, res: Response, next: NextFunction):
 
 async function listContent(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await courseService.listContent({
       courseId: req.params.id as string,
       role: req.user!.role,
       userId: req.user!.id,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     paginated(res, result.items, result.pagination, 'Course content retrieved');
   } catch (err) {

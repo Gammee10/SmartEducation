@@ -185,6 +185,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.5 Unbounded pagination parameters across every list endpoint
 
+- **Status: Completed**
+
 - **Category:** Backend / API / Performance
 - **Severity:** High
 - **Location:** Every controller, e.g. `backend/src/controllers/courseController.ts:17–24`, `libraryController.ts:17–23`, `userAdminController.ts:12–19`, `notificationController.ts:8–14`, and all services' `skip/take` usage

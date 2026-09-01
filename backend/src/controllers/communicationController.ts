@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Communication controller - announcements and events (Member 6).
 import { Request, Response, NextFunction } from 'express';
 import * as communicationService from '../services/communicationService';
@@ -9,11 +10,9 @@ function getIp(req: Request): string | null {
 
 export async function listAnnouncements(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await communicationService.listAnnouncements({
       role: req.user!.role,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Announcements retrieved');
   } catch (err) {
@@ -50,11 +49,9 @@ export async function deleteAnnouncement(req: Request, res: Response, next: Next
 
 export async function listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { page = 1, pageSize = 20 } = req.query;
     const result = await communicationService.listEvents({
       role: req.user!.role,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Events retrieved');
   } catch (err) {

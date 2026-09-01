@@ -1,3 +1,4 @@
+import { parsePagination } from '../utils/pagination';
 // Notification controller - inbox, unread count, read state (Member 6).
 import { Request, Response, NextFunction } from 'express';
 import * as notificationService from '../services/notificationService';
@@ -5,12 +6,11 @@ import { success } from '../utils/response';
 
 export async function listNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { unreadOnly, page = 1, pageSize = 20 } = req.query;
+    const { unreadOnly } = req.query;
     const result = await notificationService.listNotifications({
       userId: req.user!.id,
       unreadOnly: unreadOnly === 'true',
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Notifications retrieved');
   } catch (err) {

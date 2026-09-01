@@ -1,4 +1,5 @@
-﻿// Attendance controller - handles attendance HTTP requests.
+import { parsePagination } from '../utils/pagination';
+// Attendance controller - handles attendance HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as attendanceService from '../services/attendanceService';
 import { success, created, paginated } from '../utils/response';
@@ -16,8 +17,7 @@ export async function listCourseAttendance(req: Request, res: Response, next: Ne
       role: req.user!.role,
       userId: req.user!.id,
       date: date as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Attendance retrieved');
   } catch (err) {
@@ -59,14 +59,13 @@ export async function correctAttendance(req: Request, res: Response, next: NextF
 
 export async function listStudentAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { courseId, page = 1, pageSize = 20 } = req.query;
+    const { courseId } = req.query;
     const result = await attendanceService.listStudentAttendance({
       studentId: req.params.id as string,
       role: req.user!.role,
       userId: req.user!.id,
       courseId: courseId as string | undefined,
-      page: parseInt(page as string, 10),
-      pageSize: parseInt(pageSize as string, 10),
+      ...parsePagination(req.query),
     });
     success(res, result, 'Student attendance retrieved');
   } catch (err) {
