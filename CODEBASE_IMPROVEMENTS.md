@@ -33,6 +33,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 1.1 Quiz `maxAttempts` limit is bypassable — unlimited attempts with timer reset
 
+- **Status: Completed**
+
 - **Category:** Backend / Academic Integrity
 - **Severity:** Critical
 - **Location:** `backend/src/services/quizService.ts:663–689` (`startAttempt`)
@@ -64,6 +66,8 @@ The codebase is well organized for a modular monolith: consistent controller →
   - Unit test: expired `IN_PROGRESS` attempt is flipped to `TIME_EXPIRED` and consumes an attempt.
 
 ## 1.2 Quiz submission is not atomic — double-submission and re-grading race
+
+- **Status: Completed**
 
 - **Category:** Backend / Reliability
 - **Severity:** Critical
@@ -108,7 +112,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 # 2. High
 
-## 2.1 Teacher/Admin quiz results are never loaded — results UI is permanently empty
+## 2.1 Teacher/Admin quiz results are never loaded
+
+- **Status: Completed** — results UI is permanently empty
 
 - **Category:** Frontend / Functional Bug
 - **Severity:** High
