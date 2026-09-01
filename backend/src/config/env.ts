@@ -11,6 +11,12 @@ if (nodeEnv === 'production' && !process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be set when NODE_ENV is production');
 }
 
+// Without this, admin-created/CSV-imported users would fall back to a
+// publicly-known default password in production.
+if (nodeEnv === 'production' && !process.env.DEFAULT_USER_PASSWORD) {
+  throw new Error('DEFAULT_USER_PASSWORD must be set when NODE_ENV is production');
+}
+
 const env = {
   nodeEnv,
   port: parseInt(process.env.PORT || '5000', 10),
