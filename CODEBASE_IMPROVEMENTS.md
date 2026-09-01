@@ -277,6 +277,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.9 Unvalidated enum-ish inputs cause raw Prisma 500s (course status, content type, filter params)
 
+- **Status: Completed**
+
 - **Category:** Backend / Data Validation
 - **Severity:** High
 - **Location:**

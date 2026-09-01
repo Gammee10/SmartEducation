@@ -408,6 +408,20 @@ test('listLoans returns loans', async () => {
   assert.strictEqual(result.loans.length >= 1, true);
 });
 
+test('listLoans rejects invalid status filter', async () => {
+  await assert.rejects(
+    () => libraryService.listLoans({ status: 'banana' }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('listBorrowRequests rejects invalid status filter', async () => {
+  await assert.rejects(
+    () => libraryService.listBorrowRequests({ status: 'banana' }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
 test('listLoans annotates past-due ACTIVE loans as OVERDUE', async () => {
   state.loans.push({
     id: 'loan-overdue',

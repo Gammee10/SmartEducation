@@ -252,6 +252,24 @@ test('createCourse validates required fields', async () => {
   );
 });
 
+test('createCourse rejects invalid status', async () => {
+  await assert.rejects(
+    () =>
+      courseService.createCourse({
+        actorId: 'user-teacher-1',
+        data: { title: 'X', subject: 'S', gradeLevel: 'Grade 9', status: 'LIVE' },
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('listCourses rejects invalid status filter', async () => {
+  await assert.rejects(
+    () => courseService.listCourses({ role: 'ADMIN', userId: 'user-admin-1', status: 'banana' }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
 test('createCourse creates course with audit log', async () => {
   const course = await courseService.createCourse({
     actorId: 'user-teacher-1',

@@ -11,6 +11,25 @@ type ContentTypeEnum = 'VIDEO' | 'DOCUMENT' | 'PDF' | 'IMAGE' | 'LINK' | 'OTHER'
 type CourseWhereInput = Record<string, unknown>;
 type ContentItemWhereInput = Record<string, unknown>;
 
+// Known enum values - validated on write so bad inputs produce a 422 instead
+// of a raw Prisma validation error (500).
+const COURSE_STATUSES: CourseStatus[] = ['DRAFT', 'ACTIVE', 'ARCHIVED'];
+const CONTENT_TYPES: ContentTypeEnum[] = ['VIDEO', 'DOCUMENT', 'PDF', 'IMAGE', 'LINK', 'OTHER'];
+
+function assertCourseStatus(status: string | undefined): CourseStatus {
+  if (status !== undefined && !COURSE_STATUSES.includes(status as CourseStatus)) {
+    throw new ValidationError('Invalid course status');
+  }
+  return (status || 'DRAFT') as CourseStatus;
+}
+
+function assertContentType(type: string | undefined): ContentTypeEnum {
+  if (type !== undefined && !CONTENT_TYPES.includes(type as ContentTypeEnum)) {
+    throw new ValidationError('Invalid content type');
+  }
+  return (type || 'OTHER') as ContentTypeEnum;
+}
+
 // ---------------------------------------------------------------
 // Courses
 // ---------------------------------------------------------------
@@ -26,7 +45,12 @@ interface ListCoursesParams {
 async function listCourses({ role, userId, status, page = 1, pageSize = 20 }: ListCoursesParams) {
   let where: CourseWhereInput = {};
 
-  if (status) where.status = status;
+  if (status) {
+    if (!COURSE_STATUSES.includes(status as CourseStatus)) {
+      throw new ValidationError('Invalid course status');
+    }
+    where.status = status;
+  }
 
   if (role === 'TEACHER') {
     // Teacher sees owned courses
@@ -120,11 +144,12 @@ interface CreateCourseParams {
 }
 
 async function createCourse({ actorId, data, ipAddress }: CreateCourseParams) {
-  const { title, description, subject, gradeLevel, coverUrl, status = 'DRAFT' } = data;
+  const { title, description, subject, gradeLevel, coverUrl } = data;
 
   if (!title || !subject || !gradeLevel) {
     throw new ValidationError('Title, subject, and grade level are required');
   }
+  const status = assertCourseStatus(data.status);
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
   if (!teacher) throw new NotFoundError('Teacher profile not found');
@@ -137,7 +162,7 @@ async function createCourse({ actorId, data, ipAddress }: CreateCourseParams) {
       gradeLevel,
       coverUrl: coverUrl || null,
       teacherId: teacher.id,
-      status: status as CourseStatus,
+      status,
     },
     include: {
       teacher: { include: { user: { select: { id: true, fullName: true } } } },
@@ -187,7 +212,7 @@ async function updateCourse({ actorId, courseId, data, ipAddress }: UpdateCourse
       subject: data.subject ?? course.subject,
       gradeLevel: data.gradeLevel ?? course.gradeLevel,
       coverUrl: data.coverUrl !== undefined ? data.coverUrl : course.coverUrl,
-      status: data.status ? (data.status as CourseStatus) : course.status,
+      status: data.status ? assertCourseStatus(data.status) : course.status,
     },
   });
 
@@ -374,7 +399,7 @@ async function uploadContent({ actorId, courseId, data, ipAddress }: UploadConte
       publicId: publicId || null,
       mimeType: mimeType || null,
       sizeBytes: sizeBytes || null,
-      type: (data.type || 'OTHER') as ContentTypeEnum,
+      type: assertContentType(data.type),
       uploadedById: actorId,
     },
     include: {

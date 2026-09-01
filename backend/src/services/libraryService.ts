@@ -265,9 +265,29 @@ interface ListParams {
   pageSize?: number;
 }
 
+// Known status filter values - invalid filters produce a 422 instead of a
+// raw Prisma validation error (500). OVERDUE is a read-time derived filter.
+const BORROW_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
+const LOAN_STATUSES = ['ACTIVE', 'RETURNED', 'OVERDUE'];
+
+function assertBorrowRequestStatus(status: string | undefined) {
+  if (status !== undefined && !BORROW_REQUEST_STATUSES.includes(status)) {
+    throw new ValidationError('Invalid borrow request status');
+  }
+  return status;
+}
+
+function assertLoanStatus(status: string | undefined) {
+  if (status !== undefined && !LOAN_STATUSES.includes(status)) {
+    throw new ValidationError('Invalid loan status');
+  }
+  return status;
+}
+
 async function listBorrowRequests({ status, page = 1, pageSize = 20 }: ListParams) {
   const where: Prisma.LibraryBorrowRequestWhereInput = {};
-  if (status) where.status = status as Prisma.LibraryBorrowRequestWhereInput['status'];
+  const validatedStatus = assertBorrowRequestStatus(status);
+  if (validatedStatus) where.status = validatedStatus as Prisma.LibraryBorrowRequestWhereInput['status'];
 
   const [requests, total] = await Promise.all([
     prisma.libraryBorrowRequest.findMany({
@@ -443,7 +463,8 @@ function loanStatusFilter(status?: string): Prisma.LibraryLoanWhereInput['status
 
 async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
   const where: Prisma.LibraryLoanWhereInput = {};
-  const statusFilter = loanStatusFilter(status);
+  const validatedStatus = assertLoanStatus(status);
+  const statusFilter = loanStatusFilter(validatedStatus);
   if (statusFilter) {
     where.status = statusFilter;
   } else if (status === 'OVERDUE') {
