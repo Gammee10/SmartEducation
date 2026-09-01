@@ -248,6 +248,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.8 No structured logging, no request IDs, no graceful shutdown
 
+- **Status: Completed**
+
 - **Category:** Reliability / DevOps
 - **Severity:** High
 - **Location:** `backend/src/index.ts:6–18` (no SIGTERM/SIGINT handling, no `server.close()`, no `prisma.$disconnect()`), `backend/src/app.ts:28–35` (console.log line logging, no request id, no user id, no IP)

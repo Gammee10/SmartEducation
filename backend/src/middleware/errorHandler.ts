@@ -4,6 +4,8 @@ import { AppError } from '../utils/errors';
 import env from '../config/env';
 
 function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): Response {
+  res.setHeader('x-request-id', (req as any).id ?? '');
+
   // Prisma known errors
   if (err.name === 'PrismaClientKnownRequestError') {
     const prismaErr = err as Error & { code?: string };
@@ -63,8 +65,17 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
     });
   }
 
-  // Unknown errors - log and return generic message
-  console.error('Unhandled error:', err);
+  // Unknown errors - log with request context and return generic message
+  console.error(
+    JSON.stringify({
+      requestId: (req as any).id ?? null,
+      method: req.method,
+      url: req.originalUrl,
+      userId: (req as any).user?.id ?? null,
+      message: err.message,
+      stack: err.stack,
+    })
+  );
   return res.status(500).json({
     success: false,
     message: env.nodeEnv === 'production' ? 'Internal server error' : err.message,

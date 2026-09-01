@@ -1,7 +1,9 @@
 ﻿// Express application - modular monolith entry point.
+import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import env from './config/env';
+import prisma from './prisma/client';
 import authRoutes from './routes/authRoutes';
 import libraryRoutes from './routes/libraryRoutes';
 import courseRoutes from './routes/courseRoutes';
@@ -33,23 +35,46 @@ app.use(express.json());
 // Basic DoS protection for the whole API surface.
 app.use('/api', apiLimiter);
 
-// Request logging (lightweight)
+// Request logging (structured JSON lines with a request id and actor)
 app.use((req, res, next) => {
+  (req as any).id = crypto.randomUUID();
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+    console.log(
+      JSON.stringify({
+        id: (req as any).id,
+        method: req.method,
+        url: req.originalUrl,
+        status: res.statusCode,
+        durationMs: duration,
+        userId: (req as any).user?.id ?? null,
+      })
+    );
   });
   next();
 });
 
-// Health endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Service is healthy',
-    data: { status: 'ok', timestamp: new Date().toISOString() },
-  });
+// Health endpoint - also pings the database so a broken DB connection fails
+// the platform health check (503) instead of reporting a healthy app.
+app.get('/api/health', async (req, res) => {
+  try {
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('DB ping timeout')), 5000)),
+    ]);
+    res.status(200).json({
+      success: true,
+      message: 'Service is healthy',
+      data: { status: 'ok', database: 'ok', timestamp: new Date().toISOString() },
+    });
+  } catch (err) {
+    res.status(503).json({
+      success: false,
+      message: 'Service is unhealthy',
+      data: { status: 'error', database: 'unreachable', timestamp: new Date().toISOString() },
+    });
+  }
 });
 
 // API routes
