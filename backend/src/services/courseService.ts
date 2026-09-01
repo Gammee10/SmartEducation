@@ -1,6 +1,7 @@
 // Course service - course CRUD, enrollment, and content management.
 import prismaModule from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
+import { assertHttpUrl, assertOptionalHttpUrl } from '../utils/url';
 import { writeAuditLog } from './auditService';
 
 // Cast to any to work around Prisma type resolution in monorepo
@@ -150,6 +151,7 @@ async function createCourse({ actorId, data, ipAddress }: CreateCourseParams) {
     throw new ValidationError('Title, subject, and grade level are required');
   }
   const status = assertCourseStatus(data.status);
+  const validatedCoverUrl = assertOptionalHttpUrl(coverUrl, 'Cover URL');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
   if (!teacher) throw new NotFoundError('Teacher profile not found');
@@ -160,7 +162,7 @@ async function createCourse({ actorId, data, ipAddress }: CreateCourseParams) {
       description: description || null,
       subject,
       gradeLevel,
-      coverUrl: coverUrl || null,
+      coverUrl: validatedCoverUrl,
       teacherId: teacher.id,
       status,
     },
@@ -211,7 +213,7 @@ async function updateCourse({ actorId, courseId, data, ipAddress }: UpdateCourse
       description: data.description !== undefined ? data.description : course.description,
       subject: data.subject ?? course.subject,
       gradeLevel: data.gradeLevel ?? course.gradeLevel,
-      coverUrl: data.coverUrl !== undefined ? data.coverUrl : course.coverUrl,
+      coverUrl: data.coverUrl !== undefined ? assertOptionalHttpUrl(data.coverUrl, 'Cover URL') : course.coverUrl,
       status: data.status ? assertCourseStatus(data.status) : course.status,
     },
   });
@@ -381,6 +383,7 @@ async function uploadContent({ actorId, courseId, data, ipAddress }: UploadConte
   if (!title || !url) {
     throw new ValidationError('Title and URL are required');
   }
+  const validatedUrl = assertHttpUrl(url, 'URL');
 
   // Verify teacher owns the course
   const course = await prisma.course.findUnique({ where: { id: courseId } });
@@ -395,7 +398,7 @@ async function uploadContent({ actorId, courseId, data, ipAddress }: UploadConte
       courseId,
       title,
       description: description || null,
-      url,
+      url: validatedUrl,
       publicId: publicId || null,
       mimeType: mimeType || null,
       sizeBytes: sizeBytes || null,

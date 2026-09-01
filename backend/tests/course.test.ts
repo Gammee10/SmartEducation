@@ -331,6 +331,38 @@ test('uploadContent validates title and url', async () => {
   );
 });
 
+test('uploadContent rejects javascript: URLs', async () => {
+  await assert.rejects(
+    () =>
+      courseService.uploadContent({
+        actorId: 'user-teacher-1',
+        courseId: 'course-1',
+        data: { title: 'Evil', url: 'javascript:alert(document.cookie)' },
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+  await assert.rejects(
+    () =>
+      courseService.uploadContent({
+        actorId: 'user-teacher-1',
+        courseId: 'course-1',
+        data: { title: 'Evil', url: 'data:text/html,<script>alert(1)</script>' },
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('createCourse rejects javascript: cover URLs', async () => {
+  await assert.rejects(
+    () =>
+      courseService.createCourse({
+        actorId: 'user-teacher-1',
+        data: { title: 'X', subject: 'S', gradeLevel: 'Grade 9', coverUrl: 'javascript:alert(1)' },
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
 test('uploadContent throws ForbiddenError for non-owner teacher', async () => {
   await assert.rejects(
     () => courseService.uploadContent({

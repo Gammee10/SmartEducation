@@ -296,6 +296,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.10 Stored-XSS-ready: content/upload URLs accepted without validation
 
+- **Status: Completed**
+
 - **Category:** Security / Data Validation
 - **Severity:** High
 - **Location:** `backend/src/services/courseService.ts:353–358` (`uploadContent` accepts any `url` string), `libraryService.ts:87–113` (`coverUrl`), `userAdminService.ts` / schema `coverUrl` fields generally

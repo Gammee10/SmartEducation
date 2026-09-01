@@ -2,6 +2,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../prisma/client';
 import { NotFoundError, ConflictError, ValidationError } from '../utils/errors';
+import { assertOptionalHttpUrl } from '../utils/url';
 import { writeAuditLog } from './auditService';
 
 // ---------------------------------------------------------------
@@ -100,7 +101,7 @@ async function createBook({ actorId, data, ipAddress }: CreateBookParams) {
       publishedYear: publishedYear ? parseInt(String(publishedYear), 10) : null,
       category: category || null,
       description: description || null,
-      coverUrl: coverUrl || null,
+      coverUrl: assertOptionalHttpUrl(coverUrl, 'Cover URL'),
       createdById: actorId,
       copies: {
         create: Array.from({ length: Math.max(1, parseInt(String(copies), 10) || 1) }, (_, i) => ({
@@ -154,7 +155,7 @@ async function updateBook({ actorId, bookId, data, ipAddress }: UpdateBookParams
       publishedYear: data.publishedYear !== undefined ? parseInt(String(data.publishedYear), 10) : existing.publishedYear,
       category: data.category !== undefined ? data.category : existing.category,
       description: data.description !== undefined ? data.description : existing.description,
-      coverUrl: data.coverUrl !== undefined ? data.coverUrl : existing.coverUrl,
+      coverUrl: data.coverUrl !== undefined ? assertOptionalHttpUrl(data.coverUrl, 'Cover URL') : existing.coverUrl,
     },
   });
 
