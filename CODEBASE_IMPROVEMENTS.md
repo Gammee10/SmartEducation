@@ -366,7 +366,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Implementation Guidance:** Move `checkConflicts` to accept a `tx` client (like `writeAuditLog` does) and call it within the transaction in create/update.
 - **Suggested Validation:** Unit test with mocked tx verifying conflict query runs on the tx client and audit rows are created.
 
-## 3.3 Library loans never transition to OVERDUE — status is dead schema
+## 3.3 Library loans never transition to OVERDUE
+
+- **Status: Completed** — status is dead schema
 
 - **Category:** Backend / Missing Feature
 - **Severity:** Medium

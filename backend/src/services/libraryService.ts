@@ -423,9 +423,33 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
 // Loans & Returns
 // ---------------------------------------------------------------
 
+// Overdue loans are derived at read time (pilot-appropriate): ACTIVE loans
+// whose dueDate has passed are annotated as OVERDUE, and filtering by
+// status=OVERDUE returns ACTIVE loans past due. No cron job required.
+const now = new Date();
+
+function annotateOverdue(loans: any[]): any[] {
+  return loans.map((loan) =>
+    loan.status === 'ACTIVE' && new Date(loan.dueDate) < now ? { ...loan, status: 'OVERDUE' } : loan
+  );
+}
+
+function loanStatusFilter(status?: string): Prisma.LibraryLoanWhereInput['status'] {
+  if (status === 'OVERDUE') {
+    return undefined;
+  }
+  return status as Prisma.LibraryLoanWhereInput['status'];
+}
+
 async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
   const where: Prisma.LibraryLoanWhereInput = {};
-  if (status) where.status = status as Prisma.LibraryLoanWhereInput['status'];
+  const statusFilter = loanStatusFilter(status);
+  if (statusFilter) {
+    where.status = statusFilter;
+  } else if (status === 'OVERDUE') {
+    where.status = 'ACTIVE';
+    where.dueDate = { lt: now };
+  }
 
   const [loans, total] = await Promise.all([
     prisma.libraryLoan.findMany({
@@ -442,7 +466,7 @@ async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
   ]);
 
   return {
-    loans,
+    loans: annotateOverdue(loans),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
@@ -470,7 +494,7 @@ async function listMyLoans({ studentId, page = 1, pageSize = 20 }: ListMyLoansPa
   ]);
 
   return {
-    loans,
+    loans: annotateOverdue(loans),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }

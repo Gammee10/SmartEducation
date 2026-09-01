@@ -176,12 +176,14 @@ const mockPrisma = {
       let result = state.loans;
       if (where?.status) result = result.filter((l: any) => l.status === where.status);
       if (where?.studentId) result = result.filter((l: any) => l.studentId === where.studentId);
+      if (where?.dueDate?.lt) result = result.filter((l: any) => new Date(l.dueDate) < where.dueDate.lt);
       return result.slice(skip || 0, (skip || 0) + (take || 20));
     },
     count: async ({ where }: any) => {
       let result = state.loans;
       if (where?.status) result = result.filter((l: any) => l.status === where.status);
       if (where?.studentId) result = result.filter((l: any) => l.studentId === where.studentId);
+      if (where?.dueDate?.lt) result = result.filter((l: any) => new Date(l.dueDate) < where.dueDate.lt);
       return result.length;
     },
     update: async ({ where, data }: any) => {
@@ -404,6 +406,42 @@ test('decideBorrowRequest rejects with audit log', async () => {
 test('listLoans returns loans', async () => {
   const result = await libraryService.listLoans({});
   assert.strictEqual(result.loans.length >= 1, true);
+});
+
+test('listLoans annotates past-due ACTIVE loans as OVERDUE', async () => {
+  state.loans.push({
+    id: 'loan-overdue',
+    studentId: 'student-1',
+    bookCopyId: 'copy-2',
+    status: 'ACTIVE',
+    dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    issuedAt: new Date(),
+  });
+  state.loans.push({
+    id: 'loan-future',
+    studentId: 'student-1',
+    bookCopyId: 'copy-2',
+    status: 'ACTIVE',
+    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    issuedAt: new Date(),
+  });
+
+  const result = await libraryService.listLoans({});
+  const overdue = result.loans.find((l: any) => l.id === 'loan-overdue');
+  const future = result.loans.find((l: any) => l.id === 'loan-future');
+  assert.strictEqual(overdue.status, 'OVERDUE', 'past-due ACTIVE loan must be flagged OVERDUE');
+  assert.strictEqual(future.status, 'ACTIVE', 'future-due loan stays ACTIVE');
+});
+
+test('listLoans status=OVERDUE filter returns only past-due loans', async () => {
+  const result = await libraryService.listLoans({ status: 'OVERDUE' });
+  assert.ok(result.loans.length >= 1);
+  assert.ok(
+    result.loans.every(
+      (l: any) => l.status === 'OVERDUE' && new Date(l.dueDate).getTime() < Date.now()
+    ),
+    'every returned loan must be overdue'
+  );
 });
 
 test('listMyLoans filters by student', async () => {
