@@ -35,6 +35,15 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
     });
   }
 
+  // Body parser limit exceeded (express.json)
+  if ((err as any).type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      message: 'Request body is too large',
+      data: {},
+    });
+  }
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({

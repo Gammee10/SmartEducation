@@ -814,6 +814,11 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
     throw new ConflictError('This attempt has already been submitted');
   }
 
+  // Reject absurd payloads early (each quiz question is answered at most once)
+  if (Array.isArray(answers) && answers.length > 200) {
+    throw new ValidationError('Too many answers submitted');
+  }
+
   // Determine if the attempt expired (server-side enforcement)
   const now = new Date();
   const expired = now >= new Date(attempt.expiresAt);

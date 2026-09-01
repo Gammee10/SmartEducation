@@ -407,6 +407,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.5 CSV import: unbounded size/rows, runs inside a single JSON body, batch can be orphaned as PENDING
 
+- **Status: Completed**
+
 - **Category:** Backend / Reliability
 - **Severity:** Medium
 - **Location:** `backend/src/controllers/userAdminController.ts:66–76` (CSV as JSON string field), `backend/src/app.ts:23` (`express.json()` default 100 KB body limit), `backend/src/services/userAdminService.ts:287–425` (`importUsersCsv` — no row cap; `importBatch` created first, marked COMPLETED only at the end)
@@ -513,6 +515,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Suggested Validation:** Tampered `alg: none`/`HS384` token rejected with 401.
 
 ## 3.13 `express.json()` body limits unconfigured; large writes unbounded elsewhere
+
+- **Status: Completed**
 
 - **Category:** Security / Reliability
 - **Severity:** Medium

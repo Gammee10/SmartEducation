@@ -299,6 +299,11 @@ async function importUsersCsv(opts: {
   if (lines.length < 2) {
     throw new ValidationError('CSV must include a header row and at least one data row');
   }
+  // Cap rows so a huge import cannot run past the request timeout and leave
+  // the batch orphaned as PENDING forever.
+  if (lines.length - 1 > 5000) {
+    throw new ValidationError('CSV import is limited to 5000 rows per batch');
+  }
 
   const header = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
   const requiredCols = ['fullname', 'email', 'role'];
@@ -320,8 +325,12 @@ async function importUsersCsv(opts: {
 
   const errors: Array<{ rowNumber: number; email: string | null; message: string }> = [];
   let successCount = 0;
+  const status = () => (successCount === 0 ? 'FAILED' : errors.length > 0 ? 'PARTIAL' : 'COMPLETED');
 
-  for (let i = 1; i < lines.length; i++) {
+  // If anything unexpected escapes the per-row handling, mark the batch
+  // FAILED so it cannot be orphaned as PENDING forever, then rethrow.
+  try {
+    for (let i = 1; i < lines.length; i++) {
     const rowNumber = i + 1; // 1-based including header
     const fields = parseCsvLine(lines[i]);
     const get = (name: string) => {
@@ -390,12 +399,10 @@ async function importUsersCsv(opts: {
     }
   }
 
-  const status = successCount === 0 ? 'FAILED' : errors.length > 0 ? 'PARTIAL' : 'COMPLETED';
-
   await prisma.$transaction(async (tx: any) => {
     await tx.importBatch.update({
       where: { id: batch.id },
-      data: { status, successCount, errorCount: errors.length },
+      data: { status: status(), successCount, errorCount: errors.length },
     });
     for (const e of errors) {
       await tx.importError.create({
@@ -403,6 +410,12 @@ async function importUsersCsv(opts: {
       });
     }
   });
+  } catch (err) {
+    await prisma.importBatch
+      .update({ where: { id: batch.id }, data: { status: 'FAILED', errorCount: errors.length } })
+      .catch(() => undefined);
+    throw err;
+  }
 
   await writeAuditLog({
     actorId,
@@ -419,7 +432,7 @@ async function importUsersCsv(opts: {
     totalRows: lines.length - 1,
     successCount,
     errorCount: errors.length,
-    status,
+    status: status(),
     errors,
   };
 }

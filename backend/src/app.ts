@@ -31,7 +31,9 @@ if (env.trustProxy !== '') {
 
 // Middleware
 app.use(cors({ origin: env.clientUrl, credentials: true }));
-app.use(express.json());
+// 2MB comfortably covers the CSV import payload while still bounding request
+// sizes (default was an accidental 100KB).
+app.use(express.json({ limit: '2mb' }));
 // Basic DoS protection for the whole API surface.
 app.use('/api', apiLimiter);
 
