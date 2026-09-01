@@ -108,12 +108,23 @@ export default function QuizDetailPage() {
       const response = await api.get(`/quizzes/${quizId}`);
       setQuiz(response.data.data.quiz);
       setAttempts(response.data.data.attempts || []);
+      // Teacher/admin: the details endpoint returns no attempts - load them
+      // from the dedicated results endpoint. Non-fatal on failure so a
+      // results problem never blanks the whole page.
+      if (!isStudent) {
+        try {
+          const results = await api.get(`/quizzes/${quizId}/results`);
+          setAttempts(results.data.data.attempts || []);
+        } catch {
+          // keep whatever attempts data we already have
+        }
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load quiz');
     } finally {
       setLoading(false);
     }
-  }, [quizId]);
+  }, [quizId, isStudent]);
 
   useEffect(() => {
     fetchData();
