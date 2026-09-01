@@ -127,7 +127,9 @@ The codebase is well organized for a modular monolith: consistent controller →
   In `fetchData`, after the first fetch: `if (user?.role !== 'STUDENT') { const r = await api.get(`/quizzes/${quizId}/results`); setAttempts(r.data.data.attempts || []); }`. The results response's `attempts` include `student.user.fullName`, matching the render code (`attempt.student?.user?.fullName`). Keep error handling non-fatal (a results failure shouldn't blank the page).
 - **Suggested Validation:** Log in as teacher, open a quiz with a submitted attempt → the Results panel lists students and scores.
 
-## 2.2 Library approval race — two pending requests can both be approved, creating two loans for one copy
+## 2.2 Library approval race
+
+- **Status: Completed** — two pending requests can both be approved, creating two loans for one copy
 
 - **Category:** Backend / Concurrency
 - **Severity:** High

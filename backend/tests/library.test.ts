@@ -117,6 +117,13 @@ const mockPrisma = {
       state.copies[idx] = { ...state.copies[idx], ...data };
       return state.copies[idx];
     },
+    updateMany: async ({ where, data }: any) => {
+      const matches = state.copies.filter(
+        (c: any) => (!where.id || c.id === where.id) && (!where.status || c.status === where.status)
+      );
+      for (const c of matches) Object.assign(c, data);
+      return { count: matches.length };
+    },
   },
   libraryBorrowRequest: {
     create: async ({ data }: any) => {
@@ -181,6 +188,16 @@ const mockPrisma = {
       const idx = state.loans.findIndex((l: any) => l.id === where.id);
       state.loans[idx] = { ...state.loans[idx], ...data };
       return state.loans[idx];
+    },
+    updateMany: async ({ where, data }: any) => {
+      const matches = state.loans.filter(
+        (l: any) =>
+          (!where.id || l.id === where.id) &&
+          (!where.status?.not || l.status !== where.status.not) &&
+          (!where.status || where.status.not || l.status === where.status)
+      );
+      for (const l of matches) Object.assign(l, data);
+      return { count: matches.length };
     },
   },
   auditLog: {
@@ -320,6 +337,37 @@ test('decideBorrowRequest approves and creates loan in transaction', async () =>
   assert.strictEqual(copy.status, 'BORROWED');
   // Audit log created
   assert.strictEqual(state.auditLogs.some((l: any) => l.action === 'LIBRARY_BORROW_APPROVED'), true);
+});
+
+test('decideBorrowRequest rejects approving a second request for the same copy (race guard)', async () => {
+  // copy-1 is BORROWED after the previous approval; simulate a second pending
+  // request that raced in before the copy was flipped - approval must fail
+  // atomically and leave the request untouched.
+  state.requests.push({
+    id: 'req-race',
+    studentId: 'student-2',
+    bookCopyId: 'copy-1',
+    status: 'PENDING',
+    requestedAt: new Date(),
+    bookCopy: mockCopy,
+  });
+  const loansBefore = state.loans.length;
+  const auditsBefore = state.auditLogs.length;
+
+  await assert.rejects(
+    () =>
+      libraryService.decideBorrowRequest({
+        actorId: 'admin-1',
+        requestId: 'req-race',
+        decision: 'APPROVED',
+        dueDate: '2026-09-01',
+      }),
+    (err: any) => err instanceof ConflictError
+  );
+
+  assert.strictEqual(state.requests.find((r: any) => r.id === 'req-race').status, 'PENDING');
+  assert.strictEqual(state.loans.length, loansBefore, 'no loan may be created for a lost race');
+  assert.strictEqual(state.auditLogs.length, auditsBefore, 'no approval audit may be written for a lost race');
 });
 
 test('decideBorrowRequest rejects already decided request', async () => {

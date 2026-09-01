@@ -344,8 +344,18 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
       throw new ConflictError('This book copy is no longer available');
     }
 
-    // Transaction: approve request + create loan + mark copy borrowed + audit
+    // Transaction: approve request + create loan + claim copy + audit
     const result = await prisma.$transaction(async (tx) => {
+      // Atomically claim the copy so two admins approving two different
+      // pending requests for the same copy cannot both succeed.
+      const claimed = await tx.libraryBookCopy.updateMany({
+        where: { id: request.bookCopyId, status: 'AVAILABLE' },
+        data: { status: 'BORROWED' },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictError('This book copy is no longer available');
+      }
+
       const updatedRequest = await tx.libraryBorrowRequest.update({
         where: { id: requestId },
         data: {
@@ -364,11 +374,6 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
           issuedById: actorId,
           dueDate: new Date(dueDate),
         },
-      });
-
-      await tx.libraryBookCopy.update({
-        where: { id: request.bookCopyId },
-        data: { status: 'BORROWED' },
       });
 
       await tx.auditLog.create({
@@ -487,16 +492,26 @@ async function returnLoan({ actorId, loanId, notes, ipAddress }: ReturnLoanParam
     throw new ConflictError('This loan has already been returned');
   }
 
-  // Transaction: update loan + mark copy available + audit
+  // Transaction: claim loan (idempotent under concurrency) + mark copy
+  // available + audit
   const result = await prisma.$transaction(async (tx) => {
-    const updatedLoan = await tx.libraryLoan.update({
-      where: { id: loanId },
+    // Atomically claim the loan so concurrent double-returns cannot both pass
+    const claimed = await tx.libraryLoan.updateMany({
+      where: { id: loanId, status: { not: 'RETURNED' } },
       data: {
         status: 'RETURNED',
         returnedAt: new Date(),
         returnedById: actorId,
         notes: notes || null,
       },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictError('This loan has already been returned');
+    }
+
+    const updatedLoan = await tx.libraryLoan.update({
+      where: { id: loanId },
+      data: {},
     });
 
     await tx.libraryBookCopy.update({
