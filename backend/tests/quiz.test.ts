@@ -257,6 +257,16 @@ const mockPrisma = {
   },
   quizAttempt: {
     findUnique: async ({ where }: any) => state.attempts.find((a: any) => a.id === where.id) || null,
+    findFirst: async ({ where }: any) => {
+      let result = state.attempts;
+      if (where?.quizId) result = result.filter((a: any) => a.quizId === where.quizId);
+      if (where?.studentId) result = result.filter((a: any) => a.studentId === where.studentId);
+      if (where?.status) result = result.filter((a: any) => a.status === where.status);
+      result = [...result].sort(
+        (a: any, b: any) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+      );
+      return result[0] || null;
+    },
     findMany: async ({ where }: any) => {
       let result = state.attempts;
       if (where?.quizId) result = result.filter((a: any) => a.quizId === where.quizId);
@@ -288,6 +298,14 @@ const mockPrisma = {
       const idx = state.attempts.findIndex((a: any) => a.id === where.id);
       state.attempts[idx] = { ...state.attempts[idx], ...data };
       return state.attempts[idx];
+    },
+    updateMany: async ({ where, data }: any) => {
+      const matches = state.attempts.filter(
+        (a: any) =>
+          (!where.id || a.id === where.id) && (!where.status || a.status === where.status)
+      );
+      for (const a of matches) Object.assign(a, data);
+      return { count: matches.length };
     },
   },
   quizAnswer: {
@@ -695,6 +713,129 @@ test('startAttempt enforces max attempts limit', async () => {
     () => quizService.startAttempt({ actorId: 'user-student-1', quizId: 'quiz-single-fresh' }),
     (err: any) => err instanceof ConflictError
   );
+});
+
+test('startAttempt reuses an active IN_PROGRESS attempt without resetting the timer', async () => {
+  // Self-contained fixture: fresh quiz + one active IN_PROGRESS attempt
+  const quiz: any = { ...mockQuiz, id: 'quiz-resume', maxAttempts: 2 };
+  state.quizzes.push(quiz);
+  const original = freshAttempt({
+    id: 'attempt-resume-existing',
+    quizId: 'quiz-resume',
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    quiz,
+  });
+  state.attempts.push(original);
+  const attemptsBefore = state.attempts.length;
+
+  const result = await quizService.startAttempt({ actorId: 'user-student-1', quizId: 'quiz-resume' });
+
+  assert.strictEqual(result.attempt.id, 'attempt-resume-existing', 'must return the existing attempt');
+  assert.strictEqual(new Date(result.attempt.expiresAt).getTime(), original.expiresAt.getTime(), 'timer must not reset');
+  assert.strictEqual(state.attempts.length, attemptsBefore, 'no new attempt row may be created');
+});
+
+test('startAttempt flips an expired IN_PROGRESS attempt to TIME_EXPIRED', async () => {
+  const quiz: any = { ...mockQuiz, id: 'quiz-expired-resume', maxAttempts: 2 };
+  state.quizzes.push(quiz);
+  state.attempts.push(
+    freshAttempt({
+      id: 'attempt-expired-resume',
+      quizId: 'quiz-expired-resume',
+      expiresAt: new Date(Date.now() - 60 * 1000),
+      quiz,
+    })
+  );
+
+  const result = await quizService.startAttempt({ actorId: 'user-student-1', quizId: 'quiz-expired-resume' });
+
+  assert.notStrictEqual(result.attempt.id, 'attempt-expired-resume', 'a fresh attempt is created');
+  const flipped = state.attempts.find((a: any) => a.id === 'attempt-expired-resume');
+  assert.strictEqual(flipped.status, 'TIME_EXPIRED', 'expired attempt must count toward the limit');
+});
+
+test('startAttempt cannot exceed the limit even with an active attempt (reuse, never a new row)', async () => {
+  // maxAttempts = 1 with an active IN_PROGRESS attempt: the student gets the
+  // same attempt back (resume) - a second attempt row is never created.
+  const quiz: any = { ...mockQuiz, id: 'quiz-inprogress-cap', maxAttempts: 1 };
+  state.quizzes.push(quiz);
+  state.attempts.push(
+    freshAttempt({ id: 'attempt-inprogress-cap', quizId: 'quiz-inprogress-cap', quiz })
+  );
+  const attemptsBefore = state.attempts.length;
+
+  const result = await quizService.startAttempt({ actorId: 'user-student-1', quizId: 'quiz-inprogress-cap' });
+
+  assert.strictEqual(result.attempt.id, 'attempt-inprogress-cap');
+  assert.strictEqual(state.attempts.length, attemptsBefore, 'no second attempt row may be created');
+});
+
+test('submitAttempt double-submit is rejected atomically (no duplicate answers/audit/notification)', async () => {
+  const attempt = freshAttempt({ id: 'attempt-atomic' });
+  state.attempts.push(attempt);
+  const answers = [
+    { questionId: 'question-1', optionIds: ['option-2'] },
+    { questionId: 'question-2', optionIds: ['option-4'] },
+  ];
+
+  const first = await quizService.submitAttempt({
+    actorId: 'user-student-1',
+    attemptId: 'attempt-atomic',
+    answers,
+  });
+  assert.strictEqual(first.status, 'SUBMITTED');
+
+  const answersBefore = state.answers.filter((a: any) => a.attemptId === 'attempt-atomic').length;
+  const auditsBefore = state.auditLogs.length;
+  const notesBefore = state.notifications.length;
+
+  await assert.rejects(
+    () => quizService.submitAttempt({ actorId: 'user-student-1', attemptId: 'attempt-atomic', answers }),
+    (err: any) => err instanceof ConflictError
+  );
+
+  const answersAfter = state.answers.filter((a: any) => a.attemptId === 'attempt-atomic').length;
+  assert.strictEqual(answersAfter, answersBefore, 'no duplicate answers may be written');
+  assert.strictEqual(state.auditLogs.length, auditsBefore, 'no duplicate audit log');
+  assert.strictEqual(state.notifications.length, notesBefore, 'no duplicate notification');
+});
+
+test('submitAttempt stores full multi-select selection and ignores foreign option ids', async () => {
+  // Fresh multi-select question with 2 correct options
+  const multiQuestion: any = {
+    id: 'question-multi',
+    quizId: 'quiz-multi',
+    prompt: 'Select all prime numbers',
+    type: 'MULTIPLE_CHOICE',
+    points: 3,
+    orderIndex: 0,
+    options: [
+      { id: 'option-multi-1', questionId: 'question-multi', optionText: '2', isCorrect: true, orderIndex: 0 },
+      { id: 'option-multi-2', questionId: 'question-multi', optionText: '3', isCorrect: true, orderIndex: 1 },
+      { id: 'option-multi-3', questionId: 'question-multi', optionText: '4', isCorrect: false, orderIndex: 2 },
+    ],
+  };
+  const quiz: any = { ...mockQuiz, id: 'quiz-multi', questions: [multiQuestion] };
+  state.quizzes.push(quiz);
+  state.attempts.push(freshAttempt({ id: 'attempt-multi', quizId: 'quiz-multi', quiz }));
+
+  const result = await quizService.submitAttempt({
+    actorId: 'user-student-1',
+    attemptId: 'attempt-multi',
+    answers: [
+      {
+        questionId: 'question-multi',
+        // includes a foreign option id (option-2 belongs to question-1) and a duplicate
+        optionIds: ['option-multi-1', 'option-multi-2', 'option-2', 'option-multi-1'],
+      },
+    ],
+  });
+
+  assert.strictEqual(result.score, 3, 'both valid correct options must be graded');
+  const stored = state.answers.filter((a: any) => a.attemptId === 'attempt-multi');
+  assert.strictEqual(stored.length, 1);
+  assert.deepStrictEqual([...stored[0].selection].sort(), ['option-multi-1', 'option-multi-2']);
+  assert.strictEqual(stored[0].optionId, 'option-multi-1', 'first selection kept for backward compatibility');
 });
 
 test('submitAttempt auto-grades correct answers', async () => {

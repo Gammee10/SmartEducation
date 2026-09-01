@@ -295,6 +295,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.11 Expired quiz attempts still earn full credit
 
+- **Status: Completed**
+
 - **Category:** Backend / Business Logic
 - **Severity:** High
 - **Location:** `backend/src/services/quizService.ts:768–814` (`submitAttempt` — expiry sets `TIME_EXPIRED` but answers are still fully scored)
@@ -326,7 +328,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 # 3. Medium
 
-## 3.1 Quiz answers lose multiple-choice data and don't validate option ownership
+## 3.1 Quiz answers lose multiple-choice data and don''t validate option ownership
+
+- **Status: Completed**
 
 - **Category:** Backend / Data Integrity
 - **Severity:** Medium

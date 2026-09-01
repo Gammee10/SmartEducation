@@ -439,6 +439,9 @@ model QuizAnswer {
   attemptId  String   @map("attempt_id") @db.Uuid
   questionId String   @map("question_id") @db.Uuid
   optionId   String?  @map("option_id") @db.Uuid
+  // Full selection for multi-select questions (first selection stays in
+  // optionId for backward compatibility).
+  selection  Json?
   isCorrect  Boolean?
   pointsEarned Float? @map("points_earned")
   createdAt  DateTime @default(now()) @map("created_at")

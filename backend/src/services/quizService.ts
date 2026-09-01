@@ -53,6 +53,32 @@ function shuffle<T>(items: T[]): T[] {
   return arr;
 }
 
+/**
+ * Build the question payload returned to students (no correct answers),
+ * applying the quiz's shuffle settings. Used both for new attempts and for
+ * resuming an existing IN_PROGRESS attempt.
+ */
+function buildStudentQuestionPayload(quiz: any) {
+  let questions = quiz.questions.map((question: any) => {
+    let options = question.options.map((option: any) => ({
+      id: option.id,
+      optionText: option.optionText,
+      orderIndex: option.orderIndex,
+    }));
+    if (quiz.shuffleOptions) options = shuffle(options);
+    return {
+      id: question.id,
+      prompt: question.prompt,
+      type: question.type,
+      points: question.points,
+      orderIndex: question.orderIndex,
+      options,
+    };
+  });
+  if (quiz.shuffleQuestions) questions = shuffle(questions);
+  return questions;
+}
+
 interface QuestionInput {
   id?: string;
   prompt?: string;
@@ -660,9 +686,48 @@ async function startAttempt({ actorId, quizId, ipAddress }: StartAttemptParams) 
     throw new ForbiddenError('You must be enrolled in this course to take quizzes');
   }
 
-  // Count completed attempts (submitted or expired)
+  // Reuse an existing IN_PROGRESS attempt instead of creating a new one so the
+  // attempt limit cannot be bypassed by repeatedly starting attempts and so
+  // the timer is never reset. The frontend resume path handles a returned
+  // in-progress attempt.
+  const now = new Date();
+  let existing = await prisma.quizAttempt.findFirst({
+    where: { quizId, studentId: student.id, status: 'IN_PROGRESS' },
+    orderBy: { startedAt: 'desc' },
+  });
+
+  if (existing && now >= new Date(existing.expiresAt)) {
+    // Expired IN_PROGRESS attempts count toward the limit - flip it (guarded
+    // so a concurrent submit/flip cannot double-write) and start fresh.
+    await prisma.quizAttempt.updateMany({
+      where: { id: existing.id, status: 'IN_PROGRESS' },
+      data: { status: 'TIME_EXPIRED', submittedAt: now },
+    });
+    existing = null;
+  }
+
+  if (existing) {
+    return {
+      attempt: {
+        id: existing.id,
+        startedAt: existing.startedAt,
+        expiresAt: existing.expiresAt,
+      },
+      quiz: {
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        timeLimit: quiz.timeLimit,
+        shuffleQuestions: quiz.shuffleQuestions,
+        shuffleOptions: quiz.shuffleOptions,
+        questions: buildStudentQuestionPayload(quiz),
+      },
+    };
+  }
+
+  // Count ALL attempts (including IN_PROGRESS) against the limit
   const attemptCount = await prisma.quizAttempt.count({
-    where: { quizId, studentId: student.id, status: { in: ['SUBMITTED', 'TIME_EXPIRED'] } },
+    where: { quizId, studentId: student.id },
   });
   if (attemptCount >= quiz.maxAttempts) {
     throw new ConflictError(`You have used all ${quiz.maxAttempts} attempt(s) for this quiz`);
@@ -671,7 +736,7 @@ async function startAttempt({ actorId, quizId, ipAddress }: StartAttemptParams) 
   // Calculate required max score from question points
   const maxScore = quiz.questions.reduce((sum: number, q: any) => sum + Number(q.points || 1), 0);
 
-  const startedAt = new Date();
+  const startedAt = now;
   const expiresAt = new Date(startedAt.getTime() + quiz.timeLimit * 60 * 1000);
 
   const attempt = await prisma.quizAttempt.create({
@@ -689,23 +754,7 @@ async function startAttempt({ actorId, quizId, ipAddress }: StartAttemptParams) 
   });
 
   // Build the question payload for the student (no correct answers)
-  let questions = quiz.questions.map((question: any) => {
-    let options = question.options.map((option: any) => ({
-      id: option.id,
-      optionText: option.optionText,
-      orderIndex: option.orderIndex,
-    }));
-    if (quiz.shuffleOptions) options = shuffle(options);
-    return {
-      id: question.id,
-      prompt: question.prompt,
-      type: question.type,
-      points: question.points,
-      orderIndex: question.orderIndex,
-      options,
-    };
-  });
-  if (quiz.shuffleQuestions) questions = shuffle(questions);
+  const questions = buildStudentQuestionPayload(quiz);
 
   await writeAuditLog({
     actorId,
@@ -788,11 +837,20 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
     const correctOptionIds = new Set(
       question.options.filter((o: any) => o.isCorrect).map((o: any) => o.id)
     );
-    const selected: string[] = Array.isArray(submitted.optionIds)
-      ? (submitted.optionIds as string[])
-      : submitted.optionIds
-        ? [submitted.optionIds as string]
-        : [];
+    // Only options that actually belong to this question are accepted -
+    // anything else (forged or foreign ids) is dropped before scoring.
+    // Duplicate selections are deduplicated.
+    const optionIdSet = new Set(question.options.map((o: any) => o.id));
+    const selected = [
+      ...new Set(
+        (Array.isArray(submitted.optionIds)
+          ? (submitted.optionIds as string[])
+          : submitted.optionIds
+            ? [submitted.optionIds as string]
+            : []
+        ).filter((id: string) => optionIdSet.has(id))
+      ),
+    ];
 
     // Determine answer correctness (anti-cheating: selected options must match correct set exactly)
     const isCorrect =
@@ -806,6 +864,8 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
       attemptId,
       questionId: question.id,
       optionId: selected.length > 0 ? selected[0] : null,
+      // Keep the full multi-select selection; optionId stays the primary/first
+      selection: selected.length > 0 ? selected : null,
       isCorrect,
       pointsEarned,
     });
@@ -813,8 +873,27 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
 
   const finalStatus: QuizAttemptStatus = expired ? 'TIME_EXPIRED' : 'SUBMITTED';
 
+  // Policy: expired attempts are still graded but flagged TIME_EXPIRED so
+  // teachers can discount them; they are excluded from dashboard averages
+  // (which aggregate SUBMITTED attempts only).
   // Save answers, update attempt, audit, and notify in one transaction
   const result = await prisma.$transaction(async (tx: any) => {
+    // Atomically claim the attempt so concurrent submits (double-click,
+    // auto-submit racing manual submit) cannot double-grade. If the attempt
+    // was already submitted, roll everything back with a conflict.
+    const claimed = await tx.quizAttempt.updateMany({
+      where: { id: attemptId, status: 'IN_PROGRESS' },
+      data: {
+        status: finalStatus,
+        submittedAt: now,
+        score: earned,
+        maxScore: total,
+      },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictError('This attempt has already been submitted');
+    }
+
     // Delete any pre-existing answers (safety for retries)
     await tx.quizAnswer.deleteMany({ where: { attemptId } });
     if (answerData.length > 0) {
@@ -823,12 +902,7 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
 
     const updated = await tx.quizAttempt.update({
       where: { id: attemptId },
-      data: {
-        status: finalStatus,
-        submittedAt: now,
-        score: earned,
-        maxScore: total,
-      },
+      data: {},
       include: {
         quiz: { include: { course: true } },
         answers: true,
