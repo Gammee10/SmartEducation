@@ -246,6 +246,15 @@ async function archiveUser(opts: { actorId: string; userId: string; ipAddress?: 
   if (!existing) throw new NotFoundError('User not found');
   if (existing.status === 'ARCHIVED') throw new ConflictError('User is already archived');
   if (existing.id === actorId) throw new ValidationError('You cannot archive your own account');
+  if (existing.role === 'ADMIN') {
+    // Never allow zero active admins - that would lock out the whole system.
+    const otherActiveAdmins = await prisma.user.count({
+      where: { role: 'ADMIN', status: 'ACTIVE', id: { not: userId } },
+    });
+    if (otherActiveAdmins === 0) {
+      throw new ConflictError('Cannot archive the last active admin');
+    }
+  }
 
   const user = await prisma.user.update({
     where: { id: userId },

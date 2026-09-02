@@ -33,6 +33,7 @@ const mockPrisma = {
       let result = state.users;
       if (where?.role) result = result.filter((u: any) => u.role === where.role);
       if (where?.status) result = result.filter((u: any) => u.status === where.status);
+      if (where?.id?.not) result = result.filter((u: any) => u.id !== where.id.not);
       return result.length;
     },
     findUnique: async ({ where }: any) => {
@@ -227,5 +228,13 @@ test('resetUserPassword rejects missing users', async () => {
   await assert.rejects(
     () => userAdminService.resetUserPassword({ actorId: 'user-admin-1', userId: 'missing' }),
     NotFoundError
+  );
+});
+
+test('archiveUser blocks archiving the last active admin', async () => {
+  // state only has one admin (user-admin-1) -> archiving them is blocked
+  await assert.rejects(
+    () => userAdminService.archiveUser({ actorId: 'someone-else', userId: 'user-admin-1' }),
+    (err: any) => err instanceof ConflictError && err.message === 'Cannot archive the last active admin'
   );
 });

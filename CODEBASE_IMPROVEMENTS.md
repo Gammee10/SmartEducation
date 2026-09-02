@@ -584,6 +584,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.18 Race-prone `markNotificationRead` and generic P2002 handling are fine, but user archive lacks last-admin protection
 
+- **Status: Completed**
+
 - **Category:** Authorization / Reliability
 - **Severity:** Medium
 - **Location:** `backend/src/services/userAdminService.ts:233–256` (`archiveUser` blocks only self-archive)
