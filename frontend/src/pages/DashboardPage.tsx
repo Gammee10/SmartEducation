@@ -277,7 +277,7 @@ function AdminDashboard() {
             className="group animate-fade-up flex items-start gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 transition-colors duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20">
               <Icon name={l.icon} />
             </span>
             <span>
@@ -371,7 +371,7 @@ function TeacherDashboard() {
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
                   <p className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
-                  <span className="inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700">
+                  <span className="inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
                     {sub.score ?? '-'}
                   </span>
                 </li>

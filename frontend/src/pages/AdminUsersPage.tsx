@@ -410,7 +410,7 @@ export default function AdminUsersPage() {
           type="file"
           accept=".csv,text/csv"
           onChange={handleCsvFile}
-          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:text-gray-400"
+          className="mb-3 block w-full cursor-pointer text-sm text-gray-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:text-gray-400 dark:file:bg-primary-500/10 dark:file:text-primary-400 hover:dark:file:bg-primary-500/20"
         />
         <textarea
           rows={5}

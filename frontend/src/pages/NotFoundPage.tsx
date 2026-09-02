@@ -4,7 +4,7 @@ import { buttonPrimary } from '../components/ui';
 export default function NotFoundPage() {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-20 text-center sm:py-28">
-      <p className="bg-gradient-to-b from-primary-600 to-primary-800 bg-clip-text text-7xl font-extrabold tracking-tight text-transparent sm:text-8xl">
+      <p className="bg-gradient-to-b from-primary-600 to-primary-800 bg-clip-text text-7xl font-extrabold tracking-tight text-transparent dark:from-primary-300 dark:to-primary-500 sm:text-8xl">
         404
       </p>
       <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Page not found</h1>

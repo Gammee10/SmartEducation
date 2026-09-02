@@ -20,9 +20,10 @@ body {
 }
 
 /* Consistent, visible keyboard focus across the app. Only applies to
-   keyboard-driven focus (:focus-visible), so mouse clicks stay clean. */
+   keyboard-driven focus (:focus-visible), so mouse clicks stay clean.
+   The offset color follows the page background in each theme. */
 :focus-visible {
-  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-950;
 }
 
 /* Branded text selection */

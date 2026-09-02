@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggleButton from '../components/ThemeToggleButton';
 import { inputStyles, labelStyles, Spinner } from '../components/ui';
 
 function CapIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -123,6 +124,10 @@ export default function LoginPage() {
       <BrandPanel />
 
       <div className="relative flex flex-1 flex-col justify-center overflow-hidden bg-gray-50 px-4 py-12 dark:bg-gray-950 sm:px-6 lg:px-16 xl:px-24">
+        {/* Theme control available before signing in */}
+        <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+          <ThemeToggleButton />
+        </div>
         {/* Soft brand glow behind the form */}
         <div
           aria-hidden="true"
@@ -212,7 +217,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 bg-brand px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/25 transition-all duration-150 hover:shadow-xl hover:shadow-primary-600/30 hover:brightness-110 disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 bg-brand px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/25 transition-all duration-150 hover:shadow-xl hover:shadow-primary-600/30 hover:brightness-110 disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
             >
               {submitting && <Spinner />}
               {submitting ? 'Signing in…' : 'Sign in'}

@@ -259,7 +259,7 @@ export default function AssignmentDetailPage() {
                     <input
                       type="file"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                      className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-500/10 dark:file:text-primary-400 hover:dark:file:bg-primary-500/20"
                     />
                   </div>
                   <button

@@ -69,23 +69,23 @@ const emptyQuizForm: QuizForm = {
 const CONTENT_TYPE_META: Record<string, { path: string; tile: string }> = {
   VIDEO: {
     path: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.283a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    tile: 'bg-purple-100 text-purple-600',
+    tile: 'bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
   },
   DOCUMENT: {
     path: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    tile: 'bg-blue-100 text-blue-600',
+    tile: 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
   },
   PDF: {
     path: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    tile: 'bg-red-100 text-red-600',
+    tile: 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400',
   },
   IMAGE: {
     path: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
-    tile: 'bg-emerald-100 text-emerald-600',
+    tile: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
   },
   LINK: {
     path: 'M13.828 10.172a4 4 0 015.656 0M9 12h.01M15 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    tile: 'bg-amber-100 text-amber-600',
+    tile: 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
   },
   OTHER: {
     path: 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4',
@@ -439,7 +439,7 @@ export default function CourseDetailPage() {
             key={stat.label}
             className="flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5"
           >
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
               <svg
                 className="h-[18px] w-[18px]"
                 fill="none"
@@ -528,7 +528,7 @@ export default function CourseDetailPage() {
             {t.label}
             <span
               className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${
-                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:text-gray-400'
+                activeTab === t.key ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
               }`}
             >
               {t.count}
@@ -782,7 +782,7 @@ export default function CourseDetailPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3.5">
-                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
                           <svg
                             className="h-5 w-5"
                             fill="none"
@@ -805,7 +805,7 @@ export default function CourseDetailPage() {
                       </div>
                       <div className="flex flex-shrink-0 items-center gap-2">
                         {assignment.submissions && assignment.submissions.length > 0 && (
-                          <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-inset ring-black/[0.04]">
+                          <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-inset ring-black/[0.04] dark:bg-green-500/10 dark:text-green-400 dark:ring-white/10">
                             Submitted
                           </span>
                         )}
@@ -967,7 +967,7 @@ export default function CourseDetailPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3.5">
-                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
                         <svg
                           className="h-5 w-5"
                           fill="none"

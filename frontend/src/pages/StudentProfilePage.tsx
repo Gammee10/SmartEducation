@@ -129,7 +129,7 @@ export default function StudentProfilePage() {
       {/* Animated stats strip — overlaps the hero */}
       <div className="-mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
             <Icon name="book" className="h-[18px] w-[18px]" />
           </span>
           <div>
@@ -151,7 +151,7 @@ export default function StudentProfilePage() {
         </div>
 
         <div className="animate-fade-up flex items-center gap-3.5 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 sm:p-5" style={{ animationDelay: '120ms' }}>
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
             <Icon name="chart" className="h-[18px] w-[18px]" />
           </span>
           <div>
@@ -222,7 +222,7 @@ export default function StudentProfilePage() {
                   className="animate-fade-up flex items-start gap-3 px-5 py-3.5 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
-                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400">
                     <Icon name="book" className="h-4 w-4" />
                   </span>
                   <div>
@@ -265,7 +265,7 @@ export default function StudentProfilePage() {
                       <p className="min-w-0 truncate text-sm font-medium text-gray-900 dark:text-gray-100">
                         {a.quiz?.title || 'Quiz'}
                       </p>
-                      <span className="inline-flex h-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2.5 text-xs font-bold text-primary-700">
+                      <span className="inline-flex h-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2.5 text-xs font-bold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
                         {a.score ?? '-'} / {a.maxScore ?? '-'}
                       </span>
                     </div>

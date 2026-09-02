@@ -31,7 +31,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] ${
+      className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ring-black/[0.04] dark:ring-white/10 ${
         STATUS_STYLES[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
       }`}
     >

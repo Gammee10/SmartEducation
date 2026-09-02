@@ -536,7 +536,7 @@ export default function QuizDetailPage() {
                         <label
                           key={option.id}
                           className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors duration-150 ${
-                            isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            isSelected ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500 dark:bg-primary-500/10' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                           }`}
                         >
                           <input

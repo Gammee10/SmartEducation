@@ -297,11 +297,11 @@ export function SkeletonCard() {
 const BUTTON_BASE =
   'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 disabled:pointer-events-none disabled:opacity-60';
 
-export const buttonPrimary = `${BUTTON_BASE} bg-primary-600 text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/30 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2`;
+export const buttonPrimary = `${BUTTON_BASE} bg-primary-600 text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/30 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950`;
 
-export const buttonSecondary = `${BUTTON_BASE} border border-gray-300 bg-white text-gray-700 shadow-sm hover:border-gray-400 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-800`;
+export const buttonSecondary = `${BUTTON_BASE} border border-gray-300 bg-white text-gray-700 shadow-sm hover:border-gray-400 hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-950`;
 
-export const buttonDanger = `${BUTTON_BASE} bg-red-600 text-white shadow-md shadow-red-600/20 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2`;
+export const buttonDanger = `${BUTTON_BASE} bg-red-600 text-white shadow-md shadow-red-600/20 hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950`;
 
 export function LinkButton({
   to,
@@ -328,4 +328,4 @@ export const selectStyles = inputStyles;
 
 export const labelStyles = 'mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-300';
 
-export const fieldErrorStyles = 'mt-1.5 text-xs font-medium text-red-600';
+export const fieldErrorStyles = 'mt-1.5 text-xs font-medium text-red-600 dark:text-red-400';
