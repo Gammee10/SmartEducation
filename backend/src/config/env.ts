@@ -17,10 +17,14 @@ if (nodeEnv === 'production' && !process.env.DEFAULT_USER_PASSWORD) {
   throw new Error('DEFAULT_USER_PASSWORD must be set when NODE_ENV is production');
 }
 
-// The shared Prisma client hard-requires DIRECT_URL (datasources.db.url);
-// fail fast instead of a confusing runtime datasource error.
-if (!process.env.DIRECT_URL) {
-  throw new Error('DIRECT_URL must be set - the Prisma client connects through it');
+// The shared Prisma client hard-requires DIRECT_URL (datasources.db.url).
+// Fail fast in production; in development only warn, because a fresh clone
+// without a .env file must still be able to run the unit tests (which mock
+// the Prisma client and never touch the database).
+if (nodeEnv === 'production' && !process.env.DIRECT_URL) {
+  throw new Error('DIRECT_URL must be set when NODE_ENV is production');
+} else if (nodeEnv !== 'production' && !process.env.DIRECT_URL) {
+  console.warn('DIRECT_URL is not set - database connections will fail until it is provided.');
 }
 
 const env = {

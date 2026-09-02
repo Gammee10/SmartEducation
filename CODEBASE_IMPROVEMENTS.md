@@ -651,6 +651,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.4 `DIRECT_URL` optional in env validation but mandatory at runtime
 
+- **Status: Completed** (hard-required in production; warning in development so a fresh clone without .env can still run the unit tests)
+
 - **Status: Completed**
 
 - **Category:** Configuration
