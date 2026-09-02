@@ -697,6 +697,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.10 Repo clutter: committed handoff packages and stray logs
 
+- **Status: Completed**
+
 - **Category:** DevOps / Code Quality
 - **Severity:** Low
 - **Location:** `member-handoff-packages/` (6 committed markdown files — team-planning artifacts), `vite-build.log` (untracked, already ignored), `cline_overnight_codebase_improvement.md` (ignored)
