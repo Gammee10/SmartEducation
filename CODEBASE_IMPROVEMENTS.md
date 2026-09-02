@@ -586,6 +586,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.17 Token and user object persisted in localStorage (XSS blast radius)
 
+- **Status: Partially Completed** (minimum hardening: stored content-URL XSS vector fixed and storage limited to {token, user}; httpOnly-cookie migration deferred as a deliberate cross-cutting change per the report's Phase 5 guidance)
+
 - **Category:** Security / Frontend
 - **Severity:** Medium
 - **Location:** `frontend/src/context/AuthContext.tsx:20–45`, `frontend/src/api/client.ts:11–17`
