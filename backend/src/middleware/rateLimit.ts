@@ -1,13 +1,15 @@
 // Rate limiting middleware - protects against brute-force and DoS.
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import type { Request } from 'express';
 
 // Prefer the authenticated user id so authenticated traffic is limited per
 // user even behind shared NATs; fall back to req.ip (which correctly
 // resolves to the client when TRUST_PROXY is configured for the deployment).
+// ipKeyGenerator normalizes IPv6 addresses so /64 blocks share one bucket.
 function limiterKey(req: Request): string {
   const userId = (req as any).user?.id;
-  return userId ? `user:${userId}` : req.ip || 'unknown';
+  if (userId) return `user:${userId}`;
+  return req.ip ? `ip:${ipKeyGenerator(req.ip)}` : 'unknown';
 }
 
 // NOTE: the default store is in-memory, which resets on restart and does not

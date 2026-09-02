@@ -490,6 +490,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.10 Backend tests are service-unit tests with `require.cache` mocks; no integration tests; `supertest` unused
 
+- **Status: Completed** (supertest integration suite added at `backend/tests/integration/` against a throwaway Postgres via Docker; skips automatically when the DB is unavailable; unit tests kept and passing)
+
 - **Category:** Testing
 - **Severity:** Medium
 - **Location:** `backend/tests/*.test.ts` (e.g., `auth.test.ts:6–56`), `backend/package.json:39,42` (`supertest` + `@types/supertest` installed but never imported anywhere)
