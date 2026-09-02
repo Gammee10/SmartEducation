@@ -4,6 +4,7 @@
 // keeps passing on machines without the DB.
 import { execSync } from 'child_process';
 import { createServer, Server } from 'http';
+import { Socket } from 'net';
 import type { AddressInfo } from 'net';
 
 // Test DB coordinates - a throwaway local Postgres (never the configured
@@ -22,11 +23,23 @@ let baseUrl: string | null = null;
 let server: Server | null = null;
 
 export async function isDatabaseAvailable(): Promise<boolean> {
+  // Plain TCP reachability check - no container runtime required. Point
+  // TEST_DATABASE_URL at any local Postgres to run this suite.
   try {
-    execSync(
-      `docker exec ses-test-pg pg_isready -U postgres`,
-      { stdio: 'ignore', timeout: 5000 }
-    );
+    const url = new URL(TEST_DB_URL);
+    const port = Number(url.port || 5432);
+    await new Promise<void>((resolve, reject) => {
+      const socket = new Socket();
+      const done = (err?: Error) => {
+        socket.destroy();
+        err ? reject(err) : resolve();
+      };
+      socket.setTimeout(2000);
+      socket.once('connect', () => done());
+      socket.once('timeout', () => done(new Error('timeout')));
+      socket.once('error', (err) => done(err));
+      socket.connect(port, url.hostname);
+    });
     return true;
   } catch {
     return false;

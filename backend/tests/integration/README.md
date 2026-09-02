@@ -11,12 +11,13 @@ supertest against a **throwaway PostgreSQL database** and covers:
 
 ## Setup
 
-The suite expects a local Postgres reachable by Docker (container
-`ses-test-pg`, host port **5434**):
+The suite expects a local PostgreSQL server reachable at the
+`TEST_DATABASE_URL` (default: `localhost:5434`, user `postgres`, password
+`testpw`, database `ses_test`). Create that database with your preferred
+Postgres installation - no container runtime is required:
 
-```bash
-docker run -d --name ses-test-pg -e POSTGRES_PASSWORD=testpw \
-  -e POSTGRES_DB=ses_test -p 5434:5432 postgres:16-alpine
+```sql
+CREATE DATABASE ses_test;
 ```
 
 Prisma migrations are applied automatically before the suite runs.
@@ -31,4 +32,4 @@ Override the target with `TEST_DATABASE_URL` if needed.
 
 A GitHub Actions service container (`postgres:16`) can be wired up later by
 setting `TEST_DATABASE_URL` and adding `npm run test:integration` to the CI
-workflow once secrets/service containers are approved for the repo.
+workflow once service containers are approved for the repo.
