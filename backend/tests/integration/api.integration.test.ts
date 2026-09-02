@@ -280,7 +280,7 @@ describe('library borrow / approve / return', () => {
     const res = await api()
       .post(`/api/library/requests/${requestId}/decide`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ decision: 'APPROVED', dueDate: '2026-12-01' });
+      .send({ decision: 'APPROVED', dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) });
     assert.strictEqual(res.status, 200, JSON.stringify(res.body));
     loanId = res.body.data.loan.id;
 
@@ -294,7 +294,7 @@ describe('library borrow / approve / return', () => {
     const res = await api()
       .post(`/api/library/requests/${requestId}/decide`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ decision: 'APPROVED', dueDate: '2026-12-01' });
+      .send({ decision: 'APPROVED', dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) });
     assert.strictEqual(res.status, 409);
   });
 

@@ -114,9 +114,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 # 2. High
 
-## 2.1 Teacher/Admin quiz results are never loaded
+## 2.1 Teacher/Admin quiz results are never loaded — results UI is permanently empty
 
-- **Status: Completed** — results UI is permanently empty
+- **Status: Completed**
 
 - **Category:** Frontend / Functional Bug
 - **Severity:** High
@@ -129,9 +129,9 @@ The codebase is well organized for a modular monolith: consistent controller →
   In `fetchData`, after the first fetch: `if (user?.role !== 'STUDENT') { const r = await api.get(`/quizzes/${quizId}/results`); setAttempts(r.data.data.attempts || []); }`. The results response's `attempts` include `student.user.fullName`, matching the render code (`attempt.student?.user?.fullName`). Keep error handling non-fatal (a results failure shouldn't blank the page).
 - **Suggested Validation:** Log in as teacher, open a quiz with a submitted attempt → the Results panel lists students and scores.
 
-## 2.2 Library approval race
+## 2.2 Library approval race — two pending requests can both be approved, creating two loans for one copy
 
-- **Status: Completed** — two pending requests can both be approved, creating two loans for one copy
+- **Status: Completed**
 
 - **Category:** Backend / Concurrency
 - **Severity:** High
@@ -169,6 +169,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Suggested Validation:** As a student: `GET /courses/:id` and `/courses/:id/attendance` responses contain no other student's `email`. As a teacher: roster/attendance marking still works end-to-end.
 
 ## 2.4 No password change / reset flow — imported users keep the shared default password indefinitely
+
+- **Status: Completed**
 
 - **Category:** Authentication / Missing Feature
 - **Severity:** High
@@ -334,9 +336,9 @@ The codebase is well organized for a modular monolith: consistent controller →
   3. Document the chosen policy in the API response (`expired: true` is already returned) and in `QuizDetailPage` result banner (already shown).
 - **Suggested Validation:** Unit test: expired submit → `status === 'TIME_EXPIRED'`, excluded from `avgQuizScore` dashboard aggregation.
 
-## 2.12 Assignment submit-to-unique race yields confusing 409
+## 2.12 Assignment submit-to-unique race yields confusing 409 "A record with this value already exists"
 
-- **Status: Completed** "A record with this value already exists"
+- **Status: Completed**
 
 - **Category:** Backend / API
 - **Severity:** High
@@ -386,9 +388,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Implementation Guidance:** Move `checkConflicts` to accept a `tx` client (like `writeAuditLog` does) and call it within the transaction in create/update.
 - **Suggested Validation:** Unit test with mocked tx verifying conflict query runs on the tx client and audit rows are created.
 
-## 3.3 Library loans never transition to OVERDUE
+## 3.3 Library loans never transition to OVERDUE — status is dead schema
 
-- **Status: Completed** — status is dead schema
+- **Status: Completed**
 
 - **Category:** Backend / Missing Feature
 - **Severity:** Medium
@@ -403,6 +405,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Suggested Validation:** Create a loan with yesterday's dueDate → appears under `status=OVERDUE` filter and is flagged in the response.
 
 ## 3.4 `decideBorrowRequest` accepts invalid/past due dates
+
+- **Status: Completed**
 
 - **Category:** Backend / Data Validation
 - **Severity:** Medium
@@ -662,6 +666,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.5 Uncommitted production guard in `env.ts` — ship it
 
+- **Status: Completed**
+
 - **Category:** DevOps
 - **Severity:** Low
 - **Location:** `backend/src/config/env.ts:14–18` (uncommitted `DEFAULT_USER_PASSWORD` production check, visible in `git status`)
@@ -679,6 +685,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Recommended Improvement:** Refuse to run when `NODE_ENV === 'production'` unless `ALLOW_SEED=1` is set; log a loud warning regardless.
 
 ## 4.7 Request/audit logging omits the authenticated actor for most logged requests
+
+- **Status: Completed** (delivered together with #2.8's structured logging)
 
 - **Category:** Logging
 - **Severity:** Low
@@ -717,6 +725,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 # 5. Optional Improvements
 
 ## 5.1 In-memory notification polling — consider SSE before scaling
+
+- **Status: Skipped** (the report itself notes the polling implementation is genuinely good and SSE is a deliberate future upgrade, not needed for the pilot)
 
 - **Category:** Architecture
 - **Severity:** Optional
@@ -817,3 +827,4 @@ Ordered to **stop the bleeding first, then harden, then modernize**. Items are g
 - #2.3 (PII trimming) requires checking `CourseDetailPage`/`AttendancePage`/`StudentProfilePage` consumers before removing fields.
 - #1.3 requires a deployment-env decision (`TRUST_PROXY` value) — coordinate with whoever operates the hosting platform; do not guess `true`.
 - The `env.ts` production guard is currently **uncommitted** (#4.5) — commit it before starting anything else so it isn't lost.
+

@@ -374,6 +374,18 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
     if (!dueDate) {
       throw new ValidationError('Due date is required when approving a request');
     }
+    // Validate like attendance's assertValidDate: garbage must not reach
+    // Prisma, the due date must be in the future, and loans are capped.
+    const due = new Date(dueDate);
+    if (Number.isNaN(due.getTime())) {
+      throw new ValidationError('Due date is not a valid date');
+    }
+    if (due.getTime() <= Date.now()) {
+      throw new ValidationError('Due date must be in the future');
+    }
+    if (due.getTime() > Date.now() + 90 * 24 * 60 * 60 * 1000) {
+      throw new ValidationError('Due date cannot be more than 90 days from now');
+    }
     if (request.bookCopy.status !== 'AVAILABLE') {
       throw new ConflictError('This book copy is no longer available');
     }

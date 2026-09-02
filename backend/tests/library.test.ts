@@ -320,6 +320,45 @@ test('decideBorrowRequest requires due date for approval', async () => {
   );
 });
 
+test('decideBorrowRequest rejects invalid and past due dates', async () => {
+  const req = state.requests.find((r: any) => r.status === 'PENDING');
+  assert.ok(req, 'Expected a pending request to exist');
+
+  await assert.rejects(
+    () =>
+      libraryService.decideBorrowRequest({
+        actorId: 'admin-1',
+        requestId: req.id,
+        decision: 'APPROVED',
+        dueDate: 'not-a-date',
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+
+  await assert.rejects(
+    () =>
+      libraryService.decideBorrowRequest({
+        actorId: 'admin-1',
+        requestId: req.id,
+        decision: 'APPROVED',
+        dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+
+  // Capped at 90 days
+  await assert.rejects(
+    () =>
+      libraryService.decideBorrowRequest({
+        actorId: 'admin-1',
+        requestId: req.id,
+        decision: 'APPROVED',
+        dueDate: new Date(Date.now() + 91 * 24 * 60 * 60 * 1000).toISOString(),
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
 test('decideBorrowRequest approves and creates loan in transaction', async () => {
   // Find the fresh pending request created in the previous test
   const pendingReq = state.requests.find((r: any) => r.status === 'PENDING');
@@ -329,7 +368,7 @@ test('decideBorrowRequest approves and creates loan in transaction', async () =>
     actorId: 'admin-1',
     requestId: pendingReq.id,
     decision: 'APPROVED',
-    dueDate: '2026-09-01',
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
   });
   assert.strictEqual(result.request.status, 'APPROVED');
   assert.ok(result.loan);
@@ -362,7 +401,7 @@ test('decideBorrowRequest rejects approving a second request for the same copy (
         actorId: 'admin-1',
         requestId: 'req-race',
         decision: 'APPROVED',
-        dueDate: '2026-09-01',
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       }),
     (err: any) => err instanceof ConflictError
   );
