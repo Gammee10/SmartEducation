@@ -21,7 +21,9 @@ const env = {
   nodeEnv,
   port: parseInt(process.env.PORT || '5000', 10),
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  // 12h default: every request re-validates the user row in the DB, but a
+  // shorter token limits the theft window (logout is client-side only).
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '12h',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   // Number of proxy hops in front of the API (e.g. "1" for one reverse
   // proxy). Empty string means direct exposure - never guess "true", a

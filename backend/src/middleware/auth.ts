@@ -15,7 +15,8 @@ async function authenticate(req: Request, res: Response, next: NextFunction): Pr
     const token = header.split(' ')[1];
     let payload: { sub: string };
     try {
-      payload = jwt.verify(token, env.jwtSecret) as { sub: string };
+      // Algorithm pinned - do not accept tokens negotiated to other schemes.
+      payload = jwt.verify(token, env.jwtSecret, { algorithms: ['HS256'] }) as { sub: string };
     } catch (err) {
       throw new UnauthorizedError('Invalid or expired token');
     }

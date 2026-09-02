@@ -26,7 +26,11 @@ interface UserWithRelations {
 }
 
 function signToken(userId: string): string {
-  return jwt.sign({ sub: userId }, env.jwtSecret, { expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] });
+  // Algorithm pinned so a tampered token cannot negotiate a weaker scheme.
+  return jwt.sign({ sub: userId }, env.jwtSecret, {
+    algorithm: 'HS256',
+    expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
+  });
 }
 
 function sanitizeUser<T extends { passwordHash?: string }>(user: T | null): Omit<T, 'passwordHash'> | null {

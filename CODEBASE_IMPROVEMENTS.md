@@ -508,6 +508,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.12 JWT: no algorithm pinning, 7-day tokens, no revocation story
 
+- **Status: Completed**
+
 - **Category:** Authentication
 - **Severity:** Medium
 - **Location:** `backend/src/services/authService.ts:27–29` (`jwt.sign`), `backend/src/middleware/auth.ts:18` (`jwt.verify` without `algorithms`), `backend/src/config/env.ts:24` (`jwtExpiresIn` default `'7d'`)
