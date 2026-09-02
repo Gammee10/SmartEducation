@@ -1,9 +1,10 @@
-// Auth service - login, JWT generation, current user.
+// Auth service - login, JWT generation, current user, password change.
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../prisma/client';
 import env from '../config/env';
-import { UnauthorizedError, NotFoundError } from '../utils/errors';
+import { UnauthorizedError, NotFoundError, ValidationError } from '../utils/errors';
+import { writeAuditLog } from './auditService';
 
 interface LoginInput {
   email: string;
@@ -75,4 +76,50 @@ async function getCurrentUser(userId: string) {
   return sanitizeUser(user);
 }
 
-export { login, getCurrentUser, signToken, sanitizeUser };
+/**
+ * Change the authenticated user's own password. Requires the current
+ * password so a stolen session cannot silently take over the account.
+ */
+async function changePassword({
+  userId,
+  currentPassword,
+  newPassword,
+  ipAddress,
+}: {
+  userId: string;
+  currentPassword: string;
+  newPassword: string;
+  ipAddress?: string | null;
+}) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new NotFoundError('User not found');
+
+  const valid = await bcrypt.compare(String(currentPassword || ''), user.passwordHash);
+  if (!valid) {
+    throw new UnauthorizedError('Current password is incorrect');
+  }
+
+  const next = String(newPassword || '');
+  if (next.length < 8) {
+    throw new ValidationError('New password must be at least 8 characters');
+  }
+  if (next === currentPassword) {
+    throw new ValidationError('New password must be different from the current password');
+  }
+
+  const passwordHash = await bcrypt.hash(next, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  await writeAuditLog({
+    actorId: userId,
+    action: 'PASSWORD_CHANGED',
+    entity: 'User',
+    entityId: userId,
+    metadata: {},
+    ipAddress,
+  });
+
+  return { changed: true };
+}
+
+export { login, getCurrentUser, changePassword, signToken, sanitizeUser };

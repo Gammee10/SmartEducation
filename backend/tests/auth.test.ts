@@ -42,6 +42,14 @@ const mockPrisma = {
       if (where.id === 'user-1') return mockUser;
       return null;
     },
+    update: async ({ where, data }: any) => {
+      if (where.id !== 'user-1') throw new Error('not found');
+      Object.assign(mockUser, data);
+      return mockUser;
+    },
+  },
+  auditLog: {
+    create: async ({ data }: any) => data,
   },
 };
 
@@ -54,7 +62,7 @@ require.cache[prismaClientPath] = {
 } as any;
 
 const authService = require('../src/services/authService');
-const { UnauthorizedError, NotFoundError } = require('../src/utils/errors');
+const { UnauthorizedError, NotFoundError, ValidationError } = require('../src/utils/errors');
 
 test('login returns token and sanitized user', async () => {
   const result = await authService.login({ email: 'admin@school.edu', password: 'correct-password' });
@@ -102,4 +110,42 @@ test('sanitizeUser removes password hash', () => {
   const safe = authService.sanitizeUser({ id: '1', passwordHash: 'secret', email: 'a@b.c' });
   assert.strictEqual(safe.passwordHash, undefined);
   assert.strictEqual(safe.email, 'a@b.c');
+});
+
+test('changePassword rejects wrong current password', async () => {
+  await assert.rejects(
+    () =>
+      authService.changePassword({ userId: 'user-1', currentPassword: 'wrong', newPassword: 'new-password-1' }),
+    (err: any) => err instanceof UnauthorizedError
+  );
+});
+
+test('changePassword rejects short new password', async () => {
+  await assert.rejects(
+    () =>
+      authService.changePassword({ userId: 'user-1', currentPassword: 'correct-password', newPassword: 'short' }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('changePassword rejects new password equal to current', async () => {
+  await assert.rejects(
+    () =>
+      authService.changePassword({
+        userId: 'user-1',
+        currentPassword: 'correct-password',
+        newPassword: 'correct-password',
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('changePassword updates the hash', async () => {
+  const result = await authService.changePassword({
+    userId: 'user-1',
+    currentPassword: 'correct-password',
+    newPassword: 'brand-new-password',
+  });
+  assert.strictEqual(result.changed, true);
+  assert.strictEqual(mockUser.passwordHash, 'hashed');
 });

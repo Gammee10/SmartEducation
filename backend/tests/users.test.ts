@@ -103,7 +103,7 @@ const prismaClientPath = require.resolve('../src/prisma/client');
 require.cache[prismaClientPath] = { id: prismaClientPath, filename: prismaClientPath, loaded: true, exports: mockPrisma } as any;
 
 const userAdminService = require('../src/services/userAdminService');
-const { ValidationError, ConflictError } = require('../src/utils/errors');
+const { ValidationError, ConflictError, NotFoundError } = require('../src/utils/errors');
 
 test('createUser creates a student with generated code and audit log', async () => {
   const result = await userAdminService.createUser({
@@ -206,5 +206,26 @@ test('importUsersCsv rejects CSV without required header', async () => {
   await assert.rejects(
     userAdminService.importUsersCsv({ actorId: 'user-admin-1', csv: 'name,mail\nX,x@y.z' }),
     ValidationError
+  );
+});
+
+test('resetUserPassword generates a temporary password and audits without logging it', async () => {
+  const auditsBefore = state.auditLogs.length;
+  const result = await userAdminService.resetUserPassword({
+    actorId: 'user-admin-1',
+    userId: 'user-admin-1',
+  });
+
+  assert.ok(result.temporaryPassword, 'temporary password returned once to the admin');
+  assert.ok(result.temporaryPassword.length >= 16);
+  const audit = state.auditLogs.slice(auditsBefore).find((l: any) => l.action === 'PASSWORD_RESET');
+  assert.ok(audit, 'PASSWORD_RESET audit written');
+  assert.ok(!JSON.stringify(audit).includes(result.temporaryPassword), 'password must not be logged');
+});
+
+test('resetUserPassword rejects missing users', async () => {
+  await assert.rejects(
+    () => userAdminService.resetUserPassword({ actorId: 'user-admin-1', userId: 'missing' }),
+    NotFoundError
   );
 });

@@ -15,6 +15,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import EventsPage from './pages/EventsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="events" element={<EventsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route
           path="admin/users"
           element={

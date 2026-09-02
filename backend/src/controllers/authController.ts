@@ -30,4 +30,27 @@ async function me(req: Request, res: Response, next: NextFunction): Promise<void
   }
 }
 
-export { login, me };
+async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      res.status(422).json({
+        success: false,
+        message: 'Current and new password are required',
+        data: {},
+      });
+      return;
+    }
+    const result = await authService.changePassword({
+      userId: req.user!.id,
+      currentPassword,
+      newPassword,
+      ipAddress: req.ip || req.socket?.remoteAddress || null,
+    });
+    success(res, result, 'Password changed');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export { login, me, changePassword };

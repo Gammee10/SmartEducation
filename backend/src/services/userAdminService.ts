@@ -1,5 +1,6 @@
 // User admin service - admin user management and CSV bulk import (Member 6).
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
@@ -265,6 +266,40 @@ async function archiveUser(opts: { actorId: string; userId: string; ipAddress?: 
 }
 
 // ---------------------------------------------------------------
+// Admin password reset
+// ---------------------------------------------------------------
+
+/**
+ * Generate a random temporary password, hash it, and return it ONCE to the
+ * admin (who hands it to the user offline). The password is never logged or
+ * stored in plaintext.
+ */
+async function resetUserPassword(opts: { actorId: string; userId: string; ipAddress?: string | null }) {
+  const { actorId, userId, ipAddress } = opts;
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) throw new NotFoundError('User not found');
+  if (existing.status === 'ARCHIVED') {
+    throw new ConflictError('Cannot reset the password of an archived user');
+  }
+
+  const temporaryPassword = crypto.randomBytes(12).toString('base64url');
+  const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  await writeAuditLog({
+    actorId,
+    action: 'PASSWORD_RESET',
+    entity: 'User',
+    entityId: userId,
+    metadata: { email: existing.email, role: existing.role },
+    ipAddress,
+  });
+
+  return { userId, temporaryPassword };
+}
+
+// ---------------------------------------------------------------
 // CSV bulk import
 // Expected header: fullName,email,role,password,gradeLevel,section,subject
 // ---------------------------------------------------------------
@@ -446,4 +481,4 @@ async function importUsersCsv(opts: {
   };
 }
 
-export { listUsers, createUser, updateUser, archiveUser, importUsersCsv, parseCsvLine };
+export { listUsers, createUser, updateUser, archiveUser, resetUserPassword, importUsersCsv, parseCsvLine };

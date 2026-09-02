@@ -12,6 +12,7 @@ router.get('/users', userAdminController.listUsers);
 router.post('/users', userAdminController.createUser);
 router.put('/users/:id', userAdminController.updateUser);
 router.post('/users/:id/archive', userAdminController.archiveUser);
+router.post('/users/:id/reset-password', userAdminController.resetPassword);
 router.post('/users/import', userAdminController.importUsers);
 
 export default router;

@@ -46,6 +46,10 @@ export default function AdminUsersPage() {
   const [creating, setCreating] = useState(false);
   const [archiving, setArchiving] = useState<string | null>(null);
 
+  // Password reset
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string } | null>(null);
+
   // CSV import
   const [csvText, setCsvText] = useState('');
   const [importing, setImporting] = useState(false);
@@ -113,6 +117,21 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleResetPassword = async (u: AdminUser) => {
+    if (!window.confirm(`Generate a new temporary password for ${u.fullName}? Their current password will stop working.`)) return;
+    setResetting(u.id);
+    setError('');
+    setMessage('');
+    try {
+      const res = await api.post(`/users/${u.id}/reset-password`);
+      setResetResult({ email: u.email, temporaryPassword: res.data.data.temporaryPassword });
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetting(null);
+    }
+  };
+
   const handleCsvFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -161,6 +180,19 @@ export default function AdminUsersPage() {
       {message && (
         <div className="mb-4">
           <Banner tone="success" message={message} />
+        </div>
+      )}
+      {resetResult && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+            Temporary password for {resetResult.email}:{' '}
+            <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono dark:bg-amber-500/20">
+              {resetResult.temporaryPassword}
+            </code>
+          </p>
+          <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+            Shown only once — copy it now and share it with the user securely. Ask them to change it after logging in.
+          </p>
         </div>
       )}
 
@@ -336,15 +368,26 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="px-6 py-3 text-right">
-                    {u.status !== 'ARCHIVED' && (
-                      <button
-                        onClick={() => handleArchive(u.id)}
-                        disabled={archiving === u.id}
-                        className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-60 dark:border-red-500/30 dark:bg-gray-900 dark:hover:bg-red-500/10"
-                      >
-                        {archiving === u.id ? 'Archiving…' : 'Archive'}
-                      </button>
-                    )}
+                    <div className="flex justify-end gap-2">
+                      {u.status !== 'ARCHIVED' && (
+                        <button
+                          onClick={() => handleResetPassword(u)}
+                          disabled={resetting === u.id}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors duration-150 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          {resetting === u.id ? 'Resetting…' : 'Reset Password'}
+                        </button>
+                      )}
+                      {u.status !== 'ARCHIVED' && (
+                        <button
+                          onClick={() => handleArchive(u.id)}
+                          disabled={archiving === u.id}
+                          className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-60 dark:border-red-500/30 dark:bg-gray-900 dark:hover:bg-red-500/10"
+                        >
+                          {archiving === u.id ? 'Archiving…' : 'Archive'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -63,6 +63,19 @@ export async function archiveUser(req: Request, res: Response, next: NextFunctio
   }
 }
 
+export async function resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const result = await userAdminService.resetUserPassword({
+      actorId: req.user!.id,
+      userId: req.params.id as string,
+      ipAddress: getIp(req),
+    });
+    success(res, result, 'Temporary password generated. Share it with the user securely.');
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function importUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const csv = typeof req.body?.csv === 'string' ? req.body.csv : '';
