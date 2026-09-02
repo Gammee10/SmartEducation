@@ -11,19 +11,6 @@ interface LoginInput {
   password: string;
 }
 
-interface UserWithRelations {
-  id: string;
-  email: string;
-  passwordHash: string;
-  fullName: string;
-  role: string;
-  status: string;
-  phone: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  student?: unknown;
-  teacher?: unknown;
-}
 
 function signToken(userId: string): string {
   // Algorithm pinned so a tampered token cannot negotiate a weaker scheme.
@@ -35,7 +22,7 @@ function signToken(userId: string): string {
 
 function sanitizeUser<T extends { passwordHash?: string }>(user: T | null): Omit<T, 'passwordHash'> | null {
   if (!user) return null;
-  const { passwordHash, ...safe } = user;
+  const { passwordHash: _passwordHash, ...safe } = user;
   return safe;
 }
 

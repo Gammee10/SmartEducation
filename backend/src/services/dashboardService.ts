@@ -11,13 +11,11 @@ export async function getAdminDashboard(opts: { userId: string }): Promise<any> 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== 'ADMIN') throw new ForbiddenError('Admin access required');
 
-  const [courseCount, studentCount, teacherCount, attendanceCount, assignmentCount, quizCount] = await Promise.all([
+  const [courseCount, studentCount, teacherCount, attendanceCount] = await Promise.all([
     prisma.course.count({ where: { status: { not: 'ARCHIVED' } } }),
     prisma.student.count(),
     prisma.teacher.count(),
     prisma.attendance.count(),
-    prisma.assignment.count({ where: { status: { not: 'ARCHIVED' } } }),
-    prisma.quiz.count({ where: { status: { not: 'ARCHIVED' } } }),
   ]);
 
   const presentCount = await prisma.attendance.count({ where: { status: { in: ['PRESENT', 'LATE'] } } });
@@ -117,7 +115,6 @@ export async function getStudentDashboard(opts: { userId: string }): Promise<any
     include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } } },
     orderBy: { createdAt: 'desc' },
   });
-  const courseIds = enrollments.map((e: any) => e.courseId);
 
   const [attendanceCount, presentCount] = await Promise.all([
     prisma.attendance.count({ where: { studentId: student.id } }),

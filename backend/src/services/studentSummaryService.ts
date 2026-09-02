@@ -36,8 +36,6 @@ export async function getStudentSummary(opts: { studentId: string; role: string;
     include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } } },
     orderBy: { createdAt: 'desc' },
   });
-  const courseIds = enrollments.map((e: any) => e.courseId);
-
   const [attendanceCount, presentCount, gradedSubs, attempts] = await Promise.all([
     prisma.attendance.count({ where: { studentId } }),
     prisma.attendance.count({ where: { studentId, status: { in: ['PRESENT', 'LATE'] } } }),

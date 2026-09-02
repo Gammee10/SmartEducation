@@ -64,7 +64,7 @@ async function listCourseAssignments({ courseId, role, userId, status, page = 1,
   // Enforce course access (teacher owner, enrolled student, or admin)
   await getCourseWithAccess({ courseId, role, userId });
 
-  let where: Record<string, unknown> = { courseId };
+  const where: Record<string, unknown> = { courseId };
   if (status) {
     where.status = status;
   } else if (role === 'STUDENT') {

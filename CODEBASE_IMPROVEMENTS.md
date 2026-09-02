@@ -505,6 +505,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.11 No linting, formatting, or CI pipeline anywhere
 
+- **Status: Completed**
+
 - **Category:** DevOps / Code Quality
 - **Severity:** Medium
 - **Location:** repo root (no `.eslintrc*`, no `.prettierrc`, no `.github/workflows/`)

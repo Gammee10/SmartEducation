@@ -190,7 +190,6 @@ export default function QuizDetailPage() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAttempt, takingQuiz]);
 
   const formatTimer = (secs: number) => {

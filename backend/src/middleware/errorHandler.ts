@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 import env from '../config/env';
 
-function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): Response {
+function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): Response {
   res.setHeader('x-request-id', (req as any).id ?? '');
 
   // Prisma known errors

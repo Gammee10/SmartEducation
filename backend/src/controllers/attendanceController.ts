@@ -2,7 +2,7 @@ import { parsePagination } from '../utils/pagination';
 // Attendance controller - handles attendance HTTP requests.
 import { Request, Response, NextFunction } from 'express';
 import * as attendanceService from '../services/attendanceService';
-import { success, created, paginated } from '../utils/response';
+import { success, created } from '../utils/response';
 import { ForbiddenError } from '../utils/errors';
 
 function getIp(req: Request): string | null {
@@ -11,7 +11,7 @@ function getIp(req: Request): string | null {
 
 export async function listCourseAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { date, page = 1, pageSize = 50 } = req.query;
+    const { date } = req.query;
     const result = await attendanceService.listCourseAttendance({
       courseId: req.params.id as string,
       role: req.user!.role,
