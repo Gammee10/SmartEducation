@@ -91,10 +91,29 @@ export default function QuizDetailPage() {
   // Synchronous guard so the expiring countdown tick cannot fire duplicate
   // submissions while a manual/auto submit request is still in flight.
   const submittingRef = useRef(false);
+  // Once an auto-submit at expiry has failed (network blip), stop re-firing
+  // it every second; the student submits manually instead.
+  const autoSubmitFailedRef = useRef(false);
+  const [autoSubmitFailed, setAutoSubmitFailed] = useState(false);
 
   useEffect(() => {
     selectionsRef.current = selections;
-  }, [selections]);
+    // Persist selections so an accidental refresh does not wipe answers
+    if (activeAttempt) {
+      sessionStorage.setItem(`quiz-${activeAttempt.id}`, JSON.stringify(selections));
+    }
+  }, [selections, activeAttempt]);
+
+  // Warn before leaving the page with an attempt in progress
+  useEffect(() => {
+    if (!takingQuiz) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [takingQuiz]);
 
   // Keep submitRef pointing at the latest handleSubmit for the countdown effect
   useEffect(() => {
@@ -132,16 +151,28 @@ export default function QuizDetailPage() {
 
   // Resume an in-progress attempt after a refresh or navigation away, so a
   // student does not silently lose an attempt that is still running
-  // server-side. Selections cannot be recovered, but the remaining time can.
+  // server-side. Selections saved in sessionStorage are restored.
   useEffect(() => {
     if (!isStudent || !quiz || takingQuiz || result) return;
     const inProgress = attempts.find((a) => a.status === 'IN_PROGRESS');
     if (!inProgress) return;
     setActiveAttempt({ id: inProgress.id, expiresAt: inProgress.expiresAt });
     setTakingQuiz(true);
+    autoSubmitFailedRef.current = false;
+    setAutoSubmitFailed(false);
     const initial: Record<string, string[]> = {};
     for (const q of quiz.questions || []) {
       initial[q.id] = [];
+    }
+    try {
+      const saved = sessionStorage.getItem(`quiz-${inProgress.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setSelections({ ...initial, ...parsed });
+        return;
+      }
+    } catch {
+      // corrupted saved state - fall back to empty selections
     }
     setSelections(initial);
   }, [attempts, quiz, isStudent, takingQuiz, result]);
@@ -152,7 +183,7 @@ export default function QuizDetailPage() {
     const tick = () => {
       const remaining = Math.max(0, Math.floor((new Date(activeAttempt.expiresAt).getTime() - Date.now()) / 1000));
       setSecondsLeft(remaining);
-      if (remaining <= 0 && takingQuiz) {
+      if (remaining <= 0 && takingQuiz && !autoSubmitFailedRef.current && !submittingRef.current) {
         submitRef.current(selectionsRef.current, true);
       }
     };
@@ -271,6 +302,8 @@ export default function QuizDetailPage() {
       setActiveAttempt(data.attempt);
       setTakingQuiz(true);
       setResult(null);
+      autoSubmitFailedRef.current = false;
+      setAutoSubmitFailed(false);
       // Initialize empty selections for all questions
       const initial: Record<string, string[]> = {};
       for (const q of data.quiz.questions) {
@@ -304,14 +337,21 @@ export default function QuizDetailPage() {
         status: data.status,
         expired: data.expired,
       });
+      sessionStorage.removeItem(`quiz-${activeAttempt.id}`);
       setTakingQuiz(false);
       setActiveAttempt(null);
       setMessage(autoExpired ? 'Time expired — your attempt was auto-submitted' : 'Quiz submitted successfully');
       fetchData();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to submit quiz');
-      // If the attempt was already submitted server-side, refresh state
-      fetchData();
+      if (autoExpired) {
+        // Stop the auto-submit retry loop; the student submits manually.
+        autoSubmitFailedRef.current = true;
+        setAutoSubmitFailed(true);
+      } else {
+        // If the attempt was already submitted server-side, refresh state
+        fetchData();
+      }
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -528,6 +568,14 @@ export default function QuizDetailPage() {
                 </div>
               );
             })}
+
+            {autoSubmitFailed && (
+              <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
+                <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+                  Time expired — automatic submission failed. Please submit manually below.
+                </p>
+              </div>
+            )}
 
             <button
               type="submit"

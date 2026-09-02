@@ -560,6 +560,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.15 Quiz-taking: page refresh wipes all student answers; no beforeunload guard
 
+- **Status: Completed**
+
 - **Category:** Frontend / UX
 - **Severity:** Medium
 - **Location:** `frontend/src/pages/QuizDetailPage.tsx:125–136` (resume effect resets `selections` to empty), no `beforeunload` listener during `takingQuiz`
@@ -571,6 +573,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Suggested Validation:** Answer 3 questions → refresh → selections restored; timer continuity preserved.
 
 ## 3.16 Auto-submit retry loop when expiry submit fails
+
+- **Status: Completed**
 
 - **Category:** Frontend / Reliability
 - **Severity:** Medium
