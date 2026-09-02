@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useApi } from '../hooks/useApi';
+import { getApiError } from '../utils/apiError';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -27,47 +29,38 @@ const emptyForm = {
 export default function EventsPage() {
   const { isAdmin, isTeacher } = useAuth();
   const canPost = isAdmin || isTeacher;
-  const [events, setEvents] = useState<SchoolEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data, loading: loadingEvents, error: loadError, reload } = useApi<SchoolEvent[]>((signal) =>
+    api.get('/events', { params: { pageSize: 50 }, signal }).then((res) => res.data.data.events)
+  );
+  const events = data || [];
   const [message, setMessage] = useState('');
+  const [actionError, setActionError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    api
-      .get('/events', { params: { pageSize: 50 } })
-      .then((res) => setEvents(res.data.data.events))
-      .catch(() => setError('Failed to load events'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const loading = loadingEvents;
+  const error = loadError || actionError;
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setActionError('');
     setMessage('');
     // Validate dates before sending - a bypassed/invalid value would
     // otherwise serialize to "Invalid Date" and fail confusingly server-side.
     const startsAt = new Date(form.startsAt);
     if (!form.startsAt || Number.isNaN(startsAt.getTime())) {
-      setError('Please provide a valid start date and time.');
+      setActionError('Please provide a valid start date and time.');
       return;
     }
     let endsAt: string | undefined;
     if (form.endsAt) {
       const end = new Date(form.endsAt);
       if (Number.isNaN(end.getTime())) {
-        setError('Please provide a valid end date and time.');
+        setActionError('Please provide a valid end date and time.');
         return;
       }
       if (end.getTime() <= startsAt.getTime()) {
-        setError('End time must be after the start time.');
+        setActionError('End time must be after the start time.');
         return;
       }
       endsAt = end.toISOString();
@@ -85,9 +78,9 @@ export default function EventsPage() {
       setMessage('Event created');
       setShowForm(false);
       setForm(emptyForm);
-      load();
+      reload();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create event');
+      setActionError(getApiError(err, 'Failed to create event'));
     } finally {
       setSaving(false);
     }
@@ -97,9 +90,9 @@ export default function EventsPage() {
     if (!window.confirm('Delete this event?')) return;
     try {
       await api.delete(`/events/${id}`);
-      load();
+      reload();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete event');
+      setActionError(getApiError(err, 'Failed to delete event'));
     }
   };
 

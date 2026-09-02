@@ -550,6 +550,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.14 Frontend: duplicated fetch/error boilerplate and card markup in every page
 
+- **Status: Partially Completed** (infrastructure added: `useApi` hook with AbortController cleanup, `getApiError` util, and the shared `Card` component already existed; EventsPage migrated as the first incremental conversion - remaining pages migrate opportunistically)
+
 - **Category:** Frontend / Code Quality
 - **Severity:** Medium
 - **Location:** All 17 pages, e.g. `frontend/src/pages/QuizDetailPage.tsx:104–116,111–112,195–196,223–224,269–270,300–301` (`err.response?.data?.message || '...'` repeated), repeated `rounded-2xl border border-gray-200/70 bg-white shadow-card ...` class strings throughout every page
