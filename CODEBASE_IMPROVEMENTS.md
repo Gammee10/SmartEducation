@@ -372,6 +372,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.2 Timetable conflict detection is check-then-insert (race) and writes are never audited
 
+- **Status: Completed**
+
 - **Category:** Backend / Concurrency / Audit
 - **Severity:** Medium
 - **Location:** `backend/src/services/timetableService.ts:47–64` (`createTimetableSlot`), `:100–115` (`checkConflicts`); note `ipAddress` params are accepted but `writeAuditLog` is **never called** in this service

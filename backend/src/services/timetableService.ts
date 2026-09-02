@@ -1,6 +1,7 @@
 ﻿// Timetable service - slot CRUD with conflict detection.
 import prismaModule from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
+import { writeAuditLog } from './auditService';
 const prisma = prismaModule as any;
 type DayOfWeek = 'MONDAY'|'TUESDAY'|'WEDNESDAY'|'THURSDAY'|'FRIDAY';
 const DAYS: DayOfWeek[] = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY'];
@@ -45,7 +46,7 @@ export async function listTimetableSlots(opts: { role: string; userId: string; d
 }
 
 export async function createTimetableSlot(opts: { actorId: string; data: any; ipAddress?: string | null }): Promise<any> {
-  const { actorId, data } = opts;
+  const { actorId, data, ipAddress } = opts;
   const day = assertDay(data.dayOfWeek);
   assertTimeRange(data.startTime, data.endTime);
   const course = await prisma.course.findUnique({ where: { id: data.courseId } });
@@ -56,15 +57,26 @@ export async function createTimetableSlot(opts: { actorId: string; data: any; ip
     if (!t) throw new NotFoundError('Teacher not found');
     teacherId = t.id;
   }
-  await checkConflicts(day, data.startTime, data.endTime, data.room || null, teacherId, null);
-  return prisma.timetableSlot.create({
-    data: { courseId: data.courseId, teacherId, dayOfWeek: day, startTime: data.startTime, endTime: data.endTime, room: data.room || null },
-    include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } }, teacher: { include: { user: { select: { id: true, fullName: true } } } } },
+
+  // Conflict check runs inside the transaction so two concurrent creates
+  // cannot both pass the check and double-book a room or teacher.
+  const slot = await prisma.$transaction(async (tx: any) => {
+    await checkConflicts(tx, day, data.startTime, data.endTime, data.room || null, teacherId, null);
+    const created = await tx.timetableSlot.create({
+      data: { courseId: data.courseId, teacherId, dayOfWeek: day, startTime: data.startTime, endTime: data.endTime, room: data.room || null },
+      include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } }, teacher: { include: { user: { select: { id: true, fullName: true } } } } },
+    });
+    await writeAuditLog(
+      { actorId, action: 'TIMETABLE_SLOT_CREATED', entity: 'TimetableSlot', entityId: created.id, metadata: { courseId: data.courseId, dayOfWeek: day, startTime: data.startTime, endTime: data.endTime }, ipAddress },
+      tx
+    );
+    return created;
   });
+  return slot;
 }
 
 export async function updateTimetableSlot(opts: { actorId: string; slotId: string; data: any; ipAddress?: string | null }): Promise<any> {
-  const { actorId, slotId, data } = opts;
+  const { actorId, slotId, data, ipAddress } = opts;
   const existing = await prisma.timetableSlot.findUnique({ where: { id: slotId } });
   if (!existing) throw new NotFoundError('Timetable slot not found');
   const day = data.dayOfWeek ? assertDay(data.dayOfWeek) : existing.dayOfWeek;
@@ -81,36 +93,53 @@ export async function updateTimetableSlot(opts: { actorId: string; slotId: strin
     if (!t) throw new NotFoundError('Teacher not found');
   }
   assertTimeRange(start, end);
-  await checkConflicts(day, start, end, room || null, teacherId || null, slotId);
-  return prisma.timetableSlot.update({
-    where: { id: slotId },
-    data: { ...(data.courseId ? { courseId: data.courseId } : {}), teacherId: teacherId, dayOfWeek: day, startTime: start, endTime: end, room: room },
-    include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } }, teacher: { include: { user: { select: { id: true, fullName: true } } } } },
+
+  const slot = await prisma.$transaction(async (tx: any) => {
+    await checkConflicts(tx, day, start, end, room || null, teacherId || null, slotId);
+    const updated = await tx.timetableSlot.update({
+      where: { id: slotId },
+      data: { ...(data.courseId ? { courseId: data.courseId } : {}), teacherId: teacherId, dayOfWeek: day, startTime: start, endTime: end, room: room },
+      include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } }, teacher: { include: { user: { select: { id: true, fullName: true } } } } },
+    });
+    await writeAuditLog(
+      { actorId, action: 'TIMETABLE_SLOT_UPDATED', entity: 'TimetableSlot', entityId: slotId, metadata: { courseId: updated.courseId, dayOfWeek: day, startTime: start, endTime: end }, ipAddress },
+      tx
+    );
+    return updated;
   });
+  return slot;
 }
 
 export async function deleteTimetableSlot(opts: { actorId: string; slotId: string; ipAddress?: string | null }): Promise<any> {
-  const { actorId, slotId } = opts;
+  const { actorId, slotId, ipAddress } = opts;
   const existing = await prisma.timetableSlot.findUnique({ where: { id: slotId } });
   if (!existing) throw new NotFoundError('Timetable slot not found');
-  await prisma.timetableSlot.delete({ where: { id: slotId } });
+
+  await prisma.$transaction(async (tx: any) => {
+    await tx.timetableSlot.delete({ where: { id: slotId } });
+    await writeAuditLog(
+      { actorId, action: 'TIMETABLE_SLOT_DELETED', entity: 'TimetableSlot', entityId: slotId, metadata: { courseId: existing.courseId, dayOfWeek: existing.dayOfWeek, startTime: existing.startTime }, ipAddress },
+      tx
+    );
+  });
   return { id: slotId };
 }
 
-async function checkConflicts(day: DayOfWeek, startTime: string, endTime: string, room: string | null, teacherId: string | null, excludeId: string | null): Promise<void> {
+// Accepts a prisma/tx client so the check can run inside the creating
+// transaction (closing the check-then-insert race).
+async function checkConflicts(tx: any, day: DayOfWeek, startTime: string, endTime: string, room: string | null, teacherId: string | null, excludeId: string | null): Promise<void> {
   const s = toMin(startTime);
   const e = toMin(endTime);
   if (room) {
-    const slots = await prisma.timetableSlot.findMany({ where: { dayOfWeek: day, room, NOT: excludeId ? { id: excludeId } : undefined } });
+    const slots = await tx.timetableSlot.findMany({ where: { dayOfWeek: day, room, NOT: excludeId ? { id: excludeId } : undefined } });
     for (const x of slots) {
       if (xover(s, e, toMin(x.startTime), toMin(x.endTime))) throw new ConflictError(`Room "${room}" is already booked ${x.startTime}-${x.endTime} on ${day}`);
     }
   }
   if (teacherId) {
-    const slots = await prisma.timetableSlot.findMany({ where: { teacherId, dayOfWeek: day, NOT: excludeId ? { id: excludeId } : undefined } });
+    const slots = await tx.timetableSlot.findMany({ where: { teacherId, dayOfWeek: day, NOT: excludeId ? { id: excludeId } : undefined } });
     for (const x of slots) {
       if (xover(s, e, toMin(x.startTime), toMin(x.endTime))) throw new ConflictError(`Teacher already has a class ${x.startTime}-${x.endTime} on ${day}`);
     }
   }
 }
-

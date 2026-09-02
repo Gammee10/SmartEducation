@@ -15,6 +15,7 @@ const state: any = {
   courses: [mockCourse, mockCourse2],
   enrollments: [mockEnrollment],
   timetableSlots: [],
+  auditLogs: [],
 };
 
 const mockPrisma = {
@@ -47,6 +48,14 @@ const mockPrisma = {
       return { id: where.id };
     },
   },
+  auditLog: {
+    create: async ({ data }: any) => {
+      const log = { id: `audit-${state.auditLogs.length + 1}`, ...data };
+      state.auditLogs.push(log);
+      return log;
+    },
+  },
+  $transaction: async (fn: any) => fn(mockPrisma),
 };
 
 const prismaClientPath = require.resolve('../src/prisma/client');
