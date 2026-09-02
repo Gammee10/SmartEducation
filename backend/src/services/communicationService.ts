@@ -235,8 +235,8 @@ async function createEvent(opts: {
   return event;
 }
 
-async function listEvents(opts: { role: string; page?: number; pageSize?: number }) {
-  const { role, page = 1, pageSize = 20 } = opts;
+async function listEvents(opts: { role: string; page?: number; pageSize?: number; upcoming?: boolean }) {
+  const { role, page = 1, pageSize = 20, upcoming } = opts;
   const audiences: AudienceScope[] =
     role === 'STUDENT'
       ? ['ALL', 'STUDENTS']
@@ -244,7 +244,11 @@ async function listEvents(opts: { role: string; page?: number; pageSize?: number
         ? ['ALL', 'TEACHERS']
         : ['ALL', 'TEACHERS', 'STUDENTS'];
 
-  const where = { audience: { in: audiences } };
+  // Default to upcoming events; ?upcoming=false lists everything.
+  const where: Record<string, unknown> = { audience: { in: audiences } };
+  if (upcoming !== false) {
+    where.startsAt = { gte: new Date() };
+  }
   const [events, total] = await Promise.all([
     prisma.event.findMany({
       where,

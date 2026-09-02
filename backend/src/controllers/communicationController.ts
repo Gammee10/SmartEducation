@@ -49,8 +49,10 @@ export async function deleteAnnouncement(req: Request, res: Response, next: Next
 
 export async function listEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const upcoming = req.query.upcoming !== undefined ? String(req.query.upcoming) !== 'false' : undefined;
     const result = await communicationService.listEvents({
       role: req.user!.role,
+      upcoming,
       ...parsePagination(req.query),
     });
     success(res, result, 'Events retrieved');

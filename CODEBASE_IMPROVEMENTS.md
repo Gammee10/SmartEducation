@@ -679,6 +679,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.8 Events list shows past events first and never filters them
 
+- **Status: Completed**
+
 - **Category:** Backend / API
 - **Severity:** Low
 - **Location:** `backend/src/services/communicationService.ts:216–241` (`listEvents` — `orderBy: { startsAt: 'asc' }`, no date filter)
