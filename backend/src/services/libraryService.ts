@@ -178,7 +178,11 @@ interface AddCopiesParams {
   ipAddress?: string | null;
 }
 
-async function addCopies({ actorId, bookId, count, ipAddress }: AddCopiesParams) {
+async function addCopies({ actorId, bookId, count: rawCount, ipAddress }: AddCopiesParams) {
+  // Clamp count so absurd values cannot flood the catalog and NaN falls back
+  // to 1; copy numbering requires a numeric run.
+  const count = Math.min(500, Math.max(1, Math.floor(Number(rawCount) || 1)));
+
   const book = await prisma.libraryBook.findUnique({ where: { id: bookId } });
   if (!book) throw new NotFoundError('Book not found');
 
@@ -188,7 +192,14 @@ async function addCopies({ actorId, bookId, count, ipAddress }: AddCopiesParams)
     orderBy: { copyNumber: 'desc' },
   });
 
-  const start = existingCopies.length ? parseInt(existingCopies[0].copyNumber, 10) + 1 : 1;
+  // Non-numeric copy numbers would make `start` NaN -> invalid rows.
+  const maxNumber = existingCopies.length
+    ? existingCopies.reduce((max: number, c: any) => Math.max(max, parseInt(c.copyNumber, 10) || 0), 0)
+    : 0;
+  const start = maxNumber + 1;
+  if (!Number.isFinite(start)) {
+    throw new ValidationError('Existing copy numbers are not numeric');
+  }
   const copies = await prisma.libraryBookCopy.createMany({
     data: Array.from({ length: count }, (_, i) => ({
       bookId,

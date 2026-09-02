@@ -688,6 +688,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.9 `addCopies` count is unbounded and copy numbering can collide
 
+- **Status: Completed**
+
 - **Category:** Backend / Data Validation
 - **Severity:** Low
 - **Location:** `backend/src/controllers/libraryController.ts:68` (`parseInt(req.body.count, 10) || 1` — `count: 1000000` accepted), `backend/src/services/libraryService.ts:184–197` (max copy number derived from string sort)
