@@ -224,12 +224,34 @@ async function updateUser(opts: {
     });
   });
 
+  // Capture before/after values for the audit trail (no sensitive fields
+  // exist on User updates).
+  const changes: Record<string, { from: string | null; to: string | null }> = {};
+  if (data.fullName !== undefined && data.fullName.trim() !== existing.fullName) {
+    changes.fullName = { from: existing.fullName, to: data.fullName.trim() };
+  }
+  if (data.phone !== undefined && data.phone !== existing.phone) {
+    changes.phone = { from: existing.phone ?? null, to: data.phone ?? null };
+  }
+  if (data.status !== undefined && data.status !== existing.status) {
+    changes.status = { from: existing.status, to: data.status };
+  }
+  if (data.gradeLevel !== undefined && existing.student && data.gradeLevel !== existing.student.gradeLevel) {
+    changes.gradeLevel = { from: existing.student.gradeLevel, to: data.gradeLevel };
+  }
+  if (data.section !== undefined && existing.student && data.section !== existing.student.section) {
+    changes.section = { from: existing.student.section ?? null, to: data.section ?? null };
+  }
+  if (data.subject !== undefined && existing.teacher && data.subject !== existing.teacher.subject) {
+    changes.subject = { from: existing.teacher.subject ?? null, to: data.subject ?? null };
+  }
+
   await writeAuditLog({
     actorId,
     action: 'USER_UPDATED',
     entity: 'User',
     entityId: userId,
-    metadata: { changes: Object.keys(data) },
+    metadata: { changes },
     ipAddress,
   });
 

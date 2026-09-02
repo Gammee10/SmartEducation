@@ -215,12 +215,14 @@ async function addCopies({ actorId, bookId, count, ipAddress }: AddCopiesParams)
 
 interface CreateBorrowRequestParams {
   studentId: string;
+  // Acting user (the student) so the audit log records the actor, not null.
+  actorId?: string;
   bookCopyId: string;
   reason?: string;
   ipAddress?: string | null;
 }
 
-async function createBorrowRequest({ studentId, bookCopyId, reason, ipAddress }: CreateBorrowRequestParams) {
+async function createBorrowRequest({ studentId, actorId, bookCopyId, reason, ipAddress }: CreateBorrowRequestParams) {
   const copy = await prisma.libraryBookCopy.findUnique({
     where: { id: bookCopyId },
     include: { book: true },
@@ -249,7 +251,7 @@ async function createBorrowRequest({ studentId, bookCopyId, reason, ipAddress }:
   });
 
   await writeAuditLog({
-    actorId: null,
+    actorId: actorId || null,
     action: 'LIBRARY_BORROW_REQUESTED',
     entity: 'LibraryBorrowRequest',
     entityId: request.id,

@@ -90,6 +90,7 @@ async function createBorrowRequest(req: Request, res: Response, next: NextFuncti
     }
     const request = await libraryService.createBorrowRequest({
       studentId: req.user!.student.id,
+      actorId: req.user!.id,
       bookCopyId: req.body.bookCopyId,
       reason: req.body.reason,
       ipAddress: getIp(req),

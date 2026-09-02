@@ -467,6 +467,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.9 Audit gaps: student borrow requests are logged with `actorId: null`; user updates log keys only
 
+- **Status: Completed**
+
 - **Category:** Backend / Auditability
 - **Severity:** Medium
 - **Location:** `backend/src/services/libraryService.ts:250–257` (`writeAuditLog({ actorId: null, ... })` for `LIBRARY_BORROW_REQUESTED`), `backend/src/services/userAdminService.ts:217–224` (`USER_UPDATED` metadata logs only `Object.keys(data)`)
