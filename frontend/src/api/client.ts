@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: '/api',
+  // Bail out instead of hanging forever on dead networks/servers. Uploads
+  // override this with a longer per-request timeout.
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },

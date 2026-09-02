@@ -10,9 +10,15 @@ function errorHandler(err: Error, req: Request, res: Response, _next: NextFuncti
   if (err.name === 'PrismaClientKnownRequestError') {
     const prismaErr = err as Error & { code?: string };
     if (prismaErr.code === 'P2002') {
+      // Map known unique-constraint targets to friendly messages (fallback
+      // for sites without a local catch)
+      const target = JSON.stringify((prismaErr as any).meta?.target || '');
+      const message = target.includes('email')
+        ? 'A user with this email already exists'
+        : 'A record with this value already exists';
       return res.status(409).json({
         success: false,
-        message: 'A record with this value already exists',
+        message,
         data: {},
       });
     }

@@ -62,7 +62,8 @@ export default function AssignmentDetailPage() {
       const formData = new FormData();
       formData.append('content', content);
       if (file) formData.append('file', file);
-      await api.post(`/assignments/${assignmentId}/submit`, formData);
+      // Uploads of large documents need more than the default 15s timeout
+      await api.post(`/assignments/${assignmentId}/submit`, formData, { timeout: 120000 });
       setMessage('Assignment submitted successfully');
       setContent('');
       setFile(null);

@@ -746,12 +746,16 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 5.5 Frontend axios timeout and abortable fetches
 
+- **Status: Completed**
+
 - **Category:** Frontend / Reliability
 - **Severity:** Optional
 - **Location:** `frontend/src/api/client.ts:3–8` (no `timeout`), page-level `useEffect` fetches without `AbortController`
 - **Note:** Add `timeout: 15000` to the axios instance; wrap page fetches in `AbortController` cleanup to avoid setState-after-unmount warnings on slow networks (low user impact today).
 
 ## 5.6 P2002 handler could map constraint targets to friendly messages
+
+- **Status: Completed**
 
 - **Category:** API
 - **Severity:** Optional
