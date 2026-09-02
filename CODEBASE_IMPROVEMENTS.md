@@ -626,6 +626,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.2 Root `typecheck` script runs full builds (emits `dist/`)
 
+- **Status: Completed**
+
 - **Category:** DevOps / Code Quality
 - **Severity:** Low
 - **Location:** root `package.json:14` (`"typecheck": "npm run build --workspace backend && ..."`), `frontend/package.json:9` (`tsc && vite build`)
