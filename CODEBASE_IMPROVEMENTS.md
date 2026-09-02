@@ -448,6 +448,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.7 Attendance marking loop is N+1 (up to ~800 queries per request)
 
+- **Status: Completed**
+
 - **Category:** Backend / Performance
 - **Severity:** Medium
 - **Location:** `backend/src/services/attendanceService.ts:155–219` (`upsertAttendance` — per record: `student.findUnique` + `assertStudentEnrolled` (1 query) + `attendance.findUnique` + create/update)

@@ -172,24 +172,35 @@ export async function upsertAttendance({
   const date = assertValidDate(first.date, 'Date');
 
   const processed = await prisma.$transaction(async (tx: any) => {
+    // Batch validation reads (one query per table instead of 3 per record)
+    const studentIds = [...new Set(records.map((r) => r.studentId))];
+    const recordDates = [...new Set(records.map((r) => assertValidDate(r.date, 'Date')))];
+    const [students, enrollments, existingRecords] = await Promise.all([
+      tx.student.findMany({ where: { id: { in: studentIds } } }),
+      tx.courseEnrollment.findMany({
+        where: { studentId: { in: studentIds }, courseId: first.courseId, status: 'ACTIVE' },
+      }),
+      tx.attendance.findMany({
+        where: { studentId: { in: studentIds }, courseId: first.courseId, date: { in: recordDates } },
+      }),
+    ]);
+
+    const studentIdsFound = new Set(students.map((s: any) => s.id));
+    const enrolledStudentIds = new Set(enrollments.map((e: any) => e.studentId));
+    const existingKey = (studentId: string, d: Date) => `${studentId}|${new Date(d).toISOString().slice(0, 10)}`;
+    const existingByStudentDate = new Map(existingRecords.map((a: any) => [existingKey(a.studentId, a.date), a]));
+
     const results: any[] = [];
     for (const rec of records) {
       const recordDate = assertValidDate(rec.date, 'Date');
       const status = assertAttendanceStatus(rec.status);
 
-      const student = await tx.student.findUnique({ where: { id: rec.studentId } });
-      if (!student) throw new NotFoundError('Student not found');
-      await assertStudentEnrolled(rec.studentId, first.courseId);
+      if (!studentIdsFound.has(rec.studentId)) throw new NotFoundError('Student not found');
+      if (!enrolledStudentIds.has(rec.studentId)) {
+        throw new ValidationError('Student is not actively enrolled in this course');
+      }
 
-      const existing = await tx.attendance.findUnique({
-        where: {
-          studentId_courseId_date: {
-            studentId: rec.studentId,
-            courseId: first.courseId,
-            date: recordDate,
-          },
-        },
-      });
+      const existing = existingByStudentDate.get(existingKey(rec.studentId, recordDate));
 
       let saved;
       if (existing) {

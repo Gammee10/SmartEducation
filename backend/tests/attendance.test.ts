@@ -25,7 +25,13 @@ const state: any = {
 
 const mockPrisma = {
   teacher: { findUnique: async ({ where }: any) => state.teachers.find((t: any) => t.userId === where.userId) || null },
-  student: { findUnique: async ({ where }: any) => state.students.find((s: any) => s.userId === where.userId || s.id === where.id) || null },
+  student: {
+    findUnique: async ({ where }: any) => state.students.find((s: any) => s.userId === where.userId || s.id === where.id) || null,
+    findMany: async ({ where }: any) => {
+      const ids = where?.id?.in || [];
+      return state.students.filter((s: any) => ids.includes(s.id));
+    },
+  },
   course: {
     findUnique: async ({ where }: any) => {
       const c = state.courses.find((c: any) => c.id === where.id);
@@ -44,12 +50,24 @@ const mockPrisma = {
     findFirst: async ({ where }: any) => {
       return state.enrollments.find((e: any) => e.studentId === where.studentId && where.courseId?.in?.includes(e.courseId)) || null;
     },
+    findMany: async ({ where }: any) => {
+      let result = state.enrollments;
+      if (where?.studentId?.in) result = result.filter((e: any) => where.studentId.in.includes(e.studentId));
+      if (where?.courseId) result = result.filter((e: any) => e.courseId === where.courseId);
+      if (where?.status) result = result.filter((e: any) => e.status === where.status);
+      return result;
+    },
   },
   attendance: {
     findMany: async ({ where }: any) => {
       let result = state.attendances;
       if (where?.courseId) result = result.filter((a: any) => a.courseId === where.courseId);
-      if (where?.studentId) result = result.filter((a: any) => a.studentId === where.studentId);
+      if (where?.studentId?.in) result = result.filter((a: any) => where.studentId.in.includes(a.studentId));
+      else if (where?.studentId) result = result.filter((a: any) => a.studentId === where.studentId);
+      if (where?.date?.in) {
+        const times = where.date.in.map((d: any) => new Date(d).getTime());
+        result = result.filter((a: any) => times.includes(new Date(a.date).getTime()));
+      }
       return result;
     },
     count: async ({ where }: any) => {
