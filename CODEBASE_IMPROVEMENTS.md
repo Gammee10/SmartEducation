@@ -636,6 +636,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.3 Dead and misplaced dependencies
 
+- **Status: Partially Completed** (nodemon removed; `@types/express` left at ^5 because express-rate-limit v8 ships types requiring express-5 - downgrading breaks compilation; supertest retained for #3.10)
+
 - **Category:** Dependency Management
 - **Severity:** Low
 - **Location:** `backend/package.json:40` (`nodemon` — unused, `tsx watch` is the dev script), `backend/package.json:39,42` (`supertest` unused — see #3.10), `backend/package.json:35` (`@types/express@^5` against `express@^4.21` — major mismatch; works today but can drift)
