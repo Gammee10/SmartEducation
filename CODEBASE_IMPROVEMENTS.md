@@ -645,6 +645,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.4 `DIRECT_URL` optional in env validation but mandatory at runtime
 
+- **Status: Completed**
+
 - **Category:** Configuration
 - **Severity:** Low
 - **Location:** `backend/src/config/env.ts:27` (`directUrl: process.env.DIRECT_URL` — no validation), `backend/src/prisma/client.ts:13` (`url: process.env.DIRECT_URL` — `undefined` → runtime datasource error), `backend/.env.example` documents it
@@ -659,6 +661,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Recommended Improvement:** Commit the change (it is correct), and update `.env.example` to warn against `Password123!`.
 
 ## 4.6 Seed data uses publicly-known credentials with no production guard
+
+- **Status: Completed**
 
 - **Category:** Security / Configuration
 - **Severity:** Low

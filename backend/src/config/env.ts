@@ -17,6 +17,12 @@ if (nodeEnv === 'production' && !process.env.DEFAULT_USER_PASSWORD) {
   throw new Error('DEFAULT_USER_PASSWORD must be set when NODE_ENV is production');
 }
 
+// The shared Prisma client hard-requires DIRECT_URL (datasources.db.url);
+// fail fast instead of a confusing runtime datasource error.
+if (!process.env.DIRECT_URL) {
+  throw new Error('DIRECT_URL must be set - the Prisma client connects through it');
+}
+
 const env = {
   nodeEnv,
   port: parseInt(process.env.PORT || '5000', 10),

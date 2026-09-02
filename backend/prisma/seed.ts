@@ -6,6 +6,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Never seed known credentials against a production database unless the
+// operator explicitly opts in with ALLOW_SEED=1.
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== '1') {
+  console.error(
+    'Refusing to run the seed script with NODE_ENV=production (it creates publicly-known ' +
+      'credentials). Set ALLOW_SEED=1 only if you truly intend this.'
+  );
+  process.exit(1);
+}
+console.warn('WARNING: the seed script creates users with publicly-known passwords. Rotate them immediately after first login.');
+
 const prisma = new PrismaClient({
   datasources: {
     db: {
