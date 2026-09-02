@@ -80,6 +80,7 @@ const mockPrisma = {
       return log;
     },
   },
+  $transaction: async (fn: any) => fn(mockPrisma),
 };
 
 const prismaClientPath = require.resolve('../src/prisma/client');

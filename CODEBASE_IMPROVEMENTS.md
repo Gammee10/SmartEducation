@@ -461,6 +461,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.8 Announcement/event fan-out is non-transactional and notify failures are invisible
 
+- **Status: Completed**
+
 - **Category:** Backend / Reliability
 - **Severity:** Medium
 - **Location:** `backend/src/services/communicationService.ts:45–70` (`createAnnouncement` — announcement created, then `notifyUsers` runs as a separate unguarded write), `:172–202` (same for events)

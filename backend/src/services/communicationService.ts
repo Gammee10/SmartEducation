@@ -42,40 +42,52 @@ async function createAnnouncement(opts: {
   if (!body) throw new ValidationError('Body is required');
   const audience = assertAudience(data.audience);
 
-  const announcement = await prisma.announcement.create({
-    data: { title, body, audience, publishedById: actorId },
-    include: {
-      publishedBy: { select: { id: true, fullName: true, email: true } },
-    },
-  });
+  // Create + fan-out + audit in one transaction: a notify failure must not
+  // leave a published announcement that nobody was notified about.
+  const announcement = await prisma.$transaction(async (tx: any) => {
+    const created = await tx.announcement.create({
+      data: { title, body, audience, publishedById: actorId },
+      include: {
+        publishedBy: { select: { id: true, fullName: true, email: true } },
+      },
+    });
 
-  // Fan out in-app notifications to the targeted audience.
-  const recipients = await prisma.user.findMany({
-    where: {
-      status: 'ACTIVE',
-      ...(audience === 'TEACHERS'
-        ? { role: { in: ['TEACHER'] } }
-        : audience === 'STUDENTS'
-          ? { role: { in: ['STUDENT'] } }
-          : { role: { in: ['TEACHER', 'STUDENT'] } }),
-    },
-    select: { id: true },
-  });
-  await notifyUsers({
-    userIds: recipients.map((u: any) => u.id),
-    title: `Announcement: ${title}`,
-    message: body.slice(0, 200),
-    type: 'ANNOUNCEMENT',
-    metadata: { announcementId: announcement.id },
-  });
+    // Fan out in-app notifications to the targeted audience.
+    const recipients = await tx.user.findMany({
+      where: {
+        status: 'ACTIVE',
+        ...(audience === 'TEACHERS'
+          ? { role: { in: ['TEACHER'] } }
+          : audience === 'STUDENTS'
+            ? { role: { in: ['STUDENT'] } }
+            : { role: { in: ['TEACHER', 'STUDENT'] } }),
+      },
+      select: { id: true },
+    });
+    await notifyUsers(
+      {
+        userIds: recipients.map((u: any) => u.id),
+        title: `Announcement: ${title}`,
+        message: body.slice(0, 200),
+        type: 'ANNOUNCEMENT',
+        metadata: { announcementId: created.id },
+      },
+      tx
+    );
 
-  await writeAuditLog({
-    actorId,
-    action: 'ANNOUNCEMENT_PUBLISHED',
-    entity: 'Announcement',
-    entityId: announcement.id,
-    metadata: { title, audience, notified: recipients.length },
-    ipAddress,
+    await writeAuditLog(
+      {
+        actorId,
+        action: 'ANNOUNCEMENT_PUBLISHED',
+        entity: 'Announcement',
+        entityId: created.id,
+        metadata: { title, audience, notified: recipients.length },
+        ipAddress,
+      },
+      tx
+    );
+
+    return created;
   });
 
   return announcement;
@@ -169,45 +181,55 @@ async function createEvent(opts: {
   }
   const audience = assertAudience(data.audience);
 
-  const event = await prisma.event.create({
-    data: {
-      title,
-      description: data.description || null,
-      location: data.location || null,
-      audience,
-      startsAt,
-      endsAt,
-      createdById: actorId,
-    },
-    include: { createdBy: { select: { id: true, fullName: true, email: true } } },
-  });
+  const event = await prisma.$transaction(async (tx: any) => {
+    const created = await tx.event.create({
+      data: {
+        title,
+        description: data.description || null,
+        location: data.location || null,
+        audience,
+        startsAt,
+        endsAt,
+        createdById: actorId,
+      },
+      include: { createdBy: { select: { id: true, fullName: true, email: true } } },
+    });
 
-  const recipients = await prisma.user.findMany({
-    where: {
-      status: 'ACTIVE',
-      ...(audience === 'TEACHERS'
-        ? { role: { in: ['TEACHER'] } }
-        : audience === 'STUDENTS'
-          ? { role: { in: ['STUDENT'] } }
-          : { role: { in: ['TEACHER', 'STUDENT'] } }),
-    },
-    select: { id: true },
-  });
-  await notifyUsers({
-    userIds: recipients.map((u: any) => u.id),
-    title: `Event: ${title}`,
-    message: `${startsAt.toISOString()}${data.location ? ` · ${data.location}` : ''}`,
-    type: 'EVENT',
-    metadata: { eventId: event.id },
-  });
+    const recipients = await tx.user.findMany({
+      where: {
+        status: 'ACTIVE',
+        ...(audience === 'TEACHERS'
+          ? { role: { in: ['TEACHER'] } }
+          : audience === 'STUDENTS'
+            ? { role: { in: ['STUDENT'] } }
+            : { role: { in: ['TEACHER', 'STUDENT'] } }),
+      },
+      select: { id: true },
+    });
+    await notifyUsers(
+      {
+        userIds: recipients.map((u: any) => u.id),
+        title: `Event: ${title}`,
+        message: `${startsAt.toISOString()}${data.location ? ` · ${data.location}` : ''}`,
+        type: 'EVENT',
+        metadata: { eventId: created.id },
+      },
+      tx
+    );
 
-  await writeAuditLog({
-    actorId,
-    action: 'EVENT_CREATED',
-    entity: 'Event',
-    entityId: event.id,
-    metadata: { title, audience, startsAt: startsAt.toISOString() },
-    ipAddress,
+    await writeAuditLog(
+      {
+        actorId,
+        action: 'EVENT_CREATED',
+        entity: 'Event',
+        entityId: created.id,
+        metadata: { title, audience, startsAt: startsAt.toISOString() },
+        ipAddress,
+      },
+      tx
+    );
+
+    return created;
   });
 
   return event;

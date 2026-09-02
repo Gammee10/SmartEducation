@@ -44,19 +44,23 @@ async function createNotification(
 
 /**
  * Notify many users at once (fan-out). Used by announcements/events and
- * available to any other module.
+ * available to any other module. Accepts an optional transaction client so
+ * the fan-out can share the caller's transaction.
  */
-async function notifyUsers(params: {
-  userIds: string[];
-  title: string;
-  message: string;
-  type?: NotificationType;
-  metadata?: Record<string, unknown> | null;
-}) {
+async function notifyUsers(
+  params: {
+    userIds: string[];
+    title: string;
+    message: string;
+    type?: NotificationType;
+    metadata?: Record<string, unknown> | null;
+  },
+  client: any = prisma
+) {
   const { userIds, title, message, type = 'GENERAL', metadata = null } = params;
   if (!Array.isArray(userIds) || userIds.length === 0) return { count: 0 };
   if (!title || !message) throw new ValidationError('Title and message are required');
-  return (prisma.notification.createMany as any)({
+  return (client.notification.createMany as any)({
     data: userIds.map((userId) => ({
       userId,
       title,
