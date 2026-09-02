@@ -1,8 +1,7 @@
-﻿// Timetable service - slot CRUD with conflict detection.
-import prismaModule from '../prisma/client';
+// Timetable service - slot CRUD with conflict detection.
+import prisma from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
-const prisma = prismaModule as any;
 type DayOfWeek = 'MONDAY'|'TUESDAY'|'WEDNESDAY'|'THURSDAY'|'FRIDAY';
 const DAYS: DayOfWeek[] = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY'];
 const ORDER: Record<string, number> = { MONDAY:0, TUESDAY:1, WEDNESDAY:2, THURSDAY:3, FRIDAY:4 };

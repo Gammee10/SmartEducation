@@ -1,13 +1,12 @@
 // Assignment service - assignment CRUD, submissions, and grading.
-import prismaModule from '../prisma/client';
+import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
 import { uploadFile } from './fileStorageService';
 import { getCourse as getCourseWithAccess } from './courseService';
 
-// Cast to any to work around Prisma type resolution in monorepo
-const prisma = prismaModule as any;
+
 
 type AssignmentStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ARCHIVED';
 
@@ -411,7 +410,7 @@ async function submitAssignment({ actorId, assignmentId, data, file, ipAddress }
     };
   }
 
-  const isLate = Boolean(assignment.dueDate) && new Date() > new Date(assignment.dueDate);
+  const isLate = assignment.dueDate ? new Date() > new Date(assignment.dueDate) : false;
 
   let submission;
   try {

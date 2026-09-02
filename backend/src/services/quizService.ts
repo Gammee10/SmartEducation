@@ -1,12 +1,11 @@
 // Quiz service - quiz CRUD, questions, attempts, auto-grading, and results.
-import prismaModule from '../prisma/client';
+import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
 import { getCourse as getCourseWithAccess } from './courseService';
 
-// Cast to any to work around Prisma type resolution in monorepo
-const prisma = prismaModule as any;
+
 
 type QuizStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED' | 'ARCHIVED';
 type QuizQuestionType = 'MULTIPLE_CHOICE' | 'SINGLE_CHOICE';
@@ -479,7 +478,7 @@ async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionPara
 
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
-    include: { course: true },
+    include: { course: true, questions: { select: { id: true } } },
   });
   if (!quiz) throw new NotFoundError('Quiz not found');
 

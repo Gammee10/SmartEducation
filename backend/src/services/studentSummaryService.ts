@@ -1,7 +1,6 @@
-﻿// Student summary service - academic profile for a student.
-import prismaModule from '../prisma/client';
+// Student summary service - academic profile for a student.
+import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
-const prisma = prismaModule as any;
 
 export async function getStudentSummary(opts: { studentId: string; role: string; userId: string }): Promise<any> {
   const { studentId, role, userId } = opts;

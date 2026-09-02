@@ -1,7 +1,6 @@
 // Dashboard service - aggregate stats for admin, teacher, and student.
-import prismaModule from '../prisma/client';
+import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
-const prisma = prismaModule as any;
 
 function round2(value: number | null | undefined): number {
   return value ? Math.round(value * 100) / 100 : 0;
@@ -44,8 +43,8 @@ export async function getAdminDashboard(opts: { userId: string }): Promise<any> 
   // different from a mean of per-attempt percentages (larger quizzes now
   // weigh more); chosen deliberately for SQL-level computation.
   const avgQuizScore =
-    quizAgg._count > 0 && quizAgg._sum.maxScore > 0
-      ? Math.round((quizAgg._sum.score / quizAgg._sum.maxScore) * 10000) / 100
+    quizAgg._count > 0 && (quizAgg._sum.maxScore ?? 0) > 0
+      ? Math.round(((quizAgg._sum.score ?? 0) / (quizAgg._sum.maxScore ?? 1)) * 10000) / 100
       : 0;
 
   return {

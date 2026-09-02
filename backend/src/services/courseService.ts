@@ -1,11 +1,10 @@
 // Course service - course CRUD, enrollment, and content management.
-import prismaModule from '../prisma/client';
+import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { assertHttpUrl, assertOptionalHttpUrl } from '../utils/url';
 import { writeAuditLog } from './auditService';
 
-// Cast to any to work around Prisma type resolution in monorepo
-const prisma = prismaModule as any;
+
 
 type CourseStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
 type ContentTypeEnum = 'VIDEO' | 'DOCUMENT' | 'PDF' | 'IMAGE' | 'LINK' | 'OTHER';

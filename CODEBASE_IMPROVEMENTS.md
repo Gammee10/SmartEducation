@@ -616,6 +616,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.1 Prisma client is cast to `any` in 7 of 13 services
 
+- **Status: Completed**
+
 - **Category:** Code Quality
 - **Severity:** Low
 - **Location:** `courseService.ts:7`, `assignmentService.ts:10`, `quizService.ts:9`, `attendanceService.ts:6`, `timetableService.ts:4`, `dashboardService.ts:4`, `studentSummaryService.ts:4` (`const prisma = prismaModule as any`)
