@@ -1,4 +1,4 @@
-﻿// Attendance service - attendance marking, corrections, and history.
+// Attendance service - attendance marking, corrections, and history.
 import prismaModule from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
@@ -188,7 +188,7 @@ export async function upsertAttendance({
     const studentIdsFound = new Set(students.map((s: any) => s.id));
     const enrolledStudentIds = new Set(enrollments.map((e: any) => e.studentId));
     const existingKey = (studentId: string, d: Date) => `${studentId}|${new Date(d).toISOString().slice(0, 10)}`;
-    const existingByStudentDate = new Map(existingRecords.map((a: any) => [existingKey(a.studentId, a.date), a]));
+    const existingByStudentDate = new Map<string, any>(existingRecords.map((a: any) => [existingKey(a.studentId, a.date), a] as [string, any]));
 
     const results: any[] = [];
     for (const rec of records) {
