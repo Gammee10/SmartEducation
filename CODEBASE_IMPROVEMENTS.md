@@ -725,6 +725,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 5.2 Per-route request validation with zod
 
+- **Status: Skipped** (large, deliberate refactor explicitly scheduled after the High fixes per the report's Phase 5; hand-rolled validation gaps were addressed directly in #2.9/#2.5/#3.13)
+
 - **Category:** Backend / Code Quality
 - **Severity:** Optional
 - **Location:** All controllers (manual checks today)
@@ -732,12 +734,16 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 5.3 Consistent 404-vs-403 semantics for cross-tenant resources
 
+- **Status: Skipped** (the report concludes it is "not worth breaking frontend error handling over" for a school pilot)
+
 - **Category:** Security / API
 - **Severity:** Optional
 - **Location:** e.g., `quizService.getAttemptDetail` returns 403 for foreign attempts (id existence confirmed)
 - **Note:** Returning 403 confirms the resource exists to the probing user. For a school pilot this is acceptable and more debuggable; if hardening is desired, return 404 for foreign-owned resources. Not worth breaking frontend error handling over.
 
 ## 5.4 Add `ErrorBoundary` and route-level document titles
+
+- **Status: Completed**
 
 - **Category:** Frontend / Reliability / SEO
 - **Severity:** Optional

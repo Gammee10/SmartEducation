@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -17,6 +18,7 @@ import type { Announcement, AudienceScope } from '../types';
 const emptyForm = { title: '', body: '', audience: 'ALL' as AudienceScope };
 
 export default function AnnouncementsPage() {
+  usePageTitle('Announcements');
   const { isAdmin, isTeacher } = useAuth();
   const canPost = isAdmin || isTeacher;
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);

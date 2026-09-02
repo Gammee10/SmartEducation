@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { EmptyState, Icon, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
 import type { Book, Pagination } from '../types';
 
@@ -22,6 +23,7 @@ function bookTileClass(category?: string | null): string {
 }
 
 export default function LibraryCatalogPage() {
+  usePageTitle('Library');
   const { isStudent } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [search, setSearch] = useState('');

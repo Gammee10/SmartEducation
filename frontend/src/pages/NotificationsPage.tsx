@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import {
@@ -21,6 +22,7 @@ const typeStyles: Record<string, string> = {
 };
 
 export default function NotificationsPage() {
+  usePageTitle('Notifications');
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

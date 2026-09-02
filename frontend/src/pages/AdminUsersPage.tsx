@@ -1,3 +1,4 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useEffect, useState, useCallback, FormEvent, ChangeEvent } from 'react';
 import api from '../api/client';
 import {
@@ -24,6 +25,7 @@ const emptyCreateForm = {
 };
 
 export default function AdminUsersPage() {
+  usePageTitle('User Management');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import StatusBadge from '../components/StatusBadge';
 import {
   buttonPrimary,
@@ -61,6 +62,7 @@ const emptyForm: CourseForm = {
 };
 
 export default function CoursesPage() {
+  usePageTitle('Courses');
   const { isTeacher } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);

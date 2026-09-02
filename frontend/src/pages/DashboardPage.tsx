@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import StatusBadge from '../components/StatusBadge';
 import {
   Card,
@@ -425,6 +426,7 @@ function StudentDashboard() {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Dashboard');
   const { user, isAdmin, isTeacher, isStudent } = useAuth();
 
   const hour = new Date().getHours();

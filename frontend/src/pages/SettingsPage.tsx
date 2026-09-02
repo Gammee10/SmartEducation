@@ -1,8 +1,10 @@
+import { usePageTitle } from '../hooks/usePageTitle';
 import { FormEvent, useState } from 'react';
 import api from '../api/client';
 import { buttonPrimary, inputStyles, PageHeader, Banner, Spinner } from '../components/ui';
 
 export default function SettingsPage() {
+  usePageTitle('Settings');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

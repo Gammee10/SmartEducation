@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -24,6 +25,7 @@ interface NewSlotForm {
 }
 
 export default function TimetablePage() {
+  usePageTitle('Timetable');
   const { isAdmin } = useAuth();
   const [slots, setSlots] = useState<TimetableSlot[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);

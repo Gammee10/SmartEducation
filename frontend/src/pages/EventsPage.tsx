@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
 import { getApiError } from '../utils/apiError';
 import {
@@ -27,6 +28,7 @@ const emptyForm = {
 };
 
 export default function EventsPage() {
+  usePageTitle('Events');
   const { isAdmin, isTeacher } = useAuth();
   const canPost = isAdmin || isTeacher;
   const { data, loading: loadingEvents, error: loadError, reload } = useApi<SchoolEvent[]>((signal) =>
