@@ -1,7 +1,13 @@
 // Dashboard service - aggregate stats for admin, teacher, and student.
 import prismaModule from '../prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
-const prisma = prismaModule as any;export async function getAdminDashboard(opts: { userId: string }): Promise<any> {
+const prisma = prismaModule as any;
+
+function round2(value: number | null | undefined): number {
+  return value ? Math.round(value * 100) / 100 : 0;
+}
+
+export async function getAdminDashboard(opts: { userId: string }): Promise<any> {
   const { userId } = opts;
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== 'ADMIN') throw new ForbiddenError('Admin access required');
@@ -18,24 +24,29 @@ const prisma = prismaModule as any;export async function getAdminDashboard(opts:
   const presentCount = await prisma.attendance.count({ where: { status: { in: ['PRESENT', 'LATE'] } } });
   const attendanceRate = attendanceCount > 0 ? Math.round((presentCount / attendanceCount) * 100) : 0;
 
-  const gradedSubmissions = await prisma.assignmentSubmission.findMany({
-    where: { status: 'GRADED', score: { not: null } },
-    select: { score: true },
-  });
-  const avgAssignmentScore = gradedSubmissions.length > 0
-    ? Math.round((gradedSubmissions.reduce((s: number, x: any) => s + (x.score || 0), 0) / gradedSubmissions.length) * 100) / 100
-    : 0;
+  // SQL-level aggregation - no longer loads entire tables into memory
+  const [subAgg, quizAgg] = await Promise.all([
+    prisma.assignmentSubmission.aggregate({
+      where: { status: 'GRADED', score: { not: null } },
+      _avg: { score: true },
+    }),
+    prisma.quizAttempt.aggregate({
+      where: { status: 'SUBMITTED', score: { not: null }, maxScore: { gt: 0 } },
+      _avg: { score: true },
+      _sum: { score: true, maxScore: true },
+      _count: true,
+    }),
+  ]);
+  const avgAssignmentScore = round2(subAgg._avg.score);
 
-  const submittedAttempts = await prisma.quizAttempt.findMany({
-    where: { status: 'SUBMITTED', score: { not: null } },
-    select: { score: true, maxScore: true },
-  });
-  const quizPct = submittedAttempts
-    .filter((a: any) => a.maxScore && a.maxScore > 0)
-    .map((a: any) => (a.score || 0) / a.maxScore);
-  const avgQuizScore = quizPct.length > 0
-    ? Math.round((quizPct.reduce((s: number, p: number) => s + p, 0) / quizPct.length) * 10000) / 100
-    : 0;
+  // Quiz average: SUM(score)/SUM(maxScore) over submitted attempts - a
+  // weighted aggregate that no longer scans rows into memory. Slightly
+  // different from a mean of per-attempt percentages (larger quizzes now
+  // weigh more); chosen deliberately for SQL-level computation.
+  const avgQuizScore =
+    quizAgg._count > 0 && quizAgg._sum.maxScore > 0
+      ? Math.round((quizAgg._sum.score / quizAgg._sum.maxScore) * 10000) / 100
+      : 0;
 
   return {
     stats: {

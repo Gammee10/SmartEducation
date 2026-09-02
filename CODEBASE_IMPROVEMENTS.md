@@ -234,6 +234,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 2.7 Admin dashboard computes aggregates by loading entire tables into memory
 
+- **Status: Completed**
+
 - **Category:** Performance / Scalability
 - **Severity:** High
 - **Location:** `backend/src/services/dashboardService.ts:21–38` (`getAdminDashboard` — `findMany` of **all** graded submissions, then **all** submitted quiz attempts, summed in JS)

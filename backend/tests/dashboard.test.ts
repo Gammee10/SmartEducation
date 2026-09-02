@@ -53,6 +53,14 @@ const mockPrisma = {
       if (where?.status) result = result.filter((s: any) => s.status === where.status);
       return result;
     },
+    aggregate: async ({ where }: any) => {
+      let result = state.assignmentSubmissions;
+      if (where?.studentId) result = result.filter((s: any) => s.studentId === where.studentId);
+      if (where?.status) result = result.filter((s: any) => s.status === where.status);
+      const scores = result.map((s: any) => s.score).filter((x: any) => x !== null && x !== undefined);
+      const avg = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : null;
+      return { _avg: { score: avg } };
+    },
   },
   quizAttempt: {
     findMany: async ({ where }: any) => {
@@ -60,6 +68,15 @@ const mockPrisma = {
       if (where?.studentId) result = result.filter((a: any) => a.studentId === where.studentId);
       if (where?.status) result = result.filter((a: any) => a.status === where.status);
       return result;
+    },
+    aggregate: async ({ where }: any) => {
+      let result = state.quizAttempts;
+      if (where?.studentId) result = result.filter((a: any) => a.studentId === where.studentId);
+      if (where?.status) result = result.filter((a: any) => a.status === where.status);
+      if (where?.maxScore?.gt) result = result.filter((a: any) => a.maxScore > where.maxScore.gt);
+      const sumScore = result.reduce((s: number, a: any) => s + (a.score || 0), 0);
+      const sumMax = result.reduce((s: number, a: any) => s + (a.maxScore || 0), 0);
+      return { _avg: { score: null }, _sum: { score: sumScore, maxScore: sumMax }, _count: result.length };
     },
   },
   courseEnrollment: {
