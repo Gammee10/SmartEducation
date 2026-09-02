@@ -119,8 +119,12 @@ async function createUser(opts: {
   if (existing) throw new ConflictError('A user with this email already exists');
 
   let user;
-  try {
-    user = await prisma.$transaction(async (tx: any) => {
+  // A concurrent createUser can generate the same sequential code
+  // (count-based generation is check-then-use). Retry with a regenerated
+  // code; the unique constraint is the authoritative guard.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      user = await prisma.$transaction(async (tx: any) => {
       const created = await tx.user.create({
         data: { email, fullName, role, phone: data.phone || null, passwordHash },
       });
@@ -146,12 +150,21 @@ async function createUser(opts: {
         include: { student: true, teacher: true },
       });
     });
+    break;
   } catch (err: any) {
-    // Concurrent creations with the same email race past the pre-check
+    // Concurrent creations with the same email race past the pre-check.
+    // A duplicate code (studentCode/employeeCode) is retried with a freshly
+    // generated one; distinguishable because the email pre-check already
+    // filtered exact email duplicates and the profile create is what fails.
     if (err?.code === 'P2002') {
-      throw new ConflictError('A user with this email already exists');
+      const target = JSON.stringify(err?.meta?.target || '');
+      if (target.includes('email') || attempt === 2) {
+        throw new ConflictError('A user with this email already exists');
+      }
+      continue; // duplicate generated code - regenerate and retry
     }
     throw err;
+  }
   }
 
   await writeAuditLog({

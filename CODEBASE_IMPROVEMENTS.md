@@ -434,6 +434,8 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.6 `generateCode` student/employee code generation races on concurrent user creation
 
+- **Status: Completed**
+
 - **Category:** Backend / Concurrency
 - **Severity:** Medium
 - **Location:** `backend/src/services/userAdminService.ts:29–45`
