@@ -60,7 +60,7 @@ async function notifyUsers(
   const { userIds, title, message, type = 'GENERAL', metadata = null } = params;
   if (!Array.isArray(userIds) || userIds.length === 0) return { count: 0 };
   if (!title || !message) throw new ValidationError('Title and message are required');
-  return (client.notification.createMany as any)({
+  return client.notification.createMany({
     data: userIds.map((userId) => ({
       userId,
       title,
