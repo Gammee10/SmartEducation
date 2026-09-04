@@ -13,6 +13,7 @@ import {
   Banner,
 } from '../components/ui';
 import type { Course, ContentItem, Assignment, Quiz } from '../types';
+import { getApiError } from '../utils/apiError';
 
 interface ContentForm {
   title: string;
@@ -191,7 +192,7 @@ export default function CourseDetailPage() {
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
-            content: err.response?.data?.message || 'Failed to load content',
+            content: getApiError(err, 'Failed to load content'),
           }))
         );
       api
@@ -200,7 +201,7 @@ export default function CourseDetailPage() {
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
-            assignments: err.response?.data?.message || 'Failed to load assignments',
+            assignments: getApiError(err, 'Failed to load assignments'),
           }))
         );
       api
@@ -209,11 +210,11 @@ export default function CourseDetailPage() {
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
-            quizzes: err.response?.data?.message || 'Failed to load quizzes',
+            quizzes: getApiError(err, 'Failed to load quizzes'),
           }))
         );
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load course');
+      setError(getApiError(err, 'Failed to load course'));
     } finally {
       setLoading(false);
     }
@@ -234,7 +235,7 @@ export default function CourseDetailPage() {
       setForm(emptyForm);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to upload content');
+      setError(getApiError(err, 'Failed to upload content'));
     } finally {
       setSubmitting(false);
     }
@@ -249,7 +250,7 @@ export default function CourseDetailPage() {
       setMessage('Content archived');
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to archive content');
+      setError(getApiError(err, 'Failed to archive content'));
     } finally {
       setArchiving(null);
     }
@@ -273,7 +274,7 @@ export default function CourseDetailPage() {
       setAssignmentForm(emptyAssignmentForm);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create assignment');
+      setError(getApiError(err, 'Failed to create assignment'));
     } finally {
       setCreatingAssignment(false);
     }
@@ -299,7 +300,7 @@ export default function CourseDetailPage() {
       setQuizForm(emptyQuizForm);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create quiz');
+      setError(getApiError(err, 'Failed to create quiz'));
     } finally {
       setCreatingQuiz(false);
     }

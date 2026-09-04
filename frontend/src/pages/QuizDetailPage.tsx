@@ -14,6 +14,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { Quiz, QuizQuestion, QuizAttempt } from '../types';
+import { getApiError } from '../utils/apiError';
 
 interface QuizForm {
   title: string;
@@ -139,7 +140,7 @@ export default function QuizDetailPage() {
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load quiz');
+      setError(getApiError(err, 'Failed to load quiz'));
     } finally {
       setLoading(false);
     }
@@ -234,7 +235,7 @@ export default function QuizDetailPage() {
       setShowEdit(false);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update quiz');
+      setError(getApiError(err, 'Failed to update quiz'));
     } finally {
       setSaving(false);
     }
@@ -262,7 +263,7 @@ export default function QuizDetailPage() {
       setQuestionDraft(emptyQuestion);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add question');
+      setError(getApiError(err, 'Failed to add question'));
     } finally {
       setAddingQuestion(false);
     }
@@ -310,7 +311,7 @@ export default function QuizDetailPage() {
       }
       setSelections(initial);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to start quiz attempt');
+      setError(getApiError(err, 'Failed to start quiz attempt'));
     }
   };
 
@@ -342,7 +343,7 @@ export default function QuizDetailPage() {
       setMessage(autoExpired ? 'Time expired — your attempt was auto-submitted' : 'Quiz submitted successfully');
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit quiz');
+      setError(getApiError(err, 'Failed to submit quiz'));
       if (autoExpired) {
         // Stop the auto-submit retry loop; the student submits manually.
         autoSubmitFailedRef.current = true;

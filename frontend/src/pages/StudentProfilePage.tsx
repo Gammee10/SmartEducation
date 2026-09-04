@@ -11,6 +11,7 @@ import {
 } from '../components/ui';
 import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type { StudentSummary, StudentAttendanceView, AttendanceStatus } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const STATUS_META: Record<AttendanceStatus, { bar: string; pill: string }> = {
   PRESENT: { bar: 'bg-emerald-500', pill: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' },
@@ -50,7 +51,7 @@ export default function StudentProfilePage() {
     api
       .get(`/students/${studentId}/summary`)
       .then((res) => setSummary(res.data.data))
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load profile'));
+      .catch((err) => setError(getApiError(err, 'Failed to load profile')));
     // Track attendance loading/errors separately so a transient failure is
     // not silently rendered as "No attendance records yet."
     setAttendanceLoading(true);
@@ -59,7 +60,7 @@ export default function StudentProfilePage() {
       .get(`/students/${studentId}/attendance`)
       .then((res) => setAttendance(res.data.data))
       .catch((err) =>
-        setAttendanceError(err.response?.data?.message || 'Failed to load attendance history')
+        setAttendanceError(getApiError(err, 'Failed to load attendance history'))
       )
       .finally(() => setAttendanceLoading(false));
   }, [studentId]);

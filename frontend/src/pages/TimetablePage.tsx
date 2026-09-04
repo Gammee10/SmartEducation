@@ -13,6 +13,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { TimetableSlot, DayOfWeek, Course } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 
@@ -83,7 +84,7 @@ export default function TimetablePage() {
       setShowForm(false);
       loadSlots();
     } catch (err: any) {
-      setFormError(err.response?.data?.message || 'Failed to create slot');
+      setFormError(getApiError(err, 'Failed to create slot'));
     } finally {
       setSaving(false);
     }
@@ -98,7 +99,7 @@ export default function TimetablePage() {
       setMessage('Timetable slot deleted');
       loadSlots();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete slot');
+      setError(getApiError(err, 'Failed to delete slot'));
     }
   };
 

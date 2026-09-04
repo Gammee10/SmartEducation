@@ -13,6 +13,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { Assignment, AssignmentSubmission } from '../types';
+import { getApiError } from '../utils/apiError';
 
 export default function AssignmentDetailPage() {
   const { id: courseId, assignmentId } = useParams<{ id: string; assignmentId: string }>();
@@ -40,7 +41,7 @@ export default function AssignmentDetailPage() {
       setAssignment(response.data.data.assignment);
       setSubmissions(response.data.data.submissions);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load assignment');
+      setError(getApiError(err, 'Failed to load assignment'));
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,7 @@ export default function AssignmentDetailPage() {
       setFile(null);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit assignment');
+      setError(getApiError(err, 'Failed to submit assignment'));
     } finally {
       setSubmitting(false);
     }
@@ -88,7 +89,7 @@ export default function AssignmentDetailPage() {
       setMessage('Submission graded');
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to grade submission');
+      setError(getApiError(err, 'Failed to grade submission'));
     } finally {
       setGradingId(null);
     }

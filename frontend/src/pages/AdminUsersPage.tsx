@@ -12,6 +12,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { AdminUser, ImportResult } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const emptyCreateForm = {
   fullName: '',
@@ -97,7 +98,7 @@ export default function AdminUsersPage() {
       setCreateForm(emptyCreateForm);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create user');
+      setError(getApiError(err, 'Failed to create user'));
     } finally {
       setCreating(false);
     }
@@ -113,7 +114,7 @@ export default function AdminUsersPage() {
       setMessage('User archived');
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to archive user');
+      setError(getApiError(err, 'Failed to archive user'));
     } finally {
       setArchiving(null);
     }
@@ -128,7 +129,7 @@ export default function AdminUsersPage() {
       const res = await api.post(`/users/${u.id}/reset-password`);
       setResetResult({ email: u.email, temporaryPassword: res.data.data.temporaryPassword });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to reset password');
+      setError(getApiError(err, 'Failed to reset password'));
     } finally {
       setResetting(null);
     }
@@ -153,7 +154,7 @@ export default function AdminUsersPage() {
       setCsvText('');
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Import failed');
+      setError(getApiError(err, 'Import failed'));
     } finally {
       setImporting(false);
     }

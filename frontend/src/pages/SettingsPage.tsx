@@ -2,6 +2,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { FormEvent, useState } from 'react';
 import api from '../api/client';
 import { buttonPrimary, inputStyles, PageHeader, Banner, Spinner } from '../components/ui';
+import { getApiError } from '../utils/apiError';
 
 export default function SettingsPage() {
   usePageTitle('Settings');
@@ -28,7 +29,7 @@ export default function SettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to change password');
+      setError(getApiError(err, 'Failed to change password'));
     } finally {
       setSaving(false);
     }

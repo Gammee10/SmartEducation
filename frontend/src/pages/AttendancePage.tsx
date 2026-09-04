@@ -4,6 +4,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner } from '../components/ui';
 import type { CourseAttendanceView, AttendanceStatus } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const STATUSES: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'];
 
@@ -61,7 +62,7 @@ export default function AttendancePage() {
         });
         setDrafts(next);
       })
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load attendance'))
+      .catch((err) => setError(getApiError(err, 'Failed to load attendance')))
       .finally(() => setLoading(false));
   }, [courseId, date]);
 
@@ -92,7 +93,7 @@ export default function AttendancePage() {
       setSavedMsg(`Attendance saved for ${records.length} student(s)`);
       load();
     } catch (err: any) {
-      setActionError(err.response?.data?.message || 'Failed to save attendance');
+      setActionError(getApiError(err, 'Failed to save attendance'));
     } finally {
       setSaving(false);
     }
@@ -106,7 +107,7 @@ export default function AttendancePage() {
       setSavedMsg('Attendance corrected');
       load();
     } catch (err: any) {
-      setActionError(err.response?.data?.message || 'Failed to correct attendance');
+      setActionError(getApiError(err, 'Failed to correct attendance'));
     }
   };
 

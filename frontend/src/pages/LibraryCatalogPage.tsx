@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { EmptyState, Icon, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
 import type { Book, Pagination } from '../types';
+import { getApiError } from '../utils/apiError';
 
 // Static Tailwind classes only, so the JIT compiler keeps them all.
 const BOOK_TILES = [
@@ -47,7 +48,7 @@ export default function LibraryCatalogPage() {
     } catch (err: any) {
       // Ignore aborted requests - a newer search superseded this one
       if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') return;
-      setError(err.response?.data?.message || 'Failed to load books');
+      setError(getApiError(err, 'Failed to load books'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function LibraryCatalogPage() {
       setMessage('Borrow request submitted successfully');
       fetchBooks(pagination.page);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit request');
+      setError(getApiError(err, 'Failed to submit request'));
     } finally {
       setRequesting(null);
     }

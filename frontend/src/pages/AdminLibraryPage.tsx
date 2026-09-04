@@ -13,6 +13,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { Book, BorrowRequest, Loan } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const TABS = {
   BOOKS: 'books',
@@ -83,7 +84,7 @@ export default function AdminLibraryPage() {
       const response = await api.get('/library/books', { params: { pageSize: 100 } });
       setBooks(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load books');
+      setError(getApiError(err, 'Failed to load books'));
     }
   }, []);
 
@@ -92,7 +93,7 @@ export default function AdminLibraryPage() {
       const response = await api.get('/library/requests', { params: { pageSize: 100 } });
       setRequests(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load requests');
+      setError(getApiError(err, 'Failed to load requests'));
     }
   }, []);
 
@@ -101,7 +102,7 @@ export default function AdminLibraryPage() {
       const response = await api.get('/library/loans', { params: { pageSize: 100 } });
       setLoans(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load loans');
+      setError(getApiError(err, 'Failed to load loans'));
     }
   }, []);
 
@@ -131,7 +132,7 @@ export default function AdminLibraryPage() {
       setBookForm(emptyForm);
       fetchBooks();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add book');
+      setError(getApiError(err, 'Failed to add book'));
     } finally {
       setSavingBook(false);
     }
@@ -168,7 +169,7 @@ export default function AdminLibraryPage() {
       fetchLoans();
       fetchBooks();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update request');
+      setError(getApiError(err, 'Failed to update request'));
     } finally {
       setDeciding(null);
     }
@@ -184,7 +185,7 @@ export default function AdminLibraryPage() {
       fetchLoans();
       fetchBooks();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to return loan');
+      setError(getApiError(err, 'Failed to return loan'));
     } finally {
       setDeciding(null);
     }

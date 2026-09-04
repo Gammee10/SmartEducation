@@ -17,6 +17,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { Course } from '../types';
+import { getApiError } from '../utils/apiError';
 
 // Static Tailwind classes only, so the JIT compiler keeps them all.
 const SUBJECT_TILES = [
@@ -80,7 +81,7 @@ export default function CoursesPage() {
       const response = await api.get('/courses', { params: { pageSize: 100 } });
       setCourses(response.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load courses');
+      setError(getApiError(err, 'Failed to load courses'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +103,7 @@ export default function CoursesPage() {
       setForm(emptyForm);
       fetchCourses();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create course');
+      setError(getApiError(err, 'Failed to create course'));
     } finally {
       setSubmitting(false);
     }

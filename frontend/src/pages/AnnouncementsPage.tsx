@@ -14,6 +14,7 @@ import {
   Spinner,
 } from '../components/ui';
 import type { Announcement, AudienceScope } from '../types';
+import { getApiError } from '../utils/apiError';
 
 const emptyForm = { title: '', body: '', audience: 'ALL' as AudienceScope };
 
@@ -54,7 +55,7 @@ export default function AnnouncementsPage() {
       setForm(emptyForm);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to publish announcement');
+      setError(getApiError(err, 'Failed to publish announcement'));
     } finally {
       setSaving(false);
     }
@@ -66,7 +67,7 @@ export default function AnnouncementsPage() {
       await api.delete(`/announcements/${id}`);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete announcement');
+      setError(getApiError(err, 'Failed to delete announcement'));
     }
   };
 

@@ -3,6 +3,7 @@ import api from '../api/client';
 import StatusBadge from '../components/StatusBadge';
 import { Card, EmptyState, LoadingState, PageHeader, Banner } from '../components/ui';
 import type { BorrowRequest, Loan } from '../types';
+import { getApiError } from '../utils/apiError';
 
 export default function MyBorrowingPage() {
   const [requests, setRequests] = useState<BorrowRequest[]>([]);
@@ -21,7 +22,7 @@ export default function MyBorrowingPage() {
       setRequests(reqRes.data.data);
       setLoans(loanRes.data.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load borrowing data');
+      setError(getApiError(err, 'Failed to load borrowing data'));
     } finally {
       setLoading(false);
     }

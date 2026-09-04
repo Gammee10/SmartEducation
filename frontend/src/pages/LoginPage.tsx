@@ -3,6 +3,7 @@ import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
 import { inputStyles, labelStyles, Spinner } from '../components/ui';
+import { getApiError } from '../utils/apiError';
 
 function CapIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
@@ -113,7 +114,7 @@ export default function LoginPage() {
       }
       navigate(redirectTo);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(getApiError(err, 'Login failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }
