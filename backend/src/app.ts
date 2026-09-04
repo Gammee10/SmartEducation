@@ -2,6 +2,7 @@
 import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import env from './config/env';
 import prisma from './prisma/client';
 import authRoutes from './routes/authRoutes';
@@ -30,6 +31,9 @@ if (env.trustProxy !== '') {
 }
 
 // Middleware
+// Security headers (HSTS, noSniff, frameguard, etc.). Safe for a JSON API:
+// the frontend talks to the API via CORS fetches, which helmet does not block.
+app.use(helmet());
 app.use(cors({ origin: env.clientUrl, credentials: true }));
 // 2MB comfortably covers the CSV import payload while still bounding request
 // sizes (default was an accidental 100KB).
