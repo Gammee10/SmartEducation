@@ -1,6 +1,7 @@
 # Codebase Improvement Audit — Smart Education System
 
 **Audit date:** 2026-09-02
+**Re-verified and extended:** 2026-09-04 — every Completed claim below was re-checked against the code (all confirmed present); #3.14 was finished (all 42 inline error chains migrated to `getApiError`); the last `as any` cast (#4.1) was removed; new finding #4.11 (missing security headers) was added and fixed with `helmet`.
 **Scope:** Full repository — backend (`backend/src`, `backend/prisma`), frontend (`frontend/src`), configuration, dependencies, tests, and deployment readiness.
 
 ---
@@ -14,9 +15,9 @@ The codebase is well organized for a modular monolith: consistent controller →
 | **Critical** | 3 |
 | **High** | 12 |
 | **Medium** | 18 |
-| **Low** | 10 |
+| **Low** | 11 |
 | **Optional** | 6 |
-| **Total** | **49** |
+| **Total** | **50** |
 
 **Most important areas requiring attention:**
 
@@ -554,7 +555,7 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 3.14 Frontend: duplicated fetch/error boilerplate and card markup in every page
 
-- **Status: Partially Completed** (infrastructure added: `useApi` hook with AbortController cleanup, `getApiError` util, and the shared `Card` component already existed; EventsPage migrated as the first incremental conversion - remaining pages migrate opportunistically)
+- **Status: Completed** (2026-09-04: all 42 inline chains across 14 pages migrated to `getApiError(err, fallback)`; grep for `err.response?.data?.message` now returns only the util's own comment; `useApi` adoption beyond EventsPage remains opportunistic per-page)
 
 - **Category:** Frontend / Code Quality
 - **Severity:** Medium
@@ -626,7 +627,7 @@ The codebase is well organized for a modular monolith: consistent controller →
 
 ## 4.1 Prisma client is cast to `any` in 7 of 13 services
 
-- **Status: Completed**
+- **Status: Completed** (2026-09-04: last remaining `as any` cast in `notificationService.ts:63` removed; grep confirms zero `as any` casts in `backend/src/services`)
 
 - **Category:** Code Quality
 - **Severity:** Low
@@ -719,6 +720,22 @@ The codebase is well organized for a modular monolith: consistent controller →
 - **Severity:** Low
 - **Location:** `member-handoff-packages/` (6 committed markdown files — team-planning artifacts), `vite-build.log` (untracked, already ignored), `cline_overnight_codebase_improvement.md` (ignored)
 - **Recommended Improvement:** Move `member-handoff-packages/` to the wiki or `docs/` (or delete — they describe finished work); keep implementation docs under `docs/` only.
+
+## 4.11 No security-headers middleware (missing helmet)
+
+- **Status: Completed** (added 2026-09-04 during re-verification; fixed same day)
+
+- **Category:** Security
+- **Severity:** Low
+- **Location:** `backend/src/app.ts` (no `helmet`, no `X-Content-Type-Options` / `X-Frame-Options` / HSTS headers on any response), `backend/package.json`
+- **Current Problem:**
+  Express sets no security headers by default. Every API response was missing `X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Strict-Transport-Security`, and related hardening headers. Low exploitability for a JSON API, but it is a free, standard baseline (OWASP secure-headers) that scanners and school IT audits flag.
+- **Recommended Improvement:**
+  Add `helmet` and mount it before CORS/routes: `app.use(helmet())`. Defaults are safe for a JSON API — the SPA talks to the API via CORS fetches, which helmet does not block.
+- **Implementation Guidance:**
+  1. `npm install helmet --workspace backend` (helmet ships its own TypeScript types — no `@types/helmet` needed).
+  2. In `app.ts`: `import helmet from 'helmet'` and `app.use(helmet())` before the CORS middleware, with a comment explaining it is safe for the fetch-based frontend.
+- **Suggested Validation:** Backend `typecheck` + `eslint` + unit tests pass; `curl -I /api/health` shows `x-content-type-options: nosniff` and `x-frame-options: SAMEORIGIN` (verified via middleware presence; live header check requires a reachable database since the sandbox cannot reach Supabase).
 
 ---
 
@@ -814,7 +831,7 @@ Ordered to **stop the bleeding first, then harden, then modernize**. Items are g
 21. #3.11 ESLint/Prettier/CI (do this early in phase 4, it protects everything after)
 22. #3.10 Integration tests with supertest on a throwaway DB
 23. #3.14 Frontend fetch hook + shared Card + error util
-24. #4.x dependency/config cleanups (#4.5 commit the env.ts guard immediately — it's free)
+24. #4.x dependency/config cleanups (#4.5 commit the env.ts guard immediately — it's free; #4.11 helmet headers added 2026-09-04)
 
 **Phase 5 — Deliberate modernization (scheduled, not opportunistic):**
 25. #3.17 httpOnly cookie auth + CSRF (cross-cutting; needs planning)
