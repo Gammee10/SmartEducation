@@ -15,7 +15,7 @@ import type { AppNotification } from '../types';
 const typeStyles: Record<string, string> = {
   ASSIGNMENT: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
   GRADE: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
-  QUIZ_RESULT: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+  QUIZ_RESULT: 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400',
   ANNOUNCEMENT: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
   EVENT: 'bg-pink-50 text-pink-700 dark:bg-pink-500/10 dark:text-pink-400',
   GENERAL: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',

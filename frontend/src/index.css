@@ -6,9 +6,9 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Native widgets (scrollbars, date pickers, form controls) follow the theme. */
 :root {
   color-scheme: light;
+  --brand-glow: 37 99 235;
 }
 
 html.dark {
@@ -16,39 +16,300 @@ html.dark {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-300 dark:bg-gray-950 dark:text-gray-100;
+  @apply bg-gray-50 font-sans text-gray-900 antialiased transition-colors duration-300 dark:bg-gray-950 dark:text-gray-100;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-/* Consistent, visible keyboard focus across the app. Only applies to
-   keyboard-driven focus (:focus-visible), so mouse clicks stay clean.
-   The offset color follows the page background in each theme. */
+h1, h2, h3, .font-display {
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Consistent, visible keyboard focus across the app. */
 :focus-visible {
   @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-950;
 }
 
 /* Branded text selection */
 ::selection {
-  background-color: rgb(37 99 235 / 0.25);
+  background-color: rgb(37 99 235 / 0.22);
 }
 
-/* Gentle entrance animation for dashboard/profile content. */
+/* ---------- Scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.5) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-300 dark:bg-gray-700;
+}
+*::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* ---------- Entrance ---------- */
 @keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.animate-fade-up {
-  animation: fade-up 0.45s ease-out both;
+/* Scroll-reveal: starts hidden, IntersectionObserver adds .is-visible */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px) scale(0.99);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ---------- Interactive surfaces: slow, subtle hover feedback ---------- */
+.card-interactive {
+  @apply transition-all duration-300 ease-out;
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+/* Shine sweep on hover for buttons / hero cards */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+.shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.35) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.shine:hover::after {
+  transform: translateX(120%);
+}
+
+/* Gradient border glow on hover */
+.glow-border {
+  position: relative;
+}
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgb(59 130 246 / 0.5), rgb(168 85 247 / 0.5), rgb(34 211 238 / 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.glow-border:hover::before {
+  opacity: 1;
+}
+
+/* Solid brand accent text — no gradient, readable in both themes. */
+.text-gradient {
+  color: #1d4ed8;
+}
+.dark .text-gradient {
+  color: #93c5fd;
+}
+
+/* Glass panel */
+.glass {
+  @apply border border-white/40 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70;
+}
+
+/* Grid backdrop helpers */
+.bg-grid {
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* Shimmer skeleton */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  @apply bg-gray-200/80 dark:bg-gray-800;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  background-size: 200% 100%;
+  animation: shimmer-slide 1.6s linear infinite;
+}
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.08), transparent);
+  background-size: 200% 100%;
+}
+@keyframes shimmer-slide {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* Underline link animation */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 2px;
+  background-repeat: no-repeat;
+  background-position: left calc(100% - 1px);
+  transition: background-size 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  padding-bottom: 1px;
+}
+.link-underline:hover {
+  background-size: 100% 2px;
+}
+
+/* Nav active pill slide */
+.nav-pill {
+  position: relative;
+  isolation: isolate;
+}
+.nav-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #2563eb;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: -1;
+}
+.dark .nav-pill::before {
+  background: #1d4ed8;
+}
+.nav-pill[data-active='true']::before {
+  opacity: 1;
+  box-shadow: 0 4px 12px -4px rgb(37 99 235 / 0.5);
+}
+
+/* Page transition wrapper */
+.page-enter {
+  animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Floating blobs */
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  pointer-events: none;
+  animation: blob-drift 12s ease-in-out infinite;
+}
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -32px) scale(1.08); }
+  66% { transform: translate(-20px, 20px) scale(0.94); }
+}
+
+/* Tilt card perspective */
+.tilt-scope {
+  perspective: 900px;
+}
+.tilt-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+.tilt-pop {
+  transform: translateZ(30px);
+}
+
+/* Marquee */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 32s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Static status dot — no pulsing, keeps the UI calm. */
+.live-dot {
+  border-radius: 9999px;
+}
+
+/* Pressable */
+.pressable {
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* Tooltip (CSS-only, data-tip attribute) */
+[data-tip] {
+  position: relative;
+}
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  @apply whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg dark:bg-gray-800 dark:ring-1 dark:ring-white/10;
+  animation: tip-in 0.18s ease-out forwards;
+  z-index: 50;
+  pointer-events: none;
+}
+@keyframes tip-in {
+  to { transform: translateX(-50%) translateY(0); }
+}
+
+/* Command palette kbd */
+.kbd {
+  @apply inline-flex h-5 min-w-[20px] items-center justify-center rounded-md border border-gray-300 bg-gray-50 px-1.5 font-mono text-[10px] font-bold text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400;
+}
+
+/* Number tabular */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up {
+  .animate-fade-up,
+  .page-enter,
+  .reveal {
+    animation: none;
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  .blob,
+  .marquee-track,
+  .skeleton-shimmer::after,
+  .text-gradient {
     animation: none;
   }
   html {

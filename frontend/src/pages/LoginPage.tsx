@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggleButton from '../components/ThemeToggleButton';
-import { inputStyles, labelStyles, Spinner } from '../components/ui';
+import { inputStyles, labelStyles, Spinner, PasswordInput, Icon } from '../components/ui';
 import { getApiError } from '../utils/apiError';
 
 function CapIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -33,7 +33,7 @@ function BrandPanel() {
         aria-hidden="true"
       />
       <div
-        className="absolute -bottom-40 -right-24 h-[36rem] w-[36rem] rounded-full bg-indigo-400/25 blur-3xl"
+        className="absolute -bottom-40 -right-24 h-[36rem] w-[36rem] rounded-full bg-sky-400/20 blur-3xl"
         aria-hidden="true"
       />
       <div
@@ -83,6 +83,12 @@ function BrandPanel() {
   );
 }
 
+const DEMO_ACCOUNTS = [
+  { label: 'Admin', email: 'admin@school.edu' },
+  { label: 'Teacher', email: 'teacher@school.edu' },
+  { label: 'Student', email: 'student@school.edu' },
+];
+
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -91,6 +97,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
+  const [touched, setTouched] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -101,8 +109,13 @@ export default function LoginPage() {
   const redirectTo =
     requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/';
 
+  const emailValid = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const canSubmit = emailValid && email !== '' && password !== '' && !submitting;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setTouched(true);
+    if (!canSubmit) return;
     setError('');
     setSubmitting(true);
     try {
@@ -113,7 +126,7 @@ export default function LoginPage() {
         // ignore storage errors
       }
       navigate(redirectTo);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiError(err, 'Login failed. Please try again.'));
     } finally {
       setSubmitting(false);
@@ -138,8 +151,7 @@ export default function LoginPage() {
         <div className="relative mx-auto w-full max-w-md">
           {/* Compact brand for mobile / tablet */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-primary-600 text-white shadow-glow">
-              <span aria-hidden="true" className="absolute inset-0 bg-brand" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-sm">
               <CapIcon className="relative h-5 w-5" />
             </span>
             <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
@@ -157,6 +169,7 @@ export default function LoginPage() {
           <form
             className="mt-8 space-y-5 rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card sm:p-8 dark:border-gray-800 dark:bg-gray-900"
             onSubmit={handleSubmit}
+            noValidate
           >
             {error && (
               <div
@@ -193,32 +206,42 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={inputStyles}
+                onBlur={() => setTouched(true)}
+                className={`${inputStyles} ${touched && !emailValid ? '!border-red-400 focus:!border-red-500 focus:!ring-red-500/10' : ''}`}
                 placeholder="you@school.edu"
+                aria-invalid={touched && !emailValid}
+                aria-describedby={touched && !emailValid ? 'email-error' : undefined}
               />
+              {touched && !emailValid && (
+                <p id="email-error" role="alert" className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                  Enter a valid email address.
+                </p>
+              )}
             </div>
 
             <div>
               <label htmlFor="password" className={labelStyles}>
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputStyles}
-                placeholder="••••••••"
-              />
+              <div
+                onKeyUp={(e) => {
+                  const caps = (e as React.KeyboardEvent).getModifierState?.('CapsLock');
+                  if (typeof caps === 'boolean') setCapsOn(caps);
+                }}
+              >
+                <PasswordInput value={password} onChange={setPassword} />
+              </div>
+              {capsOn && password && (
+                <p role="status" className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <Icon name="warning" className="h-3.5 w-3.5" /> Caps Lock is on
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={submitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 bg-brand px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/25 transition-all duration-150 hover:shadow-xl hover:shadow-primary-600/30 hover:brightness-110 disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
+              disabled={!canSubmit}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all duration-300 hover:-translate-y-px hover:bg-primary-700 hover:shadow-md disabled:pointer-events-none disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
             >
               {submitting && <Spinner />}
               {submitting ? 'Signing in…' : 'Sign in'}
@@ -227,10 +250,24 @@ export default function LoginPage() {
 
           {import.meta.env.DEV && (
             <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-4 text-xs leading-relaxed text-gray-500 dark:border-gray-700 dark:text-gray-400">
-              <p className="mb-1 font-semibold text-gray-700 dark:text-gray-300">Demo accounts (seeded, dev only)</p>
-              <p>admin@school.edu / Password123!</p>
-              <p>teacher@school.edu / Password123!</p>
-              <p>student@school.edu / Password123!</p>
+              <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">Demo accounts — tap to fill (dev only)</p>
+              <div className="flex flex-wrap gap-2">
+                {DEMO_ACCOUNTS.map((d) => (
+                  <button
+                    key={d.label}
+                    type="button"
+                    onClick={() => {
+                      setEmail(d.email);
+                      setPassword('Password123!');
+                      setError('');
+                    }}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 font-medium transition-colors duration-150 hover:border-primary-300 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-primary-500/50 dark:hover:text-primary-300"
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 font-mono text-[11px] opacity-70">Password: Password123!</p>
             </div>
           )}
         </div>

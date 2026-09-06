@@ -70,7 +70,7 @@ const emptyQuizForm: QuizForm = {
 const CONTENT_TYPE_META: Record<string, { path: string; tile: string }> = {
   VIDEO: {
     path: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.283a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    tile: 'bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
+    tile: 'bg-sky-100 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400',
   },
   DOCUMENT: {
     path: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
@@ -95,7 +95,7 @@ const CONTENT_TYPE_META: Record<string, { path: string; tile: string }> = {
 };
 
 const TYPE_BADGE_STYLES: Record<string, string> = {
-  VIDEO: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400',
+  VIDEO: 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400',
   DOCUMENT: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
   PDF: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
   IMAGE: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400',
@@ -349,14 +349,14 @@ export default function CourseDetailPage() {
         {/* Gradient layer — light mode only */}
         <div aria-hidden="true" className="absolute inset-0 bg-brand dark:hidden" />
         {/* Subtle dark-mode sheen */}
-        <div aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-br from-primary-500/10 via-transparent to-indigo-500/10 dark:block" />
+        <div aria-hidden="true" className="absolute inset-0 hidden bg-primary-500/10 dark:block" />
         {/* Decorative shapes */}
         <div
           className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-2xl dark:hidden"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/20 blur-3xl dark:hidden"
+          className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:hidden"
           aria-hidden="true"
         />
 
@@ -391,7 +391,7 @@ export default function CourseDetailPage() {
                   Grade {course.gradeLevel}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 py-1 pl-1 pr-3 text-xs font-semibold text-white ring-1 ring-inset ring-white/20">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-[9px] font-bold">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold">
                     {getInitials(teacherName)}
                   </span>
                   {teacherName}
@@ -779,7 +779,7 @@ export default function CourseDetailPage() {
                   <Link
                     key={assignment.id}
                     to={`/courses/${id}/assignments/${assignment.id}`}
-                    className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                    className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3.5">
@@ -812,7 +812,7 @@ export default function CourseDetailPage() {
                         )}
                         <StatusBadge status={assignment.status} />
                         <svg
-                          className="hidden h-4 w-4 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600 sm:block"
+                          className="hidden h-4 w-4 text-gray-300 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary-600 sm:block"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -964,7 +964,7 @@ export default function CourseDetailPage() {
                 <Link
                   key={quiz.id}
                   to={`/courses/${id}/quizzes/${quiz.id}`}
-                  className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
+                  className="group block rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-start gap-3.5">

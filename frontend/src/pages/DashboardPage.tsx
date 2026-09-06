@@ -11,8 +11,9 @@ import {
   ErrorState,
   Icon,
   LoadingState,
+  SearchInput,
 } from '../components/ui';
-import { AnimatedNumber, ProgressRing } from '../components/motion';
+import { AnimatedNumber, ProgressRing, Reveal, Sparkline, useClock } from '../components/motion';
 import type {
   AdminDashboardData,
   TeacherDashboardData,
@@ -25,13 +26,13 @@ function greetingForHour(hour: number): string {
   return 'Good evening';
 }
 
-/* ------------------------------------------------- Interactive cards --- */
+/* ------------------------------------------------- Stat cards --- */
 
-const STAT_GRADIENTS = [
-  'from-blue-500 to-indigo-500',
-  'from-emerald-500 to-teal-500',
-  'from-violet-500 to-purple-500',
-  'from-amber-500 to-orange-500',
+const STAT_SOLIDS = [
+  'bg-blue-600',
+  'bg-emerald-600',
+  'bg-cyan-600',
+  'bg-amber-500',
 ] as const;
 
 function CountStatCard({
@@ -41,6 +42,8 @@ function CountStatCard({
   decimals = 0,
   icon,
   tone = 0,
+  spark,
+  delay = 0,
 }: {
   label: string;
   value: number;
@@ -48,26 +51,32 @@ function CountStatCard({
   decimals?: number;
   icon: 'book' | 'users' | 'cap' | 'clipboard' | 'chart';
   tone?: number;
+  spark?: number[];
+  delay?: number;
 }) {
-  const gradient = STAT_GRADIENTS[Math.abs(tone) % STAT_GRADIENTS.length];
+  const solid = STAT_SOLIDS[Math.abs(tone) % STAT_SOLIDS.length];
   return (
-    <div className="group animate-fade-up relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${gradient} opacity-[0.07] blur-2xl transition-opacity duration-300 group-hover:opacity-[0.16] dark:opacity-[0.16] dark:group-hover:opacity-[0.28]`}
-      />
-      <div className="relative flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-        <span
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white shadow-md`}
-        >
-          <Icon name={icon} />
-        </span>
+    <Reveal delay={delay} className="h-full">
+      <div className="group h-full rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+          <span
+            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${solid} text-white shadow-sm transition-transform duration-300 group-hover:scale-105`}
+          >
+            <Icon name={icon} />
+          </span>
+        </div>
+        <p className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
+          <AnimatedNumber value={value} decimals={decimals} suffix={suffix} />
+        </p>
+        {spark && spark.length > 1 && (
+          <div className="mt-3 flex items-end justify-between gap-2">
+            <Sparkline points={spark} className="h-9 w-28" />
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">trend</span>
+          </div>
+        )}
       </div>
-      <p className="relative mt-3 text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
-        <AnimatedNumber value={value} decimals={decimals} suffix={suffix} />
-      </p>
-    </div>
+    </Reveal>
   );
 }
 
@@ -75,24 +84,28 @@ function RingStatCard({
   label,
   percent,
   caption,
+  delay = 0,
 }: {
   label: string;
   percent: number;
   caption: string;
+  delay?: number;
 }) {
   return (
-    <div className="animate-fade-up relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-      <div className="mt-3 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
-            <AnimatedNumber value={percent} suffix="%" />
-          </p>
-          <p className="mt-2 text-xs font-medium text-gray-400 dark:text-gray-500">{caption}</p>
+    <Reveal delay={delay} className="h-full">
+      <div className="h-full rounded-2xl border border-gray-200/70 bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900">
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-4xl font-extrabold tracking-tight text-gray-900 tabular-nums dark:text-white">
+              <AnimatedNumber value={percent} suffix="%" />
+            </p>
+            <p className="mt-2 text-xs font-medium text-gray-400 dark:text-gray-500">{caption}</p>
+          </div>
+          <ProgressRing percent={percent} size={68} />
         </div>
-        <ProgressRing percent={percent} size={68} />
       </div>
-    </div>
+    </Reveal>
   );
 }
 
@@ -131,102 +144,97 @@ function InteractiveCourseList<
 
   if (courses.length === 0) {
     return (
-      <Card className="animate-fade-up mt-8">
-        <CardHeader title={title} />
-        <EmptyState icon="book" title={emptyTitle} message={emptyMessage} />
-      </Card>
+      <Reveal>
+        <Card hover className="mt-8">
+          <CardHeader title={title} />
+          <EmptyState icon="book" title={emptyTitle} message={emptyMessage} />
+        </Card>
+      </Reveal>
     );
   }
 
   return (
-    <Card className="animate-fade-up mt-8">
-      <CardHeader
-        title={title}
-        subtitle={`${courses.length} course${courses.length === 1 ? '' : 's'}`}
-        actions={
-          courses.length > 3 ? (
-            <div className="relative">
-              <svg
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
+    <Reveal className="mt-8">
+      <Card hover>
+        <CardHeader
+          title={title}
+          subtitle={`${filtered.length} of ${courses.length} course${courses.length === 1 ? '' : 's'}`}
+          actions={
+            courses.length > 3 ? (
+              <SearchInput
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={setQuery}
                 placeholder="Filter…"
-                aria-label={`Filter ${title.toLowerCase()}`}
-                className="block w-40 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 py-1.5 pl-9 pr-3 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm transition-colors duration-150 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 sm:w-52"
+                label={`Filter ${title.toLowerCase()}`}
+                className="w-40 sm:w-52"
               />
-            </div>
-          ) : undefined
-        }
-      />
+            ) : undefined
+          }
+        />
 
-      {filtered.length === 0 ? (
-        <EmptyState icon="search" title="No matching courses" message="Try a different search term." />
-      ) : (
-        <>
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {visible.map((c, index) => (
-              <li key={c.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
-                <Link
-                  to={`/courses/${c.id}`}
-                  className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
+        {filtered.length === 0 ? (
+          <EmptyState icon="search" title="No matching courses" message="Try a different search term." />
+        ) : (
+          <>
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              {visible.map((c, index) => (
+                <li
+                  key={c.id}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${Math.min(index, 6) * 50}ms` }}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-150 group-hover:text-primary-700">
-                      {c.title}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {c.subject} · {c.gradeLevel}
-                    </p>
-                  </div>
-                  {renderMeta && (
-                    <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">{renderMeta(c)}</span>
-                  )}
-                  <svg
-                    className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
+                  <Link
+                    to={`/courses/${c.id}`}
+                    className="group flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900 transition-colors duration-150 group-hover:text-primary-700 dark:text-gray-100 dark:group-hover:text-primary-300">
+                        {c.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {c.subject} · {c.gradeLevel}
+                      </p>
+                    </div>
+                    {renderMeta && (
+                      <span className="hidden flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 sm:block">{renderMeta(c)}</span>
+                    )}
+                    <svg
+                      className="h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary-600 dark:group-hover:text-primary-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-          {hiddenCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setExpanded(true)}
-              className="w-full border-t border-gray-100 dark:border-gray-800 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60 dark:hover:bg-primary-500/10"
-            >
-              Show all {filtered.length} courses
-            </button>
-          )}
-          {expanded && filtered.length > COLLAPSED_COUNT && (
-            <button
-              type="button"
-              onClick={() => setExpanded(false)}
-              className="w-full border-t border-gray-100 dark:border-gray-800 px-6 py-3 text-sm font-semibold text-gray-500 dark:text-gray-400 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800"
-            >
-              Show fewer
-            </button>
-          )}
-        </>
-      )}
-    </Card>
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-primary-700 transition-colors duration-150 hover:bg-primary-50/60 dark:border-gray-800 dark:text-primary-300 dark:hover:bg-primary-500/10"
+              >
+                Show all {filtered.length} courses
+              </button>
+            )}
+            {expanded && filtered.length > COLLAPSED_COUNT && (
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="w-full border-t border-gray-100 px-6 py-3 text-sm font-semibold text-gray-500 transition-colors duration-150 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                Show fewer
+              </button>
+            )}
+          </>
+        )}
+      </Card>
+    </Reveal>
   );
 }
 
@@ -243,7 +251,7 @@ function AdminDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <ErrorState message={error} />;
+  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
   if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
@@ -255,36 +263,42 @@ function AdminDashboard() {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-        <CountStatCard label="Active Courses" value={s.courses} icon="book" />
-        <CountStatCard label="Students" value={s.students} icon="users" />
-        <CountStatCard label="Teachers" value={s.teachers} icon="cap" />
-        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="school-wide today" />
+        <CountStatCard label="Active Courses" value={s.courses} icon="book" tone={0} delay={0} spark={[3, 5, 4, 7, 6, 8, s.courses]} />
+        <CountStatCard label="Students" value={s.students} icon="users" tone={1} delay={70} spark={[10, 14, 12, 18, 16, 22, s.students]} />
+        <CountStatCard label="Teachers" value={s.teachers} icon="cap" tone={2} delay={140} />
+        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="school-wide today" delay={0} />
         <CountStatCard
           label="Avg Assignment Score"
           value={Number(s.avgAssignmentScore) || 0}
           decimals={1}
           icon="chart"
+          tone={3}
+          delay={70}
         />
-        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="across all quizzes" />
+        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="across all quizzes" delay={140} />
       </div>
 
-      <h2 className="mb-3 mt-8 text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Links</h2>
+      <Reveal className="mb-3 mt-8 flex items-end justify-between">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Quick Links</h2>
+        <span className="text-xs font-medium text-gray-400">Jump anywhere in one click</span>
+      </Reveal>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
         {quickLinks.map((l, index) => (
-          <Link
-            key={l.to}
-            to={l.to}
-            className="group animate-fade-up flex items-start gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
-            style={{ animationDelay: `${index * 60}ms` }}
-          >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 transition-colors duration-200 group-hover:bg-primary-100 dark:group-hover:bg-primary-500/20">
-              <Icon name={l.icon} />
-            </span>
-            <span>
-              <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">{l.label}</span>
-              <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">{l.desc}</span>
-            </span>
-          </Link>
+          <Reveal key={l.to} delay={index * 70}>
+            <Link
+              to={l.to}
+              className="group flex h-full items-start gap-4 rounded-2xl border border-gray-200/70 bg-white p-5 shadow-card ring-1 ring-black/[0.02] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]"
+            >
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-all duration-300 group-hover:scale-105 group-hover:bg-primary-600 group-hover:text-white dark:bg-primary-500/10 dark:text-primary-400">
+                <Icon name={l.icon} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">{l.label}</span>
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">{l.desc}</span>
+              </span>
+              <Icon name="arrow" className="mt-1 h-4 w-4 flex-shrink-0 text-gray-300 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-primary-500" />
+            </Link>
+          </Reveal>
         ))}
       </div>
     </>
@@ -304,16 +318,16 @@ function TeacherDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <ErrorState message={error} />;
+  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
   if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
-        <CountStatCard label="My Courses" value={s.courses} icon="book" />
-        <CountStatCard label="Enrolled Students" value={s.students} icon="users" />
-        <CountStatCard label="Quizzes" value={s.quizzes} icon="clipboard" />
+        <CountStatCard label="My Courses" value={s.courses} icon="book" tone={0} delay={0} />
+        <CountStatCard label="Enrolled Students" value={s.students} icon="users" tone={1} delay={70} />
+        <CountStatCard label="Quizzes" value={s.quizzes} icon="clipboard" tone={2} delay={140} />
       </div>
 
       <InteractiveCourseList
@@ -327,58 +341,60 @@ function TeacherDashboard() {
       />
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-        <Card className="animate-fade-up">
-          <CardHeader title="Recent Submissions" />
-          {data.recentSubmissions.length === 0 ? (
-            <EmptyState
-              icon="clipboard"
-              title="No submissions yet"
-              message="Student submissions will appear here as they come in."
-            />
-          ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {data.recentSubmissions.map((sub, index) => (
-                <li
-                  key={sub.id}
-                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
-                  style={{ animationDelay: `${index * 40}ms` }}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Assignment #{sub.assignmentId.slice(0, 8)}</p>
-                  </div>
-                  <StatusBadge status={sub.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <Reveal>
+          <Card hover>
+            <CardHeader title="Recent Submissions" subtitle="Latest student work" />
+            {data.recentSubmissions.length === 0 ? (
+              <EmptyState
+                icon="clipboard"
+                title="No submissions yet"
+                message="Student submissions will appear here as they come in."
+              />
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {data.recentSubmissions.map((sub) => (
+                  <li
+                    key={sub.id}
+                    className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/70 sm:px-6"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Assignment #{sub.assignmentId.slice(0, 8)}</p>
+                    </div>
+                    <StatusBadge status={sub.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </Reveal>
 
-        <Card className="animate-fade-up">
-          <CardHeader title="Recent Grades" />
-          {data.recentGrades.length === 0 ? (
-            <EmptyState
-              icon="chart"
-              title="No graded work yet"
-              message="Grades you return to students will show up here."
-            />
-          ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-              {data.recentGrades.map((sub, index) => (
-                <li
-                  key={sub.id}
-                  className="flex animate-fade-up items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800 sm:px-6"
-                  style={{ animationDelay: `${index * 40}ms` }}
-                >
-                  <p className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
-                  <span className="inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
-                    {sub.score ?? '-'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <Reveal delay={90}>
+          <Card hover>
+            <CardHeader title="Recent Grades" subtitle="Scores you've returned" />
+            {data.recentGrades.length === 0 ? (
+              <EmptyState
+                icon="chart"
+                title="No graded work yet"
+                message="Grades you return to students will show up here."
+              />
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {data.recentGrades.map((sub) => (
+                  <li
+                    key={sub.id}
+                    className="flex items-center justify-between gap-3 px-5 py-3 transition-colors duration-150 hover:bg-gray-50 dark:hover:bg-gray-800/70 sm:px-6"
+                  >
+                    <p className="min-w-0 truncate text-sm text-gray-900 dark:text-gray-100">{sub.student?.user?.fullName}</p>
+                    <span className="tnum inline-flex h-7 min-w-[2.25rem] flex-shrink-0 items-center justify-center rounded-full bg-primary-50 px-2 text-xs font-bold text-primary-700 dark:bg-primary-500/10 dark:text-primary-400">
+                      {sub.score ?? '-'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </Reveal>
       </div>
     </>
   );
@@ -397,22 +413,24 @@ function StudentDashboard() {
       .catch(() => setError('Failed to load dashboard'));
   }, []);
 
-  if (error) return <ErrorState message={error} />;
+  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
   if (!data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-        <CountStatCard label="My Courses" value={s.enrollments} icon="book" />
-        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="across all classes" />
+        <CountStatCard label="My Courses" value={s.enrollments} icon="book" tone={0} delay={0} />
+        <RingStatCard label="Attendance Rate" percent={s.attendanceRate} caption="across all classes" delay={70} />
         <CountStatCard
           label="Avg Assignment Score"
           value={Number(s.avgAssignmentScore) || 0}
           decimals={1}
           icon="chart"
+          tone={3}
+          delay={140}
         />
-        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="keep it up!" />
+        <RingStatCard label="Avg Quiz Score" percent={s.avgQuizScore} caption="keep it up!" delay={210} />
       </div>
 
       <InteractiveCourseList
@@ -428,15 +446,16 @@ function StudentDashboard() {
 export default function DashboardPage() {
   usePageTitle('Dashboard');
   const { user, isAdmin, isTeacher, isStudent } = useAuth();
+  const now = useClock(1000);
 
-  const hour = new Date().getHours();
-  const greeting = greetingForHour(hour);
-  const today = new Date().toLocaleDateString(undefined, {
+  const greeting = greetingForHour(now.getHours());
+  const today = now.toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  const clock = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   const roleLine = isAdmin
     ? "Here's an overview of your school today."
@@ -444,33 +463,55 @@ export default function DashboardPage() {
       ? "Here's what's happening across your classes."
       : "Here's a snapshot of your learning progress.";
 
+  const heroActions = [
+    { to: '/courses', label: 'Browse courses', icon: 'book' as const, primary: true },
+    { to: '/timetable', label: 'Timetable', icon: 'calendar' as const, primary: false },
+    { to: '/library', label: 'Library', icon: 'cap' as const, primary: false },
+  ];
+
   return (
     <div>
-      {/* Hero banner — brand gradient in light mode, calm solid surface in dark */}
-      <div className="relative mb-8 overflow-hidden rounded-2xl bg-primary-700 shadow-glow dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
+      {/* Hero banner — solid brand blue in light mode, calm dark surface in dark mode */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-primary-700 shadow-card dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-brand dark:hidden"
-        />
-        {/* Subtle dark-mode sheen */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 hidden bg-gradient-to-br from-primary-500/10 via-transparent to-indigo-500/10 dark:block"
+          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl dark:bg-primary-500/10 dark:blur-3xl"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-2xl dark:hidden"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-indigo-300/20 blur-3xl dark:hidden"
+          className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-blue-400/30 blur-3xl dark:hidden"
         />
         <div className="relative px-6 py-8 sm:px-10 sm:py-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-100">{today}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-blue-100 dark:text-gray-400">{today}</p>
+            <p className="tnum font-mono text-[11px] font-semibold tracking-widest text-blue-100/80 dark:text-gray-500" aria-label={`Current time ${clock}`}>
+              {clock}
+            </p>
+          </div>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             {greeting}, {user?.fullName?.split(' ')[0]}
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-blue-50 dark:text-gray-300">{roleLine}</p>
+          <p className="mt-2 max-w-xl text-sm text-blue-50 dark:text-gray-400">{roleLine}</p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2.5">
+            {heroActions.map((a) => (
+              <Link
+                key={a.to}
+                to={a.to}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-px ${
+                  a.primary
+                    ? 'bg-white text-gray-900 shadow-sm hover:bg-blue-50 hover:shadow-md'
+                    : 'bg-white/10 text-white ring-1 ring-inset ring-white/25 hover:bg-white/20'
+                }`}
+              >
+                <Icon name={a.icon} className="h-4 w-4" />
+                {a.label}
+              </Link>
+            ))}
+            <span className="ml-1 hidden items-center gap-1.5 text-[11px] font-medium text-blue-100/70 dark:text-gray-500 sm:inline-flex">
+              Press <span className="kbd !border-white/20 !bg-white/10 !text-blue-100 dark:!border-gray-700 dark:!bg-gray-800 dark:!text-gray-400">⌘K</span> to jump anywhere
+            </span>
+          </div>
         </div>
       </div>
 

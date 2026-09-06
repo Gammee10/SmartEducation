@@ -8,12 +8,12 @@ import { getApiError } from '../utils/apiError';
 
 // Static Tailwind classes only, so the JIT compiler keeps them all.
 const BOOK_TILES = [
-  'from-blue-500 to-cyan-500',
-  'from-emerald-500 to-teal-500',
-  'from-violet-500 to-purple-500',
-  'from-amber-500 to-orange-500',
-  'from-rose-500 to-pink-500',
-  'from-sky-600 to-indigo-600',
+  'bg-blue-600',
+  'bg-emerald-600',
+  'bg-cyan-600',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-slate-600',
 ];
 
 function bookTileClass(category?: string | null): string {
@@ -145,10 +145,10 @@ export default function LibraryCatalogPage() {
               return (
                 <div
                   key={book.id}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03]"
                 >
-                  {/* Gradient header */}
-                  <div className={`relative flex h-20 items-center justify-between bg-gradient-to-br px-6 ${bookTileClass(book.category)}`}>
+                  {/* Solid color header */}
+                  <div className={`relative flex h-20 items-center justify-between px-6 ${bookTileClass(book.category)}`}>
                     <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-inset ring-white/25 backdrop-blur">
                       <Icon name="book" className="h-5 w-5" />
                     </span>
