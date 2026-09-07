@@ -12,18 +12,33 @@ interface LoginInput {
 }
 
 
-function signToken(userId: string): string {
+function signToken(userId: string, tokenVersion = 0): string {
   // Algorithm pinned so a tampered token cannot negotiate a weaker scheme.
-  return jwt.sign({ sub: userId }, env.jwtSecret, {
+  // `tv` carries the session revocation counter (C2): the auth middleware
+  // rejects tokens whose tv no longer matches the user row, so password
+  // change/reset and archive/reactivate kill stolen sessions immediately.
+  return jwt.sign({ sub: userId, tv: tokenVersion }, env.jwtSecret, {
     algorithm: 'HS256',
     expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
   });
 }
 
-function sanitizeUser<T extends { passwordHash?: string }>(user: T | null): Omit<T, 'passwordHash'> | null {
+function sanitizeUser<T extends { passwordHash?: string; tokenVersion?: unknown }>(
+  user: T | null
+): Omit<T, 'passwordHash' | 'tokenVersion'> | null {
   if (!user) return null;
-  const { passwordHash: _passwordHash, ...safe } = user;
+  const { passwordHash: _passwordHash, tokenVersion: _tokenVersion, ...safe } = user;
   return safe;
+}
+
+// bcrypt silently truncates at 72 bytes - a longer password would not
+// actually protect the account, so reject it with a clear error (M12).
+const MAX_PASSWORD_BYTES = 72;
+
+function assertPasswordBytes(value: string, field = 'Password'): void {
+  if (Buffer.byteLength(value, 'utf8') > MAX_PASSWORD_BYTES) {
+    throw new ValidationError(`${field} must be at most ${MAX_PASSWORD_BYTES} bytes`);
+  }
 }
 
 async function login({ email, password }: LoginInput) {
@@ -47,7 +62,7 @@ async function login({ email, password }: LoginInput) {
     throw new UnauthorizedError('Invalid email or password');
   }
 
-  const token = signToken(user.id);
+  const token = signToken(user.id, (user as { tokenVersion?: number }).tokenVersion ?? 0);
   return { token, user: sanitizeUser(user) };
 }
 
@@ -94,12 +109,20 @@ async function changePassword({
   if (next.length < 8) {
     throw new ValidationError('New password must be at least 8 characters');
   }
+  assertPasswordBytes(next, 'New password');
   if (next === currentPassword) {
     throw new ValidationError('New password must be different from the current password');
   }
 
   const passwordHash = await bcrypt.hash(next, 10);
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  // Bump tokenVersion so every previously issued token dies with the old
+  // password (C2). A stolen session on a shared school computer survives at
+  // most until the legitimate user changes the password - which now
+  // immediately invalidates it.
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash, tokenVersion: { increment: 1 } },
+  });
 
   await writeAuditLog({
     actorId: userId,
@@ -113,4 +136,4 @@ async function changePassword({
   return { changed: true };
 }
 
-export { login, getCurrentUser, changePassword, signToken, sanitizeUser };
+export { login, getCurrentUser, changePassword, signToken, sanitizeUser, assertPasswordBytes, MAX_PASSWORD_BYTES };

@@ -26,7 +26,14 @@ const prisma = new PrismaClient({
 });
 
 async function main(): Promise<void> {
-  const passwordHash = await bcrypt.hash('Password123!', 10);
+  // M12 secret hygiene: the seed password is configurable so pilot
+  // deployments do not share one publicly-known credential. The default is
+  // dev-only; README documents rotation.
+  const seedPassword = process.env.SEED_PASSWORD || 'Password123!';
+  if (!process.env.SEED_PASSWORD) {
+    console.warn('SEED_PASSWORD is not set - using the dev-only default seed password.');
+  }
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
 
   // Admin
   const admin = await prisma.user.upsert({

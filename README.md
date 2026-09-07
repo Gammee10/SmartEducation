@@ -80,11 +80,16 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser and log 
 
 ## 👤 Demo Accounts
 
+Seeded via `npm run prisma:seed` (dev only). The seed password defaults to
+`SEED_PASSWORD` when set, otherwise a dev-only fallback - override it with
+`SEED_PASSWORD="a-private-value"` and rotate seeded accounts immediately
+after first login in any shared environment.
+
 | Role | Email | Password | Can do |
 |---|---|---|---|
-| 🛡️ **Admin** | `admin@school.edu` | `Password123!` | Manage library, enroll students, view everything |
-| 👩‍🏫 **Teacher** | `teacher@school.edu` | `Password123!` | Create courses, upload content, assign & grade, build quizzes |
-| 🧑‍🎓 **Student** | `student@school.edu` | `Password123!` | Browse courses, submit work, take quizzes, borrow books |
+| 🛡️ **Admin** | `admin@school.edu` | `<SEED_PASSWORD>` | Manage library, enroll students, view everything |
+| 👩‍🏫 **Teacher** | `teacher@school.edu` | `<SEED_PASSWORD>` | Create courses, upload content, assign & grade, build quizzes |
+| 🧑‍🎓 **Student** | `student@school.edu` | `<SEED_PASSWORD>` | Browse courses, submit work, take quizzes, borrow books |
 
 ---
 

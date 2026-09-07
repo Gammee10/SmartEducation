@@ -59,6 +59,11 @@ model User {
   fullName     String     @map("full_name")
   role         UserRole   @default(STUDENT)
   status       UserStatus @default(ACTIVE)
+  // Session revocation counter (C2): embedded in every JWT as `tv` and
+  // enforced in auth middleware. Bumped on password change/reset and on
+  // status transitions (archive/reactivate) so stolen tokens die with the
+  // password or status change instead of surviving until expiry.
+  tokenVersion Int        @default(0) @map("token_version")
   phone        String?
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")

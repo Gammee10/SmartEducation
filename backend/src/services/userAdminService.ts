@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import prisma from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
-import { sanitizeUser } from './authService';
+import { sanitizeUser, assertPasswordBytes } from './authService';
 import env from '../config/env';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +23,7 @@ function assertEmail(email: unknown): string {
 function assertPassword(password: unknown): string {
   const value = String(password || '');
   if (value && value.length < 8) throw new ValidationError('Password must be at least 8 characters');
+  if (value) assertPasswordBytes(value, 'Password');
   return value || DEFAULT_PASSWORD;
 }
 
@@ -214,6 +215,12 @@ async function updateUser(opts: {
         ...(data.fullName !== undefined ? { fullName: data.fullName.trim() } : {}),
         ...(data.phone !== undefined ? { phone: data.phone } : {}),
         ...(data.status !== undefined ? { status: data.status } : {}),
+        // Any status transition (archive/reactivate/suspend) revokes all
+        // existing sessions (C2): a token stolen before archival must not
+        // spring back to life when the account is reactivated.
+        ...(data.status !== undefined && data.status !== existing.status
+          ? { tokenVersion: { increment: 1 } }
+          : {}),
       },
     });
     if (existing.student && (data.gradeLevel !== undefined || data.section !== undefined)) {
@@ -293,7 +300,8 @@ async function archiveUser(opts: { actorId: string; userId: string; ipAddress?: 
 
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { status: 'ARCHIVED' },
+    // Archival revokes all sessions (C2) - see updateUser status handling.
+    data: { status: 'ARCHIVED', tokenVersion: { increment: 1 } },
     include: { student: true, teacher: true },
   });
 
@@ -329,7 +337,12 @@ async function resetUserPassword(opts: { actorId: string; userId: string; ipAddr
   const temporaryPassword = crypto.randomBytes(12).toString('base64url');
   const passwordHash = await bcrypt.hash(temporaryPassword, 10);
 
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  // Revoke every existing session (C2) - a stolen token must not survive
+  // an admin-initiated password reset.
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash, tokenVersion: { increment: 1 } },
+  });
 
   await writeAuditLog({
     actorId,
@@ -413,6 +426,7 @@ async function importUsersCsv(opts: {
 
   const errors: Array<{ rowNumber: number; email: string | null; message: string }> = [];
   let successCount = 0;
+  let warnedFallbackPassword = false;
   const status = () => (successCount === 0 ? 'FAILED' : errors.length > 0 ? 'PARTIAL' : 'COMPLETED');
 
   // If anything unexpected escapes the per-row handling, mark the batch
@@ -436,7 +450,18 @@ async function importUsersCsv(opts: {
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) throw new ConflictError(`Duplicate email ${email}`);
 
-      const passwordHash = await bcrypt.hash(assertPassword(get('password')), 10);
+      // M12 secret hygiene: rows without an explicit password share the
+      // fallback secret. Warn loudly (once per import) so operators set
+      // DEFAULT_USER_PASSWORD and rotate these accounts after first login.
+      const rowPassword = get('password');
+      if (!rowPassword && !env.defaultUserPassword && !warnedFallbackPassword) {
+        warnedFallbackPassword = true;
+        console.warn(
+          'CSV import: rows without a password fall back to the built-in default - ' +
+            'set DEFAULT_USER_PASSWORD and rotate imported accounts after first login.'
+        );
+      }
+      const passwordHash = await bcrypt.hash(assertPassword(rowPassword), 10);
 
       await prisma.$transaction(async (tx: any) => {
         const created = await tx.user.create({

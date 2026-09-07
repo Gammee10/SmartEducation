@@ -238,3 +238,24 @@ test('archiveUser blocks archiving the last active admin', async () => {
     (err: any) => err instanceof ConflictError && err.message === 'Cannot archive the last active admin'
   );
 });
+
+test('resetUserPassword bumps tokenVersion to revoke sessions (C2)', async () => {
+  await userAdminService.resetUserPassword({ actorId: 'user-admin-1', userId: 'user-admin-1' });
+  assert.deepStrictEqual(
+    state.users.find((u: any) => u.id === 'user-admin-1').tokenVersion,
+    { increment: 1 }
+  );
+});
+
+test('archiveUser bumps tokenVersion to revoke sessions (C2)', async () => {
+  const created = await userAdminService.createUser({
+    actorId: 'user-admin-1',
+    data: { email: 'revoke-me@school.edu', fullName: 'Revoke Me', role: 'TEACHER', subject: 'Math' },
+  });
+  const archived = await userAdminService.archiveUser({ actorId: 'user-admin-1', userId: created.id });
+  assert.strictEqual(archived.status, 'ARCHIVED');
+  assert.deepStrictEqual(
+    state.users.find((u: any) => u.id === created.id).tokenVersion,
+    { increment: 1 }
+  );
+});

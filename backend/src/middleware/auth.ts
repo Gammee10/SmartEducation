@@ -13,10 +13,10 @@ async function authenticate(req: Request, res: Response, next: NextFunction): Pr
     }
 
     const token = header.split(' ')[1];
-    let payload: { sub: string };
+    let payload: { sub: string; tv?: number };
     try {
       // Algorithm pinned - do not accept tokens negotiated to other schemes.
-      payload = jwt.verify(token, env.jwtSecret, { algorithms: ['HS256'] }) as { sub: string };
+      payload = jwt.verify(token, env.jwtSecret, { algorithms: ['HS256'] }) as { sub: string; tv?: number };
     } catch (err) {
       throw new UnauthorizedError('Invalid or expired token');
     }
@@ -29,6 +29,7 @@ async function authenticate(req: Request, res: Response, next: NextFunction): Pr
         fullName: true,
         role: true,
         status: true,
+        tokenVersion: true,
         student: { select: { id: true, studentCode: true, gradeLevel: true, section: true } },
         teacher: { select: { id: true, employeeCode: true, subject: true } },
       },
@@ -39,6 +40,12 @@ async function authenticate(req: Request, res: Response, next: NextFunction): Pr
     }
     if (user.status !== 'ACTIVE') {
       throw new UnauthorizedError('Account is not active');
+    }
+    // Session revocation (C2): password change/reset and archive/reactivate
+    // bump tokenVersion, killing every previously issued token. `?? 0` keeps
+    // pre-revocation tokens (no `tv` claim) accepted until the next bump.
+    if ((user.tokenVersion ?? 0) !== (payload.tv ?? 0)) {
+      throw new UnauthorizedError('Session has been revoked - please log in again');
     }
 
     req.user = user as Express.Request['user'];

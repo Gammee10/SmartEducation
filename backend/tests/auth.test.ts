@@ -149,3 +149,30 @@ test('changePassword updates the hash', async () => {
   assert.strictEqual(result.changed, true);
   assert.strictEqual(mockUser.passwordHash, 'hashed');
 });
+
+test('changePassword revokes sessions by bumping tokenVersion (C2)', async () => {
+  await authService.changePassword({
+    userId: 'user-1',
+    currentPassword: 'correct-password',
+    newPassword: 'another-new-password',
+  });
+  assert.deepStrictEqual(mockUser.tokenVersion, { increment: 1 });
+});
+
+test('sanitizeUser strips tokenVersion as well as passwordHash (C2)', () => {
+  const safe = authService.sanitizeUser({ id: '1', tokenVersion: 3, email: 'a@b.c' });
+  assert.strictEqual(safe.tokenVersion, undefined);
+  assert.strictEqual(safe.email, 'a@b.c');
+});
+
+test('changePassword rejects passwords over 72 bytes (M12 bcrypt truncation)', async () => {
+  await assert.rejects(
+    () =>
+      authService.changePassword({
+        userId: 'user-1',
+        currentPassword: 'correct-password',
+        newPassword: 'x'.repeat(73),
+      }),
+    (err: any) => err instanceof ValidationError
+  );
+});
