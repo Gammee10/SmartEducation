@@ -34,7 +34,7 @@ if (env.trustProxy !== '') {
 // Security headers (HSTS, noSniff, frameguard, etc.). Safe for a JSON API:
 // the frontend talks to the API via CORS fetches, which helmet does not block.
 app.use(helmet());
-app.use(cors({ origin: env.clientUrl, credentials: true }));
+app.use(cors({ origin: env.clientUrls, credentials: true }));
 // 2MB comfortably covers the CSV import payload while still bounding request
 // sizes (default was an accidental 100KB).
 app.use(express.json({ limit: '2mb' }));

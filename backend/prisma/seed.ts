@@ -1,5 +1,6 @@
 // Seed script - creates initial admin, teacher, and student users.
-// Uses DIRECT_URL (session pooler) to avoid pgbouncer prepared statement issues.
+// Uses DIRECT_URL (the direct database connection): migrations and seeding
+// must bypass the pooler, while the app itself runs on DATABASE_URL.
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';

@@ -17,14 +17,36 @@ if (nodeEnv === 'production' && !process.env.DEFAULT_USER_PASSWORD) {
   throw new Error('DEFAULT_USER_PASSWORD must be set when NODE_ENV is production');
 }
 
-// The shared Prisma client hard-requires DIRECT_URL (datasources.db.url).
-// Fail fast in production; in development only warn, because a fresh clone
-// without a .env file must still be able to run the unit tests (which mock
-// the Prisma client and never touch the database).
-if (nodeEnv === 'production' && !process.env.DIRECT_URL) {
-  throw new Error('DIRECT_URL must be set when NODE_ENV is production');
-} else if (nodeEnv !== 'production' && !process.env.DIRECT_URL) {
-  console.warn('DIRECT_URL is not set - database connections will fail until it is provided.');
+// H13: the app runs queries through DATABASE_URL (the pooler) and only
+// migrations/seed use DIRECT_URL. Production needs at least one database
+// URL to boot; missing DATABASE_URL falls back to DIRECT_URL with a loud
+// warning in the Prisma client (existing single-URL deploys keep working).
+// In development only warn, because a fresh clone without a .env file must
+// still be able to run the unit tests (which mock the Prisma client and
+// never touch the database).
+if (nodeEnv === 'production' && !process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+  throw new Error('DATABASE_URL (pooler) must be set when NODE_ENV is production');
+} else if (!process.env.DATABASE_URL) {
+  console.warn('DATABASE_URL is not set - database connections will fail until it is provided.');
+}
+if (!process.env.DIRECT_URL) {
+  console.warn('DIRECT_URL is not set - migrations and seeding require the direct database URL.');
+}
+
+// M13: multi-origin CORS. Staging + prod + preview URLs are a
+// comma-separated list (CLIENT_URLS); CLIENT_URL is kept as a single-origin
+// fallback. Production origins must be https:// - an http:// origin in prod
+// is a fail-fast boot error, not a silent downgrade.
+const clientUrls = (process.env.CLIENT_URLS || process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+if (nodeEnv === 'production') {
+  for (const origin of clientUrls) {
+    if (!origin.startsWith('https://')) {
+      throw new Error(`CLIENT_URLS origin "${origin}" must use https:// when NODE_ENV is production`);
+    }
+  }
 }
 
 const env = {
@@ -35,6 +57,8 @@ const env = {
   // shorter token limits the theft window (logout is client-side only).
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '12h',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  // Preferred multi-origin list (M13); clientUrl is the legacy single value.
+  clientUrls,
   // Number of proxy hops in front of the API (e.g. "1" for one reverse
   // proxy). Empty string means direct exposure - never guess "true", a
   // client-controlled X-Forwarded-For would make rate limits bypassable and

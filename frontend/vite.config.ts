@@ -7,7 +7,10 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        // M13: overridable so dev can target a remote/staging API with
+        // VITE_API_PROXY=https://staging-api.example.com instead of the
+        // default local backend.
+        target: process.env.VITE_API_PROXY ?? 'http://localhost:5000',
         changeOrigin: true,
       },
     },
