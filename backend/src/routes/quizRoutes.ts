@@ -3,7 +3,7 @@ import { Router } from 'express';
 import * as quizController from '../controllers/quizController';
 import authenticate from '../middleware/auth';
 import { authenticatedLimiter } from '../middleware/rateLimit';
-import { requireStudent, requireTeacher } from '../middleware/rbac';
+import { requireRole, requireStudent } from '../middleware/rbac';
 
 const router = Router();
 
@@ -16,15 +16,16 @@ router.use(authenticatedLimiter);
 // Quizzes (top-level)
 // ---------------------------------------------------------------
 router.get('/quizzes/:id', quizController.getQuiz);
-router.put('/quizzes/:id', requireTeacher, quizController.updateQuiz);
-router.post('/quizzes/:id/archive', requireTeacher, quizController.archiveQuiz);
+// H6: ADMIN may intervene in teacher-owned quizzes/questions (audited override).
+router.put('/quizzes/:id', requireRole('TEACHER', 'ADMIN'), quizController.updateQuiz);
+router.post('/quizzes/:id/archive', requireRole('TEACHER', 'ADMIN'), quizController.archiveQuiz);
 
 // ---------------------------------------------------------------
 // Questions
 // ---------------------------------------------------------------
-router.post('/quizzes/:id/questions', requireTeacher, quizController.addQuestion);
-router.put('/quizzes/questions/:questionId', requireTeacher, quizController.updateQuestion);
-router.delete('/quizzes/questions/:questionId', requireTeacher, quizController.deleteQuestion);
+router.post('/quizzes/:id/questions', requireRole('TEACHER', 'ADMIN'), quizController.addQuestion);
+router.put('/quizzes/questions/:questionId', requireRole('TEACHER', 'ADMIN'), quizController.updateQuestion);
+router.delete('/quizzes/questions/:questionId', requireRole('TEACHER', 'ADMIN'), quizController.deleteQuestion);
 
 // ---------------------------------------------------------------
 // Attempts

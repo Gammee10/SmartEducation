@@ -4,7 +4,7 @@ import multer from 'multer';
 import * as assignmentController from '../controllers/assignmentController';
 import authenticate from '../middleware/auth';
 import { authenticatedLimiter } from '../middleware/rateLimit';
-import { requireStudent, requireTeacher } from '../middleware/rbac';
+import { requireRole, requireStudent } from '../middleware/rbac';
 import { ValidationError } from '../utils/errors';
 
 const router = Router();
@@ -50,15 +50,20 @@ router.use(authenticatedLimiter);
 // Assignments (top-level)
 // ---------------------------------------------------------------
 router.get('/assignments/:id', assignmentController.getAssignment);
-router.put('/assignments/:id', requireTeacher, assignmentController.updateAssignment);
-router.post('/assignments/:id/archive', requireTeacher, assignmentController.archiveAssignment);
+// H6: ADMIN may intervene in teacher-owned assignments (audited override).
+router.put('/assignments/:id', requireRole('TEACHER', 'ADMIN'), assignmentController.updateAssignment);
+router.post('/assignments/:id/archive', requireRole('TEACHER', 'ADMIN'), assignmentController.archiveAssignment);
 
 // ---------------------------------------------------------------
 // Submissions
 // ---------------------------------------------------------------
 router.post('/assignments/:id/submit', requireStudent, upload.single('file'), assignmentController.submitAssignment);
-router.get('/assignments/:id/submissions', requireTeacher, assignmentController.listSubmissions);
-router.post('/submissions/:id/grade', requireTeacher, assignmentController.gradeSubmission);
+router.get(
+  '/assignments/:id/submissions',
+  requireRole('TEACHER', 'ADMIN'),
+  assignmentController.listSubmissions
+);
+router.post('/submissions/:id/grade', requireRole('TEACHER', 'ADMIN'), assignmentController.gradeSubmission);
 
 export default router;
 

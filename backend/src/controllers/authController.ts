@@ -14,7 +14,11 @@ async function login(req: Request, res: Response, next: NextFunction): Promise<v
       });
       return;
     }
-    const result = await authService.login({ email, password });
+    const result = await authService.login({
+      email,
+      password,
+      ipAddress: req.ip || req.socket?.remoteAddress || null,
+    });
     success(res, result, 'Login successful');
   } catch (err) {
     next(err);

@@ -287,6 +287,20 @@ test('updateCourse throws ForbiddenError for non-owner teacher', async () => {
   );
 });
 
+test('updateCourse allows ADMIN override with audit trail (H6)', async () => {
+  const updated = await courseService.updateCourse({
+    actorId: 'user-admin-1',
+    actorRole: 'ADMIN',
+    courseId: 'course-1',
+    data: { title: 'Admin Fixed Title' },
+  });
+  assert.strictEqual(updated.title, 'Admin Fixed Title');
+  const audits = state.auditLogs.filter((l: any) => l.action === 'COURSE_UPDATED');
+  const last = audits[audits.length - 1];
+  assert.strictEqual(last.metadata.adminOverride, true);
+  assert.strictEqual(last.metadata.ownerTeacherId, 'teacher-1');
+});
+
 test('enrollStudent creates enrollment with audit log', async () => {
   const enrollment = await courseService.enrollStudent({
     actorId: 'user-admin-1',

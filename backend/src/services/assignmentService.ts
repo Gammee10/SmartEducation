@@ -4,7 +4,7 @@ import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '.
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
 import { uploadFile, deleteFile } from './fileStorageService';
-import { getCourse as getCourseWithAccess } from './courseService';
+import { getCourse as getCourseWithAccess, isAdminRole, adminOverrideMeta } from './courseService';
 
 
 
@@ -66,7 +66,13 @@ async function listCourseAssignments({ courseId, role, userId, status, page = 1,
 
   const where: Record<string, unknown> = { courseId };
   if (status) {
-    where.status = status;
+    // H8: students must never enumerate non-published titles via ?status=.
+    // Invalid values are rejected with 422 (never a raw Prisma 500).
+    const validated = assertStatusCode(status);
+    if (role === 'STUDENT' && validated !== 'PUBLISHED') {
+      throw new ForbiddenError('Students can only list published assignments');
+    }
+    where.status = validated;
   } else if (role === 'STUDENT') {
     where.status = 'PUBLISHED';
   } else {
@@ -242,6 +248,7 @@ async function createAssignment({ actorId, courseId, data, ipAddress }: CreateAs
 
 interface UpdateAssignmentParams {
   actorId: string;
+  actorRole?: string;
   assignmentId: string;
   data: {
     title?: string;
@@ -253,7 +260,7 @@ interface UpdateAssignmentParams {
   ipAddress?: string | null;
 }
 
-async function updateAssignment({ actorId, assignmentId, data, ipAddress }: UpdateAssignmentParams) {
+async function updateAssignment({ actorId, actorRole, assignmentId, data, ipAddress }: UpdateAssignmentParams) {
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
     include: { course: true },
@@ -261,7 +268,7 @@ async function updateAssignment({ actorId, assignmentId, data, ipAddress }: Upda
   if (!assignment) throw new NotFoundError('Assignment not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== assignment.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== assignment.course.teacherId)) {
     throw new ForbiddenError('You can only manage assignments in your own courses');
   }
 
@@ -332,6 +339,7 @@ async function updateAssignment({ actorId, assignmentId, data, ipAddress }: Upda
       ...(updateData.maxScore !== undefined && updateData.maxScore !== assignment.maxScore
         ? { maxScore: { from: assignment.maxScore, to: updateData.maxScore } }
         : {}),
+      ...adminOverrideMeta(actorRole, assignment.course.teacherId),
     },
     ipAddress,
   });
@@ -341,11 +349,12 @@ async function updateAssignment({ actorId, assignmentId, data, ipAddress }: Upda
 
 interface ArchiveAssignmentParams {
   actorId: string;
+  actorRole?: string;
   assignmentId: string;
   ipAddress?: string | null;
 }
 
-async function archiveAssignment({ actorId, assignmentId, ipAddress }: ArchiveAssignmentParams) {
+async function archiveAssignment({ actorId, actorRole, assignmentId, ipAddress }: ArchiveAssignmentParams) {
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
     include: { course: true },
@@ -353,7 +362,7 @@ async function archiveAssignment({ actorId, assignmentId, ipAddress }: ArchiveAs
   if (!assignment) throw new NotFoundError('Assignment not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== assignment.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== assignment.course.teacherId)) {
     throw new ForbiddenError('You can only archive assignments in your own courses');
   }
 
@@ -367,7 +376,11 @@ async function archiveAssignment({ actorId, assignmentId, ipAddress }: ArchiveAs
     action: 'ASSIGNMENT_ARCHIVED',
     entity: 'Assignment',
     entityId: assignmentId,
-    metadata: { courseId: assignment.courseId, title: assignment.title },
+    metadata: {
+      courseId: assignment.courseId,
+      title: assignment.title,
+      ...adminOverrideMeta(actorRole, assignment.course.teacherId),
+    },
     ipAddress,
   });
 
@@ -480,10 +493,11 @@ async function submitAssignment({ actorId, assignmentId, data, file, ipAddress }
 
 interface ListSubmissionsParams extends PaginationParams {
   actorId: string;
+  actorRole?: string;
   assignmentId: string;
 }
 
-async function listSubmissions({ actorId, assignmentId, page = 1, pageSize = 20 }: ListSubmissionsParams) {
+async function listSubmissions({ actorId, actorRole, assignmentId, page = 1, pageSize = 20 }: ListSubmissionsParams) {
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
     include: { course: true },
@@ -491,7 +505,7 @@ async function listSubmissions({ actorId, assignmentId, page = 1, pageSize = 20 
   if (!assignment) throw new NotFoundError('Assignment not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== assignment.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== assignment.course.teacherId)) {
     throw new ForbiddenError('You can only view submissions in your own courses');
   }
 
@@ -514,12 +528,13 @@ async function listSubmissions({ actorId, assignmentId, page = 1, pageSize = 20 
 
 interface GradeSubmissionParams {
   actorId: string;
+  actorRole?: string;
   submissionId: string;
   data: { score: number | string; feedback?: string };
   ipAddress?: string | null;
 }
 
-async function gradeSubmission({ actorId, submissionId, data, ipAddress }: GradeSubmissionParams) {
+async function gradeSubmission({ actorId, actorRole, submissionId, data, ipAddress }: GradeSubmissionParams) {
   if (data.score === undefined || data.score === null || data.score === '') {
     throw new ValidationError('Score is required');
   }
@@ -541,7 +556,7 @@ async function gradeSubmission({ actorId, submissionId, data, ipAddress }: Grade
   const course = await prisma.course.findUnique({ where: { id: submission.assignment.courseId } });
   if (!course) throw new NotFoundError('Course not found');
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== course.teacherId)) {
     throw new ForbiddenError('You can only grade submissions in your own courses');
   }
 
@@ -578,6 +593,7 @@ async function gradeSubmission({ actorId, submissionId, data, ipAddress }: Grade
           maxScore: submission.assignment.maxScore,
           previousScore: submission.score ?? null,
           feedback,
+          ...adminOverrideMeta(actorRole, course.teacherId),
         },
         ipAddress,
       },

@@ -6,7 +6,7 @@ import * as quizController from '../controllers/quizController';
 import * as attendanceController from '../controllers/attendanceController';
 import authenticate from '../middleware/auth';
 import { authenticatedLimiter } from '../middleware/rateLimit';
-import { requireAdmin, requireTeacher } from '../middleware/rbac';
+import { requireAdmin, requireRole, requireTeacher } from '../middleware/rbac';
 
 const router = Router();
 
@@ -21,9 +21,10 @@ router.use(authenticatedLimiter);
 router.get('/', courseController.listCourses);
 router.get('/:id', courseController.getCourse);
 
-// Course management - Teacher only
+// Course management - Teacher only for creates; updates allow ADMIN
+// intervention when the owner is unavailable (H6, audited as adminOverride).
 router.post('/', requireTeacher, courseController.createCourse);
-router.put('/:id', requireTeacher, courseController.updateCourse);
+router.put('/:id', requireRole('TEACHER', 'ADMIN'), courseController.updateCourse);
 
 // ---------------------------------------------------------------
 // Enrollment - Admin only
@@ -36,7 +37,7 @@ router.post('/:id/unenroll', requireAdmin, courseController.unenrollStudent);
 // ---------------------------------------------------------------
 router.get('/:id/content', courseController.listContent);
 router.post('/:courseId/content', requireTeacher, courseController.uploadContent);
-router.post('/content/:id/archive', requireTeacher, courseController.archiveContent);
+router.post('/content/:id/archive', requireRole('TEACHER', 'ADMIN'), courseController.archiveContent);
 
 // ---------------------------------------------------------------
 // Assignments (course-scoped)

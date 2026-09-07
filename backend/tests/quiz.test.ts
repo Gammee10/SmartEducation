@@ -355,6 +355,9 @@ require.cache[courseServicePath] = {
   filename: courseServicePath,
   loaded: true,
   exports: {
+    isAdminRole: (role: unknown) => role === 'ADMIN',
+    adminOverrideMeta: (actorRole: unknown, ownerTeacherId: unknown) =>
+      actorRole === 'ADMIN' ? { adminOverride: true, ownerTeacherId: ownerTeacherId ?? null } : {},
     getCourse: async ({ courseId, role, userId }: any) => {
       const course = state.courses.find((c: any) => c.id === courseId);
       if (!course) {

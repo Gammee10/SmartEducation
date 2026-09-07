@@ -62,6 +62,7 @@ async function updateCourse(req: Request, res: Response, next: NextFunction): Pr
   try {
     const course = await courseService.updateCourse({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       courseId: req.params.id as string,
       data: req.body,
       ipAddress: getIp(req),
@@ -152,6 +153,7 @@ async function archiveContent(req: Request, res: Response, next: NextFunction): 
   try {
     const item = await courseService.archiveContent({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       contentId: req.params.id as string,
       ipAddress: getIp(req),
     });

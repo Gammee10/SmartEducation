@@ -3,7 +3,7 @@ import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
-import { getCourse as getCourseWithAccess } from './courseService';
+import { getCourse as getCourseWithAccess, isAdminRole, adminOverrideMeta } from './courseService';
 
 
 
@@ -366,6 +366,7 @@ async function createQuiz({ actorId, courseId, data, ipAddress }: CreateQuizPara
 
 interface UpdateQuizParams {
   actorId: string;
+  actorRole?: string;
   quizId: string;
   data: {
     title?: string;
@@ -379,7 +380,7 @@ interface UpdateQuizParams {
   ipAddress?: string | null;
 }
 
-async function updateQuiz({ actorId, quizId, data, ipAddress }: UpdateQuizParams) {
+async function updateQuiz({ actorId, actorRole, quizId, data, ipAddress }: UpdateQuizParams) {
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     include: { course: true },
@@ -387,7 +388,7 @@ async function updateQuiz({ actorId, quizId, data, ipAddress }: UpdateQuizParams
   if (!quiz) throw new NotFoundError('Quiz not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== quiz.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== quiz.course.teacherId)) {
     throw new ForbiddenError('You can only manage quizzes in your own courses');
   }
 
@@ -441,7 +442,12 @@ async function updateQuiz({ actorId, quizId, data, ipAddress }: UpdateQuizParams
     action: 'QUIZ_UPDATED',
     entity: 'Quiz',
     entityId: quizId,
-    metadata: { courseId: quiz.courseId, title: updated.title, status: updated.status },
+    metadata: {
+      courseId: quiz.courseId,
+      title: updated.title,
+      status: updated.status,
+      ...adminOverrideMeta(actorRole, quiz.course.teacherId),
+    },
     ipAddress,
   });
 
@@ -450,11 +456,12 @@ async function updateQuiz({ actorId, quizId, data, ipAddress }: UpdateQuizParams
 
 interface ArchiveQuizParams {
   actorId: string;
+  actorRole?: string;
   quizId: string;
   ipAddress?: string | null;
 }
 
-async function archiveQuiz({ actorId, quizId, ipAddress }: ArchiveQuizParams) {
+async function archiveQuiz({ actorId, actorRole, quizId, ipAddress }: ArchiveQuizParams) {
   const quiz = await prisma.quiz.findUnique({
     where: { id: quizId },
     include: { course: true },
@@ -462,7 +469,7 @@ async function archiveQuiz({ actorId, quizId, ipAddress }: ArchiveQuizParams) {
   if (!quiz) throw new NotFoundError('Quiz not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== quiz.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== quiz.course.teacherId)) {
     throw new ForbiddenError('You can only archive quizzes in your own courses');
   }
 
@@ -476,7 +483,11 @@ async function archiveQuiz({ actorId, quizId, ipAddress }: ArchiveQuizParams) {
     action: 'QUIZ_ARCHIVED',
     entity: 'Quiz',
     entityId: quizId,
-    metadata: { courseId: quiz.courseId, title: quiz.title },
+    metadata: {
+      courseId: quiz.courseId,
+      title: quiz.title,
+      ...adminOverrideMeta(actorRole, quiz.course.teacherId),
+    },
     ipAddress,
   });
 
@@ -489,12 +500,13 @@ async function archiveQuiz({ actorId, quizId, ipAddress }: ArchiveQuizParams) {
 
 interface AddQuestionParams {
   actorId: string;
+  actorRole?: string;
   quizId: string;
   data: QuestionInput;
   ipAddress?: string | null;
 }
 
-async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionParams) {
+async function addQuestion({ actorId, actorRole, quizId, data, ipAddress }: AddQuestionParams) {
   validateQuestion(data, 0);
 
   const quiz = await prisma.quiz.findUnique({
@@ -504,7 +516,7 @@ async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionPara
   if (!quiz) throw new NotFoundError('Quiz not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== quiz.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== quiz.course.teacherId)) {
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
 
@@ -536,7 +548,7 @@ async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionPara
     action: 'QUIZ_QUESTION_ADDED',
     entity: 'QuizQuestion',
     entityId: question.id,
-    metadata: { quizId },
+    metadata: { quizId, ...adminOverrideMeta(actorRole, quiz.course.teacherId) },
     ipAddress,
   });
 
@@ -545,12 +557,13 @@ async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionPara
 
 interface UpdateQuestionParams {
   actorId: string;
+  actorRole?: string;
   questionId: string;
   data: QuestionInput;
   ipAddress?: string | null;
 }
 
-async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQuestionParams) {
+async function updateQuestion({ actorId, actorRole, questionId, data, ipAddress }: UpdateQuestionParams) {
   const existing = await prisma.quizQuestion.findUnique({
     where: { id: questionId },
     include: { quiz: { include: { course: true } } },
@@ -558,7 +571,7 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
   if (!existing) throw new NotFoundError('Question not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== existing.quiz.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== existing.quiz.course.teacherId)) {
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
 
@@ -636,7 +649,7 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
       action: 'QUIZ_QUESTION_UPDATED',
       entity: 'QuizQuestion',
       entityId: questionId,
-      metadata: { quizId: existing.quizId },
+      metadata: { quizId: existing.quizId, ...adminOverrideMeta(actorRole, existing.quiz.course.teacherId) },
       ipAddress,
     });
 
@@ -654,7 +667,7 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
     action: 'QUIZ_QUESTION_UPDATED',
     entity: 'QuizQuestion',
     entityId: questionId,
-    metadata: { quizId: existing.quizId },
+    metadata: { quizId: existing.quizId, ...adminOverrideMeta(actorRole, existing.quiz.course.teacherId) },
     ipAddress,
   });
 
@@ -663,11 +676,12 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
 
 interface DeleteQuestionParams {
   actorId: string;
+  actorRole?: string;
   questionId: string;
   ipAddress?: string | null;
 }
 
-async function deleteQuestion({ actorId, questionId, ipAddress }: DeleteQuestionParams) {
+async function deleteQuestion({ actorId, actorRole, questionId, ipAddress }: DeleteQuestionParams) {
   const existing = await prisma.quizQuestion.findUnique({
     where: { id: questionId },
     include: { quiz: { include: { course: true } } },
@@ -675,7 +689,7 @@ async function deleteQuestion({ actorId, questionId, ipAddress }: DeleteQuestion
   if (!existing) throw new NotFoundError('Question not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== existing.quiz.course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== existing.quiz.course.teacherId)) {
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
 
@@ -690,7 +704,7 @@ async function deleteQuestion({ actorId, questionId, ipAddress }: DeleteQuestion
     action: 'QUIZ_QUESTION_DELETED',
     entity: 'QuizQuestion',
     entityId: questionId,
-    metadata: { quizId: existing.quizId },
+    metadata: { quizId: existing.quizId, ...adminOverrideMeta(actorRole, existing.quiz.course.teacherId) },
     ipAddress,
   });
 

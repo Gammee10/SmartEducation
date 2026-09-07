@@ -104,7 +104,7 @@ const prismaClientPath = require.resolve('../src/prisma/client');
 require.cache[prismaClientPath] = { id: prismaClientPath, filename: prismaClientPath, loaded: true, exports: mockPrisma } as any;
 
 const userAdminService = require('../src/services/userAdminService');
-const { ValidationError, ConflictError, NotFoundError } = require('../src/utils/errors');
+const { ValidationError, ConflictError, NotFoundError, ForbiddenError } = require('../src/utils/errors');
 
 test('createUser creates a student with generated code and audit log', async () => {
   const result = await userAdminService.createUser({
@@ -257,5 +257,37 @@ test('archiveUser bumps tokenVersion to revoke sessions (C2)', async () => {
   assert.deepStrictEqual(
     state.users.find((u: any) => u.id === created.id).tokenVersion,
     { increment: 1 }
+  );
+});
+
+test('updateUser rejects ARCHIVED via the generic update (H7)', async () => {
+  const target = state.users.find((u: any) => u.email === 'abebe@school.edu');
+  await assert.rejects(
+    userAdminService.updateUser({ actorId: 'user-admin-1', userId: target.id, data: { status: 'ARCHIVED' } }),
+    ValidationError
+  );
+  assert.notStrictEqual(state.users.find((u: any) => u.id === target.id).status, 'ARCHIVED');
+});
+
+test('updateUser blocks self-suspend and last-admin suspend (H7)', async () => {
+  await assert.rejects(
+    userAdminService.updateUser({ actorId: 'user-admin-1', userId: 'user-admin-1', data: { status: 'SUSPENDED' } }),
+    (err: any) => err instanceof ForbiddenError
+  );
+  await assert.rejects(
+    userAdminService.updateUser({ actorId: 'someone-else', userId: 'user-admin-1', data: { status: 'SUSPENDED' } }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('updateUser validates fields (H7)', async () => {
+  const target = state.users.find((u: any) => u.email === 'abebe@school.edu');
+  await assert.rejects(
+    userAdminService.updateUser({ actorId: 'user-admin-1', userId: target.id, data: { fullName: '   ' } }),
+    ValidationError
+  );
+  await assert.rejects(
+    userAdminService.updateUser({ actorId: 'user-admin-1', userId: target.id, data: { phone: 'not-a-phone!!!' } }),
+    ValidationError
   );
 });

@@ -30,6 +30,20 @@ function assertContentType(type: string | undefined): ContentTypeEnum {
   return (type || 'OTHER') as ContentTypeEnum;
 }
 
+// H6: admin content-moderation override. Teachers own their courses, but an
+// admin must be able to intervene when the owner is unavailable (leave or
+// suspension) - otherwise archived-teacher courses become unmanageable.
+// Ownership checks below skip the teacher match when actorRole is ADMIN, and
+// every override is tagged in the audit metadata (ADMIN_OVERRIDE... via
+// adminOverride fields) with the owner for traceability.
+function isAdminRole(role: unknown): boolean {
+  return role === 'ADMIN';
+}
+
+function adminOverrideMeta(actorRole: unknown, ownerTeacherId: unknown): Record<string, unknown> {
+  return isAdminRole(actorRole) ? { adminOverride: true, ownerTeacherId: ownerTeacherId ?? null } : {};
+}
+
 // ---------------------------------------------------------------
 // Courses
 // ---------------------------------------------------------------
@@ -193,6 +207,9 @@ async function createCourse({ actorId, data, ipAddress }: CreateCourseParams) {
 
 interface UpdateCourseParams {
   actorId: string;
+  // H6: callers pass the authenticated user's role; ADMIN skips the
+  // ownership check (intervention) and is tagged in the audit metadata.
+  actorRole?: string;
   courseId: string;
   data: {
     title?: string;
@@ -205,12 +222,12 @@ interface UpdateCourseParams {
   ipAddress?: string | null;
 }
 
-async function updateCourse({ actorId, courseId, data, ipAddress }: UpdateCourseParams) {
+async function updateCourse({ actorId, actorRole, courseId, data, ipAddress }: UpdateCourseParams) {
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) throw new NotFoundError('Course not found');
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== course.teacherId)) {
     throw new ForbiddenError('You can only manage your own courses');
   }
 
@@ -231,7 +248,7 @@ async function updateCourse({ actorId, courseId, data, ipAddress }: UpdateCourse
     action: 'COURSE_UPDATED',
     entity: 'Course',
     entityId: courseId,
-    metadata: { title: updated.title },
+    metadata: { title: updated.title, ...adminOverrideMeta(actorRole, course.teacherId) },
     ipAddress,
   });
 
@@ -440,11 +457,12 @@ async function uploadContent({ actorId, courseId, data, ipAddress }: UploadConte
 
 interface ArchiveContentParams {
   actorId: string;
+  actorRole?: string;
   contentId: string;
   ipAddress?: string | null;
 }
 
-async function archiveContent({ actorId, contentId, ipAddress }: ArchiveContentParams) {
+async function archiveContent({ actorId, actorRole, contentId, ipAddress }: ArchiveContentParams) {
   const item = await prisma.contentItem.findUnique({ where: { id: contentId } });
   if (!item) throw new NotFoundError('Content item not found');
 
@@ -452,7 +470,7 @@ async function archiveContent({ actorId, contentId, ipAddress }: ArchiveContentP
   const course = await prisma.course.findUnique({ where: { id: item.courseId } });
   if (!course) throw new NotFoundError('Course not found');
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
-  if (!teacher || teacher.id !== course.teacherId) {
+  if (!isAdminRole(actorRole) && (!teacher || teacher.id !== course.teacherId)) {
     throw new ForbiddenError('You can only archive content in your own courses');
   }
 
@@ -466,7 +484,7 @@ async function archiveContent({ actorId, contentId, ipAddress }: ArchiveContentP
     action: 'CONTENT_ARCHIVED',
     entity: 'ContentItem',
     entityId: contentId,
-    metadata: { courseId: item.courseId, title: item.title },
+    metadata: { courseId: item.courseId, title: item.title, ...adminOverrideMeta(actorRole, course.teacherId) },
     ipAddress,
   });
 
@@ -483,4 +501,6 @@ export {
   listContent,
   uploadContent,
   archiveContent,
+  isAdminRole,
+  adminOverrideMeta,
 };

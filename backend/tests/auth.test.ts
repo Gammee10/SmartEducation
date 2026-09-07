@@ -150,6 +150,28 @@ test('changePassword updates the hash', async () => {
   assert.strictEqual(mockUser.passwordHash, 'hashed');
 });
 
+test('login audits success and failure without passwords (M11)', async () => {
+  const prismaMock = require('../src/prisma/client');
+  const seen: any[] = [];
+  const orig = prismaMock.auditLog.create;
+  prismaMock.auditLog.create = async ({ data }: any) => {
+    seen.push(data);
+    return data;
+  };
+  try {
+    await authService.login({ email: 'admin@school.edu', password: 'correct-password' });
+    await assert.rejects(() => authService.login({ email: 'admin@school.edu', password: 'wrong-password' }));
+    const success = seen.find((l: any) => l.action === 'LOGIN_SUCCESS');
+    const failure = seen.find((l: any) => l.action === 'LOGIN_FAILURE');
+    assert.ok(success, 'LOGIN_SUCCESS audit written');
+    assert.ok(failure, 'LOGIN_FAILURE audit written');
+    assert.ok(!JSON.stringify(seen).includes('correct-password'), 'passwords must never be logged');
+    assert.ok(!JSON.stringify(seen).includes('wrong-password'), 'passwords must never be logged');
+  } finally {
+    prismaMock.auditLog.create = orig;
+  }
+});
+
 test('changePassword revokes sessions by bumping tokenVersion (C2)', async () => {
   await authService.changePassword({
     userId: 'user-1',

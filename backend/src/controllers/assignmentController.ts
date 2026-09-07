@@ -64,6 +64,7 @@ async function updateAssignment(req: Request, res: Response, next: NextFunction)
   try {
     const assignment = await assignmentService.updateAssignment({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       assignmentId: req.params.id as string,
       data: req.body,
       ipAddress: getIp(req),
@@ -78,6 +79,7 @@ async function archiveAssignment(req: Request, res: Response, next: NextFunction
   try {
     const assignment = await assignmentService.archiveAssignment({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       assignmentId: req.params.id as string,
       ipAddress: getIp(req),
     });
@@ -120,6 +122,7 @@ async function listSubmissions(req: Request, res: Response, next: NextFunction):
   try {
     const result = await assignmentService.listSubmissions({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       assignmentId: req.params.id as string,
       ...parsePagination(req.query),
     });
@@ -131,12 +134,13 @@ async function listSubmissions(req: Request, res: Response, next: NextFunction):
 
 async function gradeSubmission(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can grade submissions'));
+    if (req.user!.role !== 'TEACHER' && req.user!.role !== 'ADMIN') {
+      next(new ForbiddenError('Only teachers and admins can grade submissions'));
       return;
     }
     const submission = await assignmentService.gradeSubmission({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       submissionId: req.params.id as string,
       data: req.body,
       ipAddress: getIp(req),

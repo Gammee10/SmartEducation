@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../prisma/client';
-import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
+import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { sanitizeUser, assertPasswordBytes } from './authService';
 import env from '../config/env';
@@ -206,6 +206,47 @@ async function updateUser(opts: {
 
   if (data.status && !['ACTIVE', 'SUSPENDED', 'ARCHIVED'].includes(data.status)) {
     throw new ValidationError('Invalid status');
+  }
+
+  // H7: the generic update must not bypass the archive guards (self-archive
+  // and last-active-admin checks live on the archive path). Force archival
+  // through POST /users/:id/archive.
+  if (data.status === 'ARCHIVED') {
+    throw new ValidationError('Archiving must use POST /users/:id/archive');
+  }
+
+  // H7: suspending yourself or the last active admin via the generic update
+  // would lock out the system exactly like archiving would - apply the same
+  // guards here.
+  if (data.status === 'SUSPENDED' && existing.status !== 'SUSPENDED') {
+    if (existing.id === actorId) {
+      throw new ForbiddenError('You cannot suspend your own account');
+    }
+    if (existing.role === 'ADMIN') {
+      const otherActiveAdmins = await prisma.user.count({
+        where: { role: 'ADMIN', status: 'ACTIVE', id: { not: userId } },
+      });
+      if (otherActiveAdmins === 0) {
+        throw new ConflictError('Cannot suspend the last active admin');
+      }
+    }
+  }
+
+  // H7: validate update fields (previously empty names and unvalidated
+  // phone/profile fields were persisted verbatim).
+  if (data.fullName !== undefined && String(data.fullName).trim() === '') {
+    throw new ValidationError('Full name cannot be empty');
+  }
+  if (data.phone !== undefined && data.phone !== null && String(data.phone).trim() !== '') {
+    if (!/^[+\d][\d\s\-().]{5,25}$/.test(String(data.phone).trim())) {
+      throw new ValidationError('Invalid phone number');
+    }
+  }
+  for (const field of ['gradeLevel', 'section', 'subject'] as const) {
+    const value = (data as Record<string, unknown>)[field];
+    if (value !== undefined && value !== null && String(value).trim() === '') {
+      throw new ValidationError(`${field} cannot be empty`);
+    }
   }
 
   const user = await prisma.$transaction(async (tx: any) => {

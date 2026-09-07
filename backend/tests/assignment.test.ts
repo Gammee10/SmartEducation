@@ -659,8 +659,7 @@ test('updateAssignment allows raising maxScore and audits old->new (H9)', async 
   assert.deepStrictEqual(last.metadata.maxScore, { from: 120, to: 200 });
 });
 
-test('submitAssignment deletes the uploaded file when the DB insert fails (H4)', async () => {
-  state.assignments.push({
+test('submitAssignment deletes the uploaded file when the DB insert fails (H4)', async () => {  state.assignments.push({
     id: 'assignment-h4',
     courseId: 'course-1',
     title: 'Orphan Homework',
@@ -698,4 +697,30 @@ test('submitAssignment deletes the uploaded file when the DB insert fails (H4)',
     mockPrisma.assignmentSubmission.create = origCreate;
     storage.deleteFile = origDelete;
   }
+});
+
+test('listCourseAssignments forces STUDENT to PUBLISHED (H8)', async () => {
+  await assert.rejects(
+    () =>
+      assignmentService.listCourseAssignments({
+        courseId: 'course-1',
+        role: 'STUDENT',
+        userId: 'user-student-1',
+        status: 'DRAFT',
+      }),
+    (err: any) => err instanceof ForbiddenError
+  );
+});
+
+test('listCourseAssignments rejects invalid status with 422, never 500 (H8)', async () => {
+  await assert.rejects(
+    () =>
+      assignmentService.listCourseAssignments({
+        courseId: 'course-1',
+        role: 'TEACHER',
+        userId: 'user-teacher-1',
+        status: 'FOO',
+      }),
+    (err: any) => err instanceof ValidationError
+  );
 });

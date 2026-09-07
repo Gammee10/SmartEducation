@@ -62,6 +62,7 @@ async function updateQuiz(req: Request, res: Response, next: NextFunction): Prom
   try {
     const quiz = await quizService.updateQuiz({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       quizId: req.params.id as string,
       data: req.body,
       ipAddress: getIp(req),
@@ -76,6 +77,7 @@ async function archiveQuiz(req: Request, res: Response, next: NextFunction): Pro
   try {
     const quiz = await quizService.archiveQuiz({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       quizId: req.params.id as string,
       ipAddress: getIp(req),
     });
@@ -93,6 +95,7 @@ async function addQuestion(req: Request, res: Response, next: NextFunction): Pro
   try {
     const question = await quizService.addQuestion({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       quizId: req.params.id as string,
       data: req.body,
       ipAddress: getIp(req),
@@ -107,6 +110,7 @@ async function updateQuestion(req: Request, res: Response, next: NextFunction): 
   try {
     const question = await quizService.updateQuestion({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       questionId: req.params.questionId as string,
       data: req.body,
       ipAddress: getIp(req),
@@ -121,6 +125,7 @@ async function deleteQuestion(req: Request, res: Response, next: NextFunction): 
   try {
     const result = await quizService.deleteQuestion({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       questionId: req.params.questionId as string,
       ipAddress: getIp(req),
     });

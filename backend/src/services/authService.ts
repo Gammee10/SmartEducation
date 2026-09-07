@@ -9,6 +9,30 @@ import { writeAuditLog } from './auditService';
 interface LoginInput {
   email: string;
   password: string;
+  ipAddress?: string | null;
+}
+
+// M11: login attempts are auditable (email only - never passwords). Writes
+// are best-effort so a broken audit table cannot lock every user out;
+// brute-force log flooding is bounded by authLimiter (10 logins/15min/IP).
+async function auditLoginAttempt(
+  action: 'LOGIN_SUCCESS' | 'LOGIN_FAILURE',
+  userId: string | null,
+  email: string,
+  ipAddress?: string | null
+): Promise<void> {
+  try {
+    await writeAuditLog({
+      actorId: userId,
+      action,
+      entity: 'User',
+      entityId: userId,
+      metadata: { email },
+      ipAddress,
+    });
+  } catch (err) {
+    console.error('Login audit write failed:', err);
+  }
 }
 
 
@@ -41,9 +65,10 @@ function assertPasswordBytes(value: string, field = 'Password'): void {
   }
 }
 
-async function login({ email, password }: LoginInput) {
+async function login({ email, password, ipAddress }: LoginInput) {
+  const normalizedEmail = String(email || '').toLowerCase().trim();
   const user = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
+    where: { email: normalizedEmail },
     include: {
       student: true,
       teacher: true,
@@ -51,17 +76,21 @@ async function login({ email, password }: LoginInput) {
   });
 
   if (!user) {
+    await auditLoginAttempt('LOGIN_FAILURE', null, normalizedEmail, ipAddress);
     throw new UnauthorizedError('Invalid email or password');
   }
   if (user.status !== 'ACTIVE') {
+    await auditLoginAttempt('LOGIN_FAILURE', user.id, normalizedEmail, ipAddress);
     throw new UnauthorizedError('Account is not active');
   }
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
+    await auditLoginAttempt('LOGIN_FAILURE', user.id, normalizedEmail, ipAddress);
     throw new UnauthorizedError('Invalid email or password');
   }
 
+  await auditLoginAttempt('LOGIN_SUCCESS', user.id, normalizedEmail, ipAddress);
   const token = signToken(user.id, (user as { tokenVersion?: number }).tokenVersion ?? 0);
   return { token, user: sanitizeUser(user) };
 }
