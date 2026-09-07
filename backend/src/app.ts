@@ -18,6 +18,7 @@ import communicationRoutes from './routes/communicationRoutes';
 import userAdminRoutes from './routes/userAdminRoutes';
 import errorHandler from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimit';
+import logger, { redactUrl } from './utils/logger';
 
 const app = express();
 
@@ -41,22 +42,20 @@ app.use(express.json({ limit: '2mb' }));
 // Basic DoS protection for the whole API surface.
 app.use('/api', apiLimiter);
 
-// Request logging (structured JSON lines with a request id and actor)
+// Request logging (M16: leveled logger, URLs redacted, request id + actor)
 app.use((req, res, next) => {
   (req as any).id = crypto.randomUUID();
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(
-      JSON.stringify({
-        id: (req as any).id,
-        method: req.method,
-        url: req.originalUrl,
-        status: res.statusCode,
-        durationMs: duration,
-        userId: (req as any).user?.id ?? null,
-      })
-    );
+    logger.info('request', {
+      id: (req as any).id,
+      method: req.method,
+      url: redactUrl(req.originalUrl),
+      status: res.statusCode,
+      durationMs: duration,
+      userId: (req as any).user?.id ?? null,
+    });
   });
   next();
 });

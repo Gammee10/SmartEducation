@@ -5,6 +5,7 @@ import prisma from '../prisma/client';
 import env from '../config/env';
 import { UnauthorizedError, NotFoundError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
+import logger from '../utils/logger';
 
 interface LoginInput {
   email: string;
@@ -31,7 +32,7 @@ async function auditLoginAttempt(
       ipAddress,
     });
   } catch (err) {
-    console.error('Login audit write failed:', err);
+    logger.error('login audit write failed', { message: (err as Error).message });
   }
 }
 

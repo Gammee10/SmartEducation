@@ -14,6 +14,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ const poolerUrl = process.env.DATABASE_URL;
 const directUrl = process.env.DIRECT_URL;
 
 if (!poolerUrl && directUrl) {
-  console.warn(
+  logger.warn(
     'DATABASE_URL is not set - falling back to DIRECT_URL for app queries. ' +
       'Set DATABASE_URL to the pooler URL (e.g. Supabase port 6543) to bound connection usage.'
   );

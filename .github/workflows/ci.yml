@@ -5,9 +5,36 @@ on:
     branches: [master]
   pull_request:
 
+# M15/H12: unit tests mock Prisma, but constraints, cascades, and races
+# only break in the integration suite - so CI runs both against a real
+# Postgres service, plus migration deploy, schema validation, and audit.
+# Known-moderate qs/body-parser advisory (GHSA via express 4.x) is an
+# allowlisted exception until the express 5 upgrade (see L7); the gate
+# fails on high-or-worse.
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpw
+          POSTGRES_DB: ses_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:testpw@localhost:5432/ses_test?schema=public
+      DIRECT_URL: postgresql://postgres:testpw@localhost:5432/ses_test?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:testpw@localhost:5432/ses_test?schema=public
+      JWT_SECRET: ci-test-secret
+      DEFAULT_USER_PASSWORD: ci-import-password-123
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,11 +50,49 @@ jobs:
           fi
       - name: Generate Prisma client
         run: npm run prisma:generate --workspace backend
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Validate Prisma schema
+        run: npx prisma validate --schema=backend/prisma/schema.prisma
+      - name: Typecheck backend
+        run: npm run typecheck --workspace backend
       - name: Lint
         run: npm run lint
       - name: Unit tests
         run: npm run test:backend
-      - name: Build
-        run: npm run build
+      - name: Deploy migrations
+        run: npm run prisma:deploy --workspace backend
+      - name: Integration tests
+        run: npm run test:integration --workspace backend
+      - name: Security audit (high and above)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build backend
+        run: npm run build --workspace backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: |
+          set -o pipefail
+          if ! npm ci --no-audit --no-fund 2>&1 | tee /tmp/npmci.log; then
+            tail -8 /tmp/npmci.log | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          fi
+      - name: Typecheck frontend
+        run: npm run typecheck --workspace frontend
+      - name: Build frontend
+        run: npm run build --workspace frontend
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t smartedu-backend:ci .
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t smartedu-frontend:ci .

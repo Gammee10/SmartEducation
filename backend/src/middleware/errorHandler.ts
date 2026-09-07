@@ -2,6 +2,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors';
 import env from '../config/env';
+import logger, { redactUrl } from '../utils/logger';
+import { captureError } from '../utils/errorTracker';
 
 function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): Response {
   res.setHeader('x-request-id', (req as any).id ?? '');
@@ -90,17 +92,18 @@ function errorHandler(err: Error, req: Request, res: Response, _next: NextFuncti
     });
   }
 
-  // Unknown errors - log with request context and return generic message
-  console.error(
-    JSON.stringify({
-      requestId: (req as any).id ?? null,
-      method: req.method,
-      url: req.originalUrl,
-      userId: (req as any).user?.id ?? null,
-      message: err.message,
-      stack: err.stack,
-    })
-  );
+  // Unknown errors - M16: leveled log with redacted URL and no stack in
+  // production (stacks stay in the error tracker with the request id).
+  const requestId = (req as any).id ?? null;
+  logger.error('unhandled error', {
+    requestId,
+    method: req.method,
+    url: redactUrl(req.originalUrl),
+    userId: (req as any).user?.id ?? null,
+    message: err.message,
+    ...(env.nodeEnv === 'production' ? {} : { stack: err.stack }),
+  });
+  captureError(err, { requestId });
   return res.status(500).json({
     success: false,
     message: env.nodeEnv === 'production' ? 'Internal server error' : err.message,

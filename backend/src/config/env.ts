@@ -1,5 +1,6 @@
 // Environment configuration - loads and validates required env vars.
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -27,10 +28,10 @@ if (nodeEnv === 'production' && !process.env.DEFAULT_USER_PASSWORD) {
 if (nodeEnv === 'production' && !process.env.DATABASE_URL && !process.env.DIRECT_URL) {
   throw new Error('DATABASE_URL (pooler) must be set when NODE_ENV is production');
 } else if (!process.env.DATABASE_URL) {
-  console.warn('DATABASE_URL is not set - database connections will fail until it is provided.');
+  logger.warn('DATABASE_URL is not set - database connections will fail until it is provided.');
 }
 if (!process.env.DIRECT_URL) {
-  console.warn('DIRECT_URL is not set - migrations and seeding require the direct database URL.');
+  logger.warn('DIRECT_URL is not set - migrations and seeding require the direct database URL.');
 }
 
 // M13: multi-origin CORS. Staging + prod + preview URLs are a
@@ -88,7 +89,7 @@ if (nodeEnv === 'production' && (process.env.TRUST_PROXY || '') === '') {
   if (managedProxy) {
     throw new Error(message);
   }
-  console.warn(`WARNING (production): ${message}`);
+  logger.warn(`production without TRUST_PROXY: ${message}`);
 }
 
 export default env;

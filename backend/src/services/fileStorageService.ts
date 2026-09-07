@@ -3,6 +3,7 @@ import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import env from '../config/env';
 import { AppError, ValidationError } from '../utils/errors';
+import logger from '../utils/logger';
 
 interface UploadFile {
   path?: string;
@@ -184,7 +185,7 @@ async function deleteFile(publicId: string): Promise<void> {
   try {
     await cloudinary.uploader.destroy(publicId);
   } catch (err) {
-    console.error('Cloudinary delete failed:', err);
+    logger.error('cloudinary delete failed', { message: (err as Error).message });
   }
 }
 

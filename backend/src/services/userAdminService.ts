@@ -5,6 +5,7 @@ import prisma from '../prisma/client';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { sanitizeUser, assertPasswordBytes } from './authService';
+import logger from '../utils/logger';
 import env from '../config/env';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -492,13 +493,12 @@ async function importUsersCsv(opts: {
     // fallback secret. Warn loudly (once per import) so operators set
     // DEFAULT_USER_PASSWORD and rotate these accounts after first login.
     const rowPassword = get('password');
-    if (!rowPassword && !env.defaultUserPassword && !warnedFallbackPassword) {
-      warnedFallbackPassword = true;
-      console.warn(
-        'CSV import: rows without a password fall back to the built-in default - ' +
-          'set DEFAULT_USER_PASSWORD and rotate imported accounts after first login.'
-      );
-    }
+      if (!rowPassword && !env.defaultUserPassword && !warnedFallbackPassword) {
+        warnedFallbackPassword = true;
+        logger.warn(
+          'csv import uses the built-in default password - set DEFAULT_USER_PASSWORD and rotate imported accounts'
+        );
+      }
     const passwordHash = await bcrypt.hash(assertPassword(rowPassword), 10);
 
     const phone = get('phone') || null;
