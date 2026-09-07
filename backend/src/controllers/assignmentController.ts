@@ -105,6 +105,9 @@ async function submitAssignment(req: Request, res: Response, next: NextFunction)
       data: { content: req.body.content as string | undefined },
       file: req.file
         ? {
+            // M10: multer disk storage yields a temp path (streamed to
+            // Cloudinary, then cleaned up); memory uploads yield a buffer.
+            path: (req.file as Express.Multer.File).path,
             buffer: req.file.buffer,
             mimetype: req.file.mimetype,
             size: req.file.size,

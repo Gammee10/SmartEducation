@@ -94,3 +94,21 @@ export const sensitiveLimiter = rateLimit({
     data: {},
   },
 });
+
+// Per-IP upload throttle (M10): disk-backed uploads still cost temp disk,
+// validation CPU, and outbound bandwidth per file. 60/15min is far above
+// legitimate use (one submission per assignment) while bounding bulk abuse.
+// IP-keyed on purpose: it runs before any per-user accounting on the
+// multipart route.
+export const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: ipKey,
+  message: {
+    success: false,
+    message: 'Too many uploads, please try again later.',
+    data: {},
+  },
+});

@@ -1,9 +1,13 @@
 // Assignment routes - assignments, submissions, and grading.
 import { Router } from 'express';
 import multer from 'multer';
+import os from 'os';
+import path from 'path';
+import crypto from 'crypto';
+import fs from 'fs';
 import * as assignmentController from '../controllers/assignmentController';
 import authenticate from '../middleware/auth';
-import { authenticatedLimiter } from '../middleware/rateLimit';
+import { authenticatedLimiter, uploadLimiter } from '../middleware/rateLimit';
 import { requireRole, requireStudent } from '../middleware/rbac';
 import { ValidationError } from '../utils/errors';
 
@@ -28,9 +32,22 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const upload = multer({
-  storage: multer.memoryStorage(),
+  // M10: disk-backed uploads stream from temp files instead of buffering
+  // full files (up to 20MB, base64-doubled) in RAM before the upload
+  // semaphore even engages. Files are removed after the Cloudinary upload.
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = path.join(os.tmpdir(), 'smartedu-uploads');
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const safe = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100);
+      cb(null, `${Date.now()}-${crypto.randomBytes(8).toString('hex')}-${safe}`);
+    },
+  }),
   // 20MB - submissions are documents; smaller buffers also reduce the memory
-  // cost of the base64 upload path (content upload is URL-based).
+  // cost of the upload path (content upload is URL-based).
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
@@ -57,7 +74,15 @@ router.post('/assignments/:id/archive', requireRole('TEACHER', 'ADMIN'), assignm
 // ---------------------------------------------------------------
 // Submissions
 // ---------------------------------------------------------------
-router.post('/assignments/:id/submit', requireStudent, upload.single('file'), assignmentController.submitAssignment);
+router.post(
+  '/assignments/:id/submit',
+  requireStudent,
+  // M10: per-IP upload throttle (60/15min) - submissions are normally
+  // one-per-assignment, so this only bites bulk-abuse scripts.
+  uploadLimiter,
+  upload.single('file'),
+  assignmentController.submitAssignment
+);
 router.get(
   '/assignments/:id/submissions',
   requireRole('TEACHER', 'ADMIN'),
