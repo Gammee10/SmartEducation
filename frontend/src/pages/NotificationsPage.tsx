@@ -1,6 +1,9 @@
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../api/client';
+import { useApi } from '../hooks/useApi';
+import { notifyNotificationsChanged } from '../utils/notificationBus';
+import { getApiError } from '../utils/apiError';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -23,25 +26,30 @@ const typeStyles: Record<string, string> = {
 
 export default function NotificationsPage() {
   usePageTitle('Notifications');
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
+  // M17: list loading goes through useApi (abort-safe, server messages).
+  const {
+    data: loaded,
+    loading,
+    error: loadError,
+  } = useApi<AppNotification[]>(
+    (signal) =>
+      api
+        .get('/notifications', { params: { unreadOnly: unreadOnly || undefined, pageSize: 50 }, signal })
+        .then((res) => res.data.data.notifications),
+    [unreadOnly]
+  );
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [error, setError] = useState('');
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
+  const displayError = error || loadError;
 
-  const load = useCallback(() => {
-    setLoading(true);
-    api
-      .get('/notifications', { params: { unreadOnly: unreadOnly || undefined, pageSize: 50 } })
-      .then((res) => setNotifications(res.data.data.notifications))
-      .catch(() => setError('Failed to load notifications'))
-      .finally(() => setLoading(false));
-  }, [unreadOnly]);
-
+  // Mirror freshly loaded pages into the locally-mutable list (mark-read
+  // updates apply instantly on top).
   useEffect(() => {
-    load();
-  }, [load]);
+    if (loaded) setNotifications(loaded);
+  }, [loaded]);
 
   const handleMarkRead = async (id: string) => {
     setError('');
@@ -53,8 +61,10 @@ export default function NotificationsPage() {
       setNotifications((prev) =>
         unreadOnly ? prev.filter((n) => n.id !== id) : prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-    } catch {
-      setError('Failed to mark notification as read');
+      // M19: refresh the Layout bell badge immediately.
+      notifyNotificationsChanged();
+    } catch (err: any) {
+      setError(getApiError(err, 'Failed to mark notification as read'));
     } finally {
       setMarkingId(null);
     }
@@ -66,8 +76,10 @@ export default function NotificationsPage() {
     try {
       await api.put('/notifications/read-all');
       setNotifications((prev) => (unreadOnly ? [] : prev.map((n) => ({ ...n, isRead: true }))));
-    } catch {
-      setError('Failed to mark all as read');
+      // M19: refresh the Layout bell badge immediately.
+      notifyNotificationsChanged();
+    } catch (err: any) {
+      setError(getApiError(err, 'Failed to mark all as read'));
     } finally {
       setMarkingAll(false);
     }
@@ -101,9 +113,9 @@ export default function NotificationsPage() {
         }
       />
 
-      {error && (
+      {displayError && (
         <div className="mb-4">
-          <Banner tone="error" message={error} />
+          <Banner tone="error" message={displayError} />
         </div>
       )}
 

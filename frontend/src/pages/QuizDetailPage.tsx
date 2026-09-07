@@ -11,6 +11,7 @@ import {
   labelStyles,
   LoadingState,
   Banner,
+  Modal,
   Spinner,
 } from '../components/ui';
 import type { Quiz, QuizQuestion, QuizAttempt } from '../types';
@@ -79,6 +80,11 @@ export default function QuizDetailPage() {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  // M20: submit confirmation (lists unanswered questions) and resume
+  // confirmation (no more silent auto-entry into a timed attempt).
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingResume, setPendingResume] = useState<{ id: string; expiresAt: string } | null>(null);
+  const [resumeDismissed, setResumeDismissed] = useState(false);
   const [result, setResult] = useState<{
     score: number;
     maxScore: number;
@@ -150,14 +156,21 @@ export default function QuizDetailPage() {
     fetchData();
   }, [fetchData]);
 
-  // Resume an in-progress attempt after a refresh or navigation away, so a
-  // student does not silently lose an attempt that is still running
-  // server-side. Selections saved in sessionStorage are restored.
+  // Offer to resume an in-progress attempt after a refresh or navigation
+  // away, so a student does not silently lose an attempt that is still
+  // running server-side. M20: this is a confirmation now - auto-entering
+  // used to yank students straight into the countdown. Selections saved in
+  // sessionStorage are restored on resume.
   useEffect(() => {
-    if (!isStudent || !quiz || takingQuiz || result) return;
+    if (!isStudent || !quiz || takingQuiz || result || resumeDismissed || pendingResume) return;
     const inProgress = attempts.find((a) => a.status === 'IN_PROGRESS');
     if (!inProgress) return;
-    setActiveAttempt({ id: inProgress.id, expiresAt: inProgress.expiresAt });
+    setPendingResume({ id: inProgress.id, expiresAt: inProgress.expiresAt });
+  }, [attempts, quiz, isStudent, takingQuiz, result, resumeDismissed, pendingResume]);
+
+  const confirmResume = () => {
+    if (!pendingResume || !quiz) return;
+    setActiveAttempt(pendingResume);
     setTakingQuiz(true);
     autoSubmitFailedRef.current = false;
     setAutoSubmitFailed(false);
@@ -166,17 +179,18 @@ export default function QuizDetailPage() {
       initial[q.id] = [];
     }
     try {
-      const saved = sessionStorage.getItem(`quiz-${inProgress.id}`);
+      const saved = sessionStorage.getItem(`quiz-${pendingResume.id}`);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        setSelections({ ...initial, ...parsed });
-        return;
+        setSelections({ ...initial, ...JSON.parse(saved) });
+      } else {
+        setSelections(initial);
       }
     } catch {
       // corrupted saved state - fall back to empty selections
+      setSelections(initial);
     }
-    setSelections(initial);
-  }, [attempts, quiz, isStudent, takingQuiz, result]);
+    setPendingResume(null);
+  };
 
   // Countdown timer for active quiz attempt (auto-submits on expiry)
   useEffect(() => {
@@ -194,9 +208,12 @@ export default function QuizDetailPage() {
   }, [activeAttempt, takingQuiz]);
 
   const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60);
+    // M20: hh:mm:ss past the hour (70:00 used to read as seventy minutes).
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
     const s = secs % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+    return `${h > 0 ? `${h}:` : ''}${mm}:${String(s).padStart(2, '0')}`;
   };
 
   // ---------------------------------------------------------------
@@ -246,6 +263,14 @@ export default function QuizDetailPage() {
   // ---------------------------------------------------------------
   const handleAddQuestion = async (e: FormEvent) => {
     e.preventDefault();
+    // M20: single-choice needs exactly one correct option - the builder
+    // radios below already enforce this, but validate before the roundtrip
+    // so a 0/N-correct draft never reaches the server as a 400 surprise.
+    const filled = questionDraft.options.filter((o) => o.optionText.trim());
+    if (questionDraft.type === 'SINGLE_CHOICE' && filled.filter((o) => o.isCorrect).length !== 1) {
+      setError('Single-choice questions need exactly one correct option');
+      return;
+    }
     setAddingQuestion(true);
     setError('');
     setMessage('');
@@ -357,6 +382,12 @@ export default function QuizDetailPage() {
       setSubmitting(false);
     }
   };
+
+  // ---------------------------------------------------------------
+  // M20: quiz progress derived from selections (no extra state).
+  // ---------------------------------------------------------------
+  const answeredCount = (quiz?.questions || []).filter((q) => (selections[q.id] || []).length > 0).length;
+  const unansweredQuestions = (quiz?.questions || []).filter((q) => (selections[q.id] || []).length === 0);
 
   // ---------------------------------------------------------------
   // Render
@@ -484,7 +515,7 @@ export default function QuizDetailPage() {
         ----------------------------------------------------- */}
       {isStudent && takingQuiz && activeAttempt && (
         <div className="mt-8">
-          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex items-center justify-between gap-4 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] px-4 py-3 sm:px-5">
+          <div className="sticky top-16 z-10 -mx-1 mb-6 mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] px-4 py-3 sm:px-5">
             <span className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               <svg
                 className="h-4 w-4 text-gray-400 dark:text-gray-500"
@@ -498,23 +529,61 @@ export default function QuizDetailPage() {
               </svg>
               Time remaining
             </span>
-            <span
-              className={`rounded-lg px-2.5 py-1 font-mono text-lg font-bold tabular-nums ${
-                secondsLeft <= 60
-                  ? 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse'
-                  : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-              }`}
-              role="timer"
-              aria-live="off"
-            >
-              {formatTimer(secondsLeft)}
+            {/* M20: timer stays aria-live=off (no per-second SR spam); a
+              "Low time" status badge announces once when time runs short,
+              plus visible low-time styling for sighted users. */}
+            <span className="flex items-center gap-2">
+              {secondsLeft <= 60 && (
+                <span
+                  role="status"
+                  className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-red-600 dark:bg-red-500/15 dark:text-red-400"
+                >
+                  Low time
+                </span>
+              )}
+              <span
+                className={`rounded-lg px-2.5 py-1 font-mono text-lg font-bold tabular-nums ${
+                  secondsLeft <= 60
+                    ? 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400 animate-pulse'
+                    : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                }`}
+                role="timer"
+                aria-live="off"
+                aria-label={`Time remaining ${formatTimer(secondsLeft)}`}
+              >
+                {formatTimer(secondsLeft)}
+              </span>
+            </span>
+            {/* M20: answered-count progress (updates without re-render cost
+              beyond this bar). */}
+            <span className="flex w-full items-center gap-2 sm:w-auto sm:min-w-48" aria-hidden="true">
+              <span className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 sm:w-32 sm:flex-none">
+                <span
+                  className="block h-full rounded-full bg-primary-600 transition-all"
+                  style={{
+                    width: `${quiz.questions?.length ? Math.round((answeredCount / quiz.questions.length) * 100) : 0}%`,
+                  }}
+                />
+              </span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {answeredCount} of {quiz.questions?.length || 0} answered
+              </span>
+            </span>
+            <span className="sr-only" role="status">
+              {answeredCount} of {quiz.questions?.length || 0} questions answered
             </span>
           </div>
 
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSubmit(selections);
+              // M20: accidental submits lose marks - confirm when questions
+              // are unanswered instead of firing straight away.
+              if (unansweredQuestions.length > 0) {
+                setShowConfirm(true);
+              } else {
+                handleSubmit(selections);
+              }
             }}
             className="space-y-6"
           >
@@ -565,6 +634,17 @@ export default function QuizDetailPage() {
                       );
                     })}
                   </fieldset>
+                  {/* M20: radios cannot be unchecked by click - offer an
+                    explicit clear for single-choice questions. */}
+                  {question.type === 'SINGLE_CHOICE' && selected.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelections((prev) => ({ ...prev, [question.id]: [] }))}
+                      className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Clear selection
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -577,16 +657,90 @@ export default function QuizDetailPage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`${buttonPrimary} px-6`}
-            >
-              {submitting && <Spinner />}
-              {submitting ? 'Submitting…' : 'Submit Quiz'}
-            </button>
+            {/* M20: sticky submit footer - progress stays visible on long
+              quizzes instead of only a bottom button. */}
+            <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200/70 bg-white/95 px-4 py-3 shadow-card ring-1 ring-black/[0.02] backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 dark:ring-white/[0.03] sm:px-5">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {answeredCount} of {quiz.questions?.length || 0} answered
+                {unansweredQuestions.length > 0 && (
+                  <span className="text-gray-400 dark:text-gray-500"> ({unansweredQuestions.length} unanswered)</span>
+                )}
+              </span>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`${buttonPrimary} px-6`}
+              >
+                {submitting && <Spinner />}
+                {submitting ? 'Submitting…' : 'Review & Submit'}
+              </button>
+            </div>
           </form>
+
+          {/* M20: submit confirmation listing unanswered questions. */}
+          <Modal open={showConfirm} onClose={() => setShowConfirm(false)} title="Submit quiz?">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              You answered {answeredCount} of {quiz.questions?.length || 0} questions.
+            </p>
+            {unansweredQuestions.length > 0 && (
+              <ul className="mt-3 max-h-48 space-y-1 overflow-y-auto rounded-lg bg-gray-50 p-3 text-sm text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                {unansweredQuestions.map((q) => {
+                  const n = (quiz.questions || []).findIndex((x) => x.id === q.id) + 1;
+                  return <li key={q.id}>Question {n}: {q.prompt}</li>;
+                })}
+              </ul>
+            )}
+            <div className="mt-5 flex justify-end gap-3">
+              <button onClick={() => setShowConfirm(false)} className={buttonSecondary}>
+                Keep answering
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirm(false);
+                  handleSubmit(selections);
+                }}
+                disabled={submitting}
+                className={buttonPrimary}
+              >
+                Submit anyway
+              </button>
+            </div>
+          </Modal>
         </div>
+      )}
+
+      {/* M20: resume confirmation - entering a timed attempt is explicit. */}
+      {isStudent && pendingResume && !takingQuiz && (
+        <Modal
+          open={!!pendingResume}
+          onClose={() => {
+            setPendingResume(null);
+            setResumeDismissed(true);
+          }}
+          title="Resume quiz attempt?"
+        >
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You have an attempt still in progress
+            {pendingResume.expiresAt && (
+              <> (expires {new Date(pendingResume.expiresAt).toLocaleTimeString()})</>
+            )}
+            . Resuming restarts the countdown immediately.
+          </p>
+          <div className="mt-5 flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setPendingResume(null);
+                setResumeDismissed(true);
+              }}
+              className={buttonSecondary}
+            >
+              Not now
+            </button>
+            <button onClick={confirmResume} className={buttonPrimary}>
+              Resume attempt
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* -----------------------------------------------------
@@ -780,10 +934,17 @@ export default function QuizDetailPage() {
                         name="correct-option"
                         checked={option.isCorrect}
                         onChange={() =>
+                          // M20: single-choice radios enforce exactly one
+                          // correct option (previously each toggled
+                          // independently, allowing 0 or N correct).
                           setQuestionDraft((prev) => ({
                             ...prev,
                             options: prev.options.map((o, i) =>
-                              i === optIndex ? { ...o, isCorrect: !o.isCorrect } : o
+                              prev.type === 'MULTIPLE_CHOICE'
+                                ? i === optIndex
+                                  ? { ...o, isCorrect: !o.isCorrect }
+                                  : o
+                                : { ...o, isCorrect: i === optIndex }
                             ),
                           }))
                         }

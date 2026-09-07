@@ -105,7 +105,18 @@ export default function LoginPage() {
   }
 
   // Only follow same-origin relative redirects to avoid open redirects.
-  const requestedRedirect = searchParams.get('redirect') || '/';
+  // O3: single redirect source of truth - ?redirect= wins, otherwise the
+  // session expirer stashed the destination in sessionStorage (background
+  // 401s have no ?redirect= to carry it).
+  const requestedRedirect = (() => {
+    const param = searchParams.get('redirect');
+    if (param) return param;
+    try {
+      return sessionStorage.getItem('postLoginRedirect') || '/';
+    } catch {
+      return '/';
+    }
+  })();
   const redirectTo =
     requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/';
 

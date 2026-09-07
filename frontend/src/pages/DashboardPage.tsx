@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useApi } from '../hooks/useApi';
 import StatusBadge from '../components/StatusBadge';
 import {
   Card,
@@ -241,18 +242,14 @@ function InteractiveCourseList<
 /* ------------------------------------------------- Admin dashboard --- */
 
 function AdminDashboard() {
-  const [data, setData] = useState<AdminDashboardData | null>(null);
-  const [error, setError] = useState('');
+  // M17: page loads go through useApi - server messages survive, retry
+  // re-fetches in place instead of wiping state with location.reload().
+  const { data, loading, error, reload } = useApi<AdminDashboardData>((signal) =>
+    api.get('/dashboard/admin', { signal }).then((res) => res.data.data)
+  );
 
-  useEffect(() => {
-    api
-      .get('/dashboard/admin')
-      .then((res) => setData(res.data.data))
-      .catch(() => setError('Failed to load dashboard'));
-  }, []);
-
-  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
-  if (!data) return <LoadingState label="Loading dashboard…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (loading || !data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   const quickLinks = [
@@ -308,18 +305,12 @@ function AdminDashboard() {
 /* ----------------------------------------------- Teacher dashboard --- */
 
 function TeacherDashboard() {
-  const [data, setData] = useState<TeacherDashboardData | null>(null);
-  const [error, setError] = useState('');
+  const { data, loading, error, reload } = useApi<TeacherDashboardData>((signal) =>
+    api.get('/dashboard/teacher', { signal }).then((res) => res.data.data)
+  );
 
-  useEffect(() => {
-    api
-      .get('/dashboard/teacher')
-      .then((res) => setData(res.data.data))
-      .catch(() => setError('Failed to load dashboard'));
-  }, []);
-
-  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
-  if (!data) return <LoadingState label="Loading dashboard…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (loading || !data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (
@@ -403,18 +394,12 @@ function TeacherDashboard() {
 /* ----------------------------------------------- Student dashboard --- */
 
 function StudentDashboard() {
-  const [data, setData] = useState<StudentDashboardData | null>(null);
-  const [error, setError] = useState('');
+  const { data, loading, error, reload } = useApi<StudentDashboardData>((signal) =>
+    api.get('/dashboard/student', { signal }).then((res) => res.data.data)
+  );
 
-  useEffect(() => {
-    api
-      .get('/dashboard/student')
-      .then((res) => setData(res.data.data))
-      .catch(() => setError('Failed to load dashboard'));
-  }, []);
-
-  if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
-  if (!data) return <LoadingState label="Loading dashboard…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (loading || !data) return <LoadingState label="Loading dashboard…" />;
 
   const s = data.stats;
   return (

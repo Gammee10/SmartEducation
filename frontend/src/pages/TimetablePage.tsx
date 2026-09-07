@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useApi } from '../hooks/useApi';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -28,9 +29,18 @@ interface NewSlotForm {
 export default function TimetablePage() {
   usePageTitle('Timetable');
   const { isAdmin } = useAuth();
-  const [slots, setSlots] = useState<TimetableSlot[]>([]);
+  // M17: slot loading goes through useApi (abort-safe, server messages,
+  // in-place reload for mutations).
+  const {
+    data: loadedSlots,
+    loading,
+    error: loadError,
+    reload,
+  } = useApi<TimetableSlot[]>((signal) =>
+    api.get('/timetable', { signal }).then((res) => res.data.data.slots)
+  );
+  const slots = loadedSlots ?? [];
   const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
   const [message, setMessage] = useState('');
@@ -44,29 +54,20 @@ export default function TimetablePage() {
     room: '',
   });
 
-  const loadSlots = useCallback(() => {
-    setLoading(true);
-    setError('');
-    api
-      .get('/timetable')
-      .then((res) => setSlots(res.data.data.slots))
-      .catch(() => setError('Failed to load timetable'))
-      .finally(() => setLoading(false));
-  }, []);
+  const displayError = error || loadError;
 
   useEffect(() => {
-    loadSlots();
     // Surface course-list failures instead of silently rendering an empty
-    // course dropdown for admins.
+    // course dropdown for admins (server message preserved).
     if (isAdmin) {
       api
         .get('/courses')
         .then((res) => setCourses(res.data.data.courses || res.data.data))
-        .catch(() =>
-          setError('Failed to load courses. You may not be able to add slots until this is fixed.')
+        .catch((err: any) =>
+          setError(`${getApiError(err, 'Failed to load courses')} You may not be able to add slots until this is fixed.`)
         );
     }
-  }, [loadSlots, isAdmin]);
+  }, [isAdmin]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +83,7 @@ export default function TimetablePage() {
       });
       setMessage('Timetable slot created');
       setShowForm(false);
-      loadSlots();
+      reload();
     } catch (err: any) {
       setFormError(getApiError(err, 'Failed to create slot'));
     } finally {
@@ -97,7 +98,7 @@ export default function TimetablePage() {
     try {
       await api.delete(`/timetable/${id}`);
       setMessage('Timetable slot deleted');
-      loadSlots();
+      reload();
     } catch (err: any) {
       setError(getApiError(err, 'Failed to delete slot'));
     }
@@ -120,9 +121,9 @@ export default function TimetablePage() {
         }
       />
 
-      {error && (
+      {displayError && (
         <div className="mb-4">
-          <Banner tone="error" message={error} />
+          <Banner tone="error" message={displayError} />
         </div>
       )}
       {message && (

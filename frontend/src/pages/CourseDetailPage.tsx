@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import SafeLink from '../components/SafeLink';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -649,14 +650,12 @@ export default function CourseDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-2 sm:ml-4">
-                    <a
+                    <SafeLink
                       href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-700"
                     >
                       Open
-                    </a>
+                    </SafeLink>
                     {isTeacher && (
                       <button
                         onClick={() => handleArchive(item.id)}

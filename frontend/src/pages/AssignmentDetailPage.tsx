@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import SafeLink from '../components/SafeLink';
 import {
   buttonPrimary,
   EmptyState,
@@ -209,14 +210,12 @@ export default function AssignmentDetailPage() {
               {mySubmission.fileUrl && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Submitted file</h4>
-                  <a
+                  <SafeLink
                     href={mySubmission.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="text-sm text-primary-600 hover:text-primary-700 underline"
                   >
                     Open file{mySubmission.mimeType ? ` (${mySubmission.mimeType})` : ''}
-                  </a>
+                  </SafeLink>
                 </div>
               )}
 
@@ -315,14 +314,12 @@ export default function AssignmentDetailPage() {
                     </p>
                   )}
                   {sub.fileUrl && (
-                    <a
+                    <SafeLink
                       href={sub.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="text-sm text-primary-600 hover:text-primary-700 underline inline-block mb-3"
                     >
                       Open submitted file
-                    </a>
+                    </SafeLink>
                   )}
 
                   {isTeacher ? (

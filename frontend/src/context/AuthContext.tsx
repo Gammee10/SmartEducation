@@ -47,6 +47,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // H10: quiz drafts and redirect targets must not leak across sessions
+    // on shared school computers - clear any quiz/attempt-scoped keys plus
+    // the post-login redirect.
+    try {
+      const doomed: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && /^(quiz|attempt|draft)[-_]/i.test(key)) doomed.push(key);
+      }
+      doomed.forEach((k) => localStorage.removeItem(k));
+      sessionStorage.removeItem('postLoginRedirect');
+    } catch {
+      // storage unavailable - nothing to clear
+    }
     setUser(null);
   }, []);
 
@@ -57,21 +71,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return userData;
-    } catch (err) {
-      logout();
+    } catch (err: any) {
+      // H10: only a 401 means the session is actually dead (expired or
+      // revoked). A network blip keeps the cached user instead of logging
+      // out from under in-progress work.
+      if (err?.response?.status === 401) {
+        logout();
+      }
       throw err;
     }
   }, [logout]);
 
   useEffect(() => {
+    // H10: always revalidate on mount. A cached user with an expired or
+    // revoked (server-side tokenVersion) token must not look authenticated
+    // until the first 401 proves otherwise.
     const token = localStorage.getItem('token');
-    if (token && !user) {
-      setLoading(true);
-      refreshUser()
-        .catch(() => {})
-        .finally(() => setLoading(false));
+    if (!token) {
+      setLoading(false);
+      return;
     }
-  }, [user, refreshUser]);
+    let cancelled = false;
+    setLoading(true);
+    refreshUser()
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshUser]);
 
   // The API client dispatches this when any authenticated request comes
   // back 401 (expired/revoked session). Clear user state so protected

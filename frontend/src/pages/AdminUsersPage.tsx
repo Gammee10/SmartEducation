@@ -1,6 +1,7 @@
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useEffect, useState, useCallback, FormEvent, ChangeEvent } from 'react';
+import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
 import api from '../api/client';
+import { useApi } from '../hooks/useApi';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -27,15 +28,32 @@ const emptyCreateForm = {
 
 export default function AdminUsersPage() {
   usePageTitle('User Management');
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-
-  // Filters
+  // Filters (declared before the list hook - they drive refetching).
   const [roleFilter, setRoleFilter] = useState('');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  // M17: list loading goes through useApi (abort-safe, server messages,
+  // in-place reload for mutations).
+  const {
+    data: loadedUsers,
+    loading,
+    error: loadError,
+    reload,
+  } = useApi<AdminUser[]>(
+    (signal) =>
+      api
+        .get('/users', {
+          params: { role: roleFilter || undefined, search: search || undefined, pageSize: 100 },
+          signal,
+        })
+        .then((res) => res.data.data.users),
+    [roleFilter, search]
+  );
+  const users = loadedUsers ?? [];
+  const load = reload;
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const displayError = error || loadError;
 
   // Debounce the search box so typing does not fire a request per keystroke
   useEffect(() => {
@@ -57,25 +75,6 @@ export default function AdminUsersPage() {
   const [csvText, setCsvText] = useState('');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    api
-      .get('/users', {
-        params: {
-          role: roleFilter || undefined,
-          search: search || undefined,
-          pageSize: 100,
-        },
-      })
-      .then((res) => setUsers(res.data.data.users))
-      .catch(() => setError('Failed to load users'))
-      .finally(() => setLoading(false));
-  }, [roleFilter, search]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -175,9 +174,9 @@ export default function AdminUsersPage() {
         }
       />
 
-      {error && (
+      {displayError && (
         <div className="mb-4">
-          <Banner tone="error" message={error} />
+          <Banner tone="error" message={displayError} />
         </div>
       )}
       {message && (

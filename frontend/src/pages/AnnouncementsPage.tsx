@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useApi } from '../hooks/useApi';
 import {
   buttonPrimary,
   buttonSecondary,
@@ -20,28 +21,26 @@ const emptyForm = { title: '', body: '', audience: 'ALL' as AudienceScope };
 
 export default function AnnouncementsPage() {
   usePageTitle('Announcements');
-  const { isAdmin, isTeacher } = useAuth();
+  const { isAdmin, isTeacher, user } = useAuth();
   const canPost = isAdmin || isTeacher;
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
+  // M17: list loading goes through useApi (abort-safe, server messages,
+  // in-place reload for mutations).
+  const {
+    data: loaded,
+    loading,
+    error: loadError,
+    reload,
+  } = useApi<Announcement[]>((signal) =>
+    api.get('/announcements', { params: { pageSize: 50 }, signal }).then((res) => res.data.data.announcements)
+  );
+  const announcements = loaded ?? [];
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    api
-      .get('/announcements', { params: { pageSize: 50 } })
-      .then((res) => setAnnouncements(res.data.data.announcements))
-      .catch(() => setError('Failed to load announcements'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Load errors surface next to mutation errors (server message preserved).
+  const displayError = error || loadError;
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -53,7 +52,7 @@ export default function AnnouncementsPage() {
       setMessage('Announcement published');
       setShowForm(false);
       setForm(emptyForm);
-      load();
+      reload();
     } catch (err: any) {
       setError(getApiError(err, 'Failed to publish announcement'));
     } finally {
@@ -65,7 +64,7 @@ export default function AnnouncementsPage() {
     if (!window.confirm('Delete this announcement?')) return;
     try {
       await api.delete(`/announcements/${id}`);
-      load();
+      reload();
     } catch (err: any) {
       setError(getApiError(err, 'Failed to delete announcement'));
     }
@@ -88,9 +87,9 @@ export default function AnnouncementsPage() {
         }
       />
 
-      {error && (
+      {displayError && (
         <div className="mb-4">
-          <Banner tone="error" message={error} />
+          <Banner tone="error" message={displayError} />
         </div>
       )}
       {message && (
@@ -173,7 +172,8 @@ export default function AnnouncementsPage() {
                     <span className="uppercase tracking-wide">{a.audience}</span>
                   </p>
                 </div>
-                {isAdmin && (
+                {/* M8: owners can delete their own announcements, admins any. */}
+                {(isAdmin || a.publishedBy?.id === user?.id) && (
                   <button
                     onClick={() => handleDelete(a.id)}
                     className="flex-shrink-0 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-colors duration-150 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-60 dark:border-red-500/30 dark:bg-gray-900 dark:hover:bg-red-500/10"

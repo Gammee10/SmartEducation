@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { subscribeNotificationsChanged } from '../utils/notificationBus';
 import ThemeToggleButton from './ThemeToggleButton';
 import { Icon, Avatar, type IconName } from './ui';
 
@@ -285,36 +286,44 @@ export default function Layout() {
     });
   };
 
-  const refreshUnread = useCallback(() => {
+  const refreshUnread = useCallback((signal?: AbortSignal) => {
     api
-      .get('/notifications/unread-count')
+      .get('/notifications/unread-count', { signal })
       .then((res) => {
         failuresRef.current = 0;
         setUnreadCount(res.data.data.count);
       })
-      .catch(() => {
+      .catch((err: any) => {
+        // Aborted superseded polls are not failures.
+        if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') return;
         failuresRef.current += 1;
       });
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     let timer: number;
     const schedule = () => {
       const delay = Math.min(30000 * 2 ** failuresRef.current, 300000);
       timer = window.setTimeout(() => {
-        if (!document.hidden) refreshUnread();
+        if (!document.hidden) refreshUnread(controller.signal);
         schedule();
       }, delay);
     };
-    refreshUnread();
+    refreshUnread(controller.signal);
     schedule();
     const onVisibilityChange = () => {
-      if (!document.hidden) refreshUnread();
+      if (!document.hidden) refreshUnread(controller.signal);
     };
+    // M19: mark-read on NotificationsPage refreshes the badge immediately
+    // instead of waiting for the next poll tick.
+    const unsubscribe = subscribeNotificationsChanged(() => refreshUnread(controller.signal));
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      unsubscribe();
+      controller.abort();
     };
   }, [refreshUnread]);
 

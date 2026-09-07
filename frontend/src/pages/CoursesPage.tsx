@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo, FormEvent } from 'react';
+import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useApi } from '../hooks/useApi';
 import StatusBadge from '../components/StatusBadge';
 import {
   buttonPrimary,
@@ -62,9 +63,19 @@ type SortMode = 'title' | 'subject' | 'students';
 export default function CoursesPage() {
   usePageTitle('Courses');
   const { isTeacher } = useAuth();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  // M17: list loading goes through useApi (abort-safe, server messages,
+  // in-place reload for mutations).
+  const {
+    data: loadedCourses,
+    loading,
+    error: loadError,
+    reload,
+  } = useApi<Course[]>((signal) =>
+    api.get('/courses', { params: { pageSize: 100 }, signal }).then((response) => response.data.data)
+  );
+  const courses = useMemo(() => loadedCourses ?? [], [loadedCourses]);
   const [error, setError] = useState('');
+  const displayError = error || loadError;
   const [message, setMessage] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState<CourseForm>(emptyForm);
@@ -74,22 +85,7 @@ export default function CoursesPage() {
   const [sort, setSort] = useState<SortMode>('title');
   const [subjectFilter, setSubjectFilter] = useState<string>('All');
 
-  const fetchCourses = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await api.get('/courses', { params: { pageSize: 100 } });
-      setCourses(response.data.data);
-    } catch (err: unknown) {
-      setError(getApiError(err, 'Failed to load courses'));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+  const fetchCourses = reload;
 
   useEffect(() => {
     if (!message) return;
@@ -162,9 +158,9 @@ export default function CoursesPage() {
           <Banner tone="success" message={message} dismissible onDismiss={() => setMessage('')} />
         </div>
       )}
-      {error && (
+      {displayError && (
         <div className="mb-4">
-          <Banner tone="error" message={error} dismissible onDismiss={() => setError('')} />
+          <Banner tone="error" message={displayError} dismissible onDismiss={() => setError('')} />
         </div>
       )}
 
