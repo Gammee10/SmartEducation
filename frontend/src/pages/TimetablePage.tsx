@@ -72,6 +72,16 @@ export default function TimetablePage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    // L4: client-side range check (mirrors EventsPage) - no roundtrip for
+    // obvious mistakes, and empty/missing times never reach the API.
+    if (!form.courseId) {
+      setFormError('Please select a course');
+      return;
+    }
+    if (!form.startTime || !form.endTime || form.endTime <= form.startTime) {
+      setFormError('End time must be after start time');
+      return;
+    }
     setSaving(true);
     try {
       await api.post('/timetable', {
@@ -143,8 +153,9 @@ export default function TimetablePage() {
             </div>
           )}
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Course</label>
+            <label htmlFor="slot-course" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Course</label>
             <select
+              id="slot-course"
               required
               value={form.courseId}
               onChange={(e) => setForm({ ...form, courseId: e.target.value })}
@@ -159,8 +170,9 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Day</label>
+            <label htmlFor="slot-day" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Day</label>
             <select
+              id="slot-day"
               value={form.dayOfWeek}
               onChange={(e) => setForm({ ...form, dayOfWeek: e.target.value as DayOfWeek })}
               className={inputStyles}
@@ -173,8 +185,9 @@ export default function TimetablePage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Start Time</label>
+            <label htmlFor="slot-start" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Start Time</label>
             <input
+              id="slot-start"
               type="time"
               required
               value={form.startTime}
@@ -183,8 +196,9 @@ export default function TimetablePage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">End Time</label>
+            <label htmlFor="slot-end" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">End Time</label>
             <input
+              id="slot-end"
               type="time"
               required
               value={form.endTime}
@@ -193,8 +207,9 @@ export default function TimetablePage() {
             />
           </div>
           <div className="lg:col-span-2">
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Room (optional)</label>
+            <label htmlFor="slot-room" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Room (optional)</label>
             <input
+              id="slot-room"
               type="text"
               value={form.room}
               onChange={(e) => setForm({ ...form, room: e.target.value })}

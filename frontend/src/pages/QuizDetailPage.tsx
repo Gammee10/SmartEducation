@@ -235,6 +235,18 @@ export default function QuizDetailPage() {
 
   const handleSaveQuiz = async (e: FormEvent) => {
     e.preventDefault();
+    // L4: validate numerics client-side with inline errors (empty/abc must
+    // never roundtrip as NaN).
+    const timeLimit = Number(editForm.timeLimit);
+    const maxAttempts = Number(editForm.maxAttempts);
+    if (!Number.isInteger(timeLimit) || timeLimit < 1 || timeLimit > 300) {
+      setError('Time limit must be a whole number between 1 and 300 minutes');
+      return;
+    }
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 10) {
+      setError('Max attempts must be a whole number between 1 and 10');
+      return;
+    }
     setSaving(true);
     setError('');
     setMessage('');
@@ -242,8 +254,8 @@ export default function QuizDetailPage() {
       await api.put(`/quizzes/${quizId}`, {
         title: editForm.title,
         description: editForm.description,
-        timeLimit: Number(editForm.timeLimit),
-        maxAttempts: Number(editForm.maxAttempts),
+        timeLimit,
+        maxAttempts,
         shuffleQuestions: editForm.shuffleQuestions,
         shuffleOptions: editForm.shuffleOptions,
         status: editForm.status,
@@ -271,6 +283,12 @@ export default function QuizDetailPage() {
       setError('Single-choice questions need exactly one correct option');
       return;
     }
+    // L4: points validated client-side (empty/abc/0 must never roundtrip).
+    const points = Number(questionDraft.points);
+    if (!Number.isInteger(points) || points < 1) {
+      setError('Points must be a positive whole number');
+      return;
+    }
     setAddingQuestion(true);
     setError('');
     setMessage('');
@@ -278,7 +296,7 @@ export default function QuizDetailPage() {
       await api.post(`/quizzes/${quizId}/questions`, {
         prompt: questionDraft.prompt,
         type: questionDraft.type,
-        points: Number(questionDraft.points),
+        points,
         options: questionDraft.options
           .filter((o) => o.optionText.trim())
           .map((o) => ({ optionText: o.optionText.trim(), isCorrect: o.isCorrect })),
@@ -799,8 +817,9 @@ export default function QuizDetailPage() {
           {showEdit && (
             <form onSubmit={handleSaveQuiz} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Title *</label>
+                <label htmlFor="quiz-title" className={labelStyles}>Title *</label>
                 <input
+                  id="quiz-title"
                   type="text"
                   required
                   value={editForm.title}
@@ -809,8 +828,9 @@ export default function QuizDetailPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Description</label>
+                <label htmlFor="quiz-description" className={labelStyles}>Description</label>
                 <textarea
+                  id="quiz-description"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={3}
@@ -818,8 +838,9 @@ export default function QuizDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Time Limit (minutes) *</label>
+                <label htmlFor="quiz-timelimit" className={labelStyles}>Time Limit (minutes) *</label>
                 <input
+                  id="quiz-timelimit"
                   type="number"
                   required
                   min={1}
@@ -830,8 +851,9 @@ export default function QuizDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Max Attempts *</label>
+                <label htmlFor="quiz-maxattempts" className={labelStyles}>Max Attempts *</label>
                 <input
+                  id="quiz-maxattempts"
                   type="number"
                   required
                   min={1}
@@ -842,8 +864,9 @@ export default function QuizDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Status</label>
+                <label htmlFor="quiz-status" className={labelStyles}>Status</label>
                 <select
+                  id="quiz-status"
                   value={editForm.status}
                   onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                   className={inputStyles}
@@ -889,8 +912,9 @@ export default function QuizDetailPage() {
           {showAddQuestion && (
             <form onSubmit={handleAddQuestion} className="rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] space-y-4 p-5">
               <div>
-                <label className={labelStyles}>Question Prompt *</label>
+                <label htmlFor="question-prompt" className={labelStyles}>Question Prompt *</label>
                 <input
+                  id="question-prompt"
                   type="text"
                   required
                   value={questionDraft.prompt}
@@ -901,8 +925,9 @@ export default function QuizDetailPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelStyles}>Type</label>
+                  <label htmlFor="question-type" className={labelStyles}>Type</label>
                   <select
+                    id="question-type"
                     value={questionDraft.type}
                     onChange={(e) => setQuestionDraft({ ...questionDraft, type: e.target.value })}
                     className={inputStyles}
@@ -912,8 +937,9 @@ export default function QuizDetailPage() {
                   </select>
                 </div>
                 <div>
-                  <label className={labelStyles}>Points</label>
+                  <label htmlFor="question-points" className={labelStyles}>Points</label>
                   <input
+                    id="question-points"
                     type="number"
                     required
                     min={1}
@@ -925,7 +951,8 @@ export default function QuizDetailPage() {
               </div>
 
               <div>
-                <label className={`${labelStyles} mb-2`}>Options (mark the correct one)</label>
+                {/* Group label for the option rows (not a single input). */}
+                <span className={`${labelStyles} mb-2 block`}>Options (mark the correct one)</span>
                 <div className="space-y-2">
                   {questionDraft.options.map((option, optIndex) => (
                     <div key={optIndex} className="flex items-center gap-2">

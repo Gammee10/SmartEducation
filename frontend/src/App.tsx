@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import LibraryCatalogPage from './pages/LibraryCatalogPage';
@@ -17,6 +17,7 @@ import EventsPage from './pages/EventsPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ForbiddenPage from './pages/ForbiddenPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -71,9 +72,13 @@ export default function App() {
           }
         />
         <Route path="*" element={<NotFoundPage />} />
+        <Route path="403" element={<ForbiddenPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* O2: unknown top-level paths render NotFound directly - the old
+        outer catch-all bounced everything to / (and was unreachable for
+        authed users anyway since the inner * matches first). */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

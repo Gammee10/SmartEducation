@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -430,8 +430,24 @@ function StudentDashboard() {
 
 export default function DashboardPage() {
   usePageTitle('Dashboard');
-  const { user, isAdmin, isTeacher, isStudent } = useAuth();
-  const now = useClock(1000);
+  const { isAdmin, isTeacher, isStudent } = useAuth();
+
+  return (
+    <div>
+      <DashboardHero />
+      {isAdmin && <AdminDashboard />}
+      {isTeacher && <TeacherDashboard />}
+      {isStudent && <StudentDashboard />}
+    </div>
+  );
+}
+
+// O1: the live clock used to re-render the entire dashboard (stat cards,
+// sparklines, animations) every second. The hero owns a 30s tick and is
+// memoized, so dashboard subtrees render once.
+const DashboardHero = memo(function DashboardHero() {
+  const { user, isAdmin, isTeacher } = useAuth();
+  const now = useClock(30000);
 
   const greeting = greetingForHour(now.getHours());
   const today = now.toLocaleDateString(undefined, {
@@ -455,7 +471,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div>
+      <div>
       {/* Hero banner — solid brand blue in light mode, calm dark surface in dark mode */}
       <div className="relative mb-8 overflow-hidden rounded-2xl bg-primary-700 shadow-card dark:bg-gray-900 dark:shadow-none dark:ring-1 dark:ring-white/10">
         <div
@@ -499,10 +515,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {isAdmin && <AdminDashboard />}
-      {isTeacher && <TeacherDashboard />}
-      {isStudent && <StudentDashboard />}
     </div>
   );
-}
+});

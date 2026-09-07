@@ -29,7 +29,9 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
   }
 
   if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+    // O2: role denials explain themselves on /403 (with the origin kept in
+    // state) instead of silently landing on the dashboard.
+    return <Navigate to="/403" replace state={{ from: location.pathname + location.search }} />;
   }
 
   return <>{children}</>;

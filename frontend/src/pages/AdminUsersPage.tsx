@@ -205,8 +205,9 @@ export default function AdminUsersPage() {
           className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6"
         >
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Full name *</label>
+            <label htmlFor="newuser-fullname" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Full name *</label>
             <input
+              id="newuser-fullname"
               type="text"
               required
               value={createForm.fullName}
@@ -215,8 +216,9 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Email *</label>
+            <label htmlFor="newuser-email" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Email *</label>
             <input
+              id="newuser-email"
               type="email"
               required
               value={createForm.email}
@@ -225,8 +227,9 @@ export default function AdminUsersPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Role *</label>
+            <label htmlFor="newuser-role" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Role *</label>
             <select
+              id="newuser-role"
               value={createForm.role}
               onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
               className={inputStyles}
@@ -237,11 +240,14 @@ export default function AdminUsersPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-              Password (defaults to Password123!)
+            <label htmlFor="newuser-password" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+              Password (leave blank for the configured default)
             </label>
+            {/* O4: masked by default (was plaintext) against shoulder-surfing. */}
             <input
-              type="text"
+              id="newuser-password"
+              type="password"
+              autoComplete="new-password"
               value={createForm.password}
               onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
               className={inputStyles}
@@ -250,8 +256,9 @@ export default function AdminUsersPage() {
           {createForm.role === 'STUDENT' ? (
             <>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Grade level *</label>
+                <label htmlFor="newuser-grade" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Grade level *</label>
                 <input
+                  id="newuser-grade"
                   type="text"
                   required
                   value={createForm.gradeLevel}
@@ -261,8 +268,9 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Section</label>
+                <label htmlFor="newuser-section" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Section</label>
                 <input
+                  id="newuser-section"
                   type="text"
                   value={createForm.section}
                   onChange={(e) => setCreateForm({ ...createForm, section: e.target.value })}
@@ -272,8 +280,9 @@ export default function AdminUsersPage() {
             </>
           ) : (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Subject</label>
+              <label htmlFor="newuser-subject" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Subject</label>
               <input
+                id="newuser-subject"
                 type="text"
                 value={createForm.subject}
                 onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })}

@@ -124,9 +124,25 @@ export default function AdminLibraryPage() {
     e.preventDefault();
     setError('');
     setMessage('');
+    // L4: copies/year posted as clean numbers, not raw strings - "abc" or
+    // empty must never roundtrip and confuse the server.
+    const year = bookForm.publishedYear.trim();
+    if (year && !/^\d{4}$/.test(year)) {
+      setError('Published year must be a 4-digit year');
+      return;
+    }
+    const copies = Number(bookForm.copies);
+    if (!Number.isInteger(copies) || copies < 1 || copies > 500) {
+      setError('Number of copies must be a whole number between 1 and 500');
+      return;
+    }
     setSavingBook(true);
     try {
-      await api.post('/library/books', bookForm);
+      await api.post('/library/books', {
+        ...bookForm,
+        publishedYear: year || undefined,
+        copies,
+      });
       setMessage('Book added successfully');
       setShowAddBook(false);
       setBookForm(emptyForm);
@@ -261,8 +277,9 @@ export default function AdminLibraryPage() {
           {showAddBook && (
             <form onSubmit={handleAddBook} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div>
-                <label className={labelStyles}>Title *</label>
+                <label htmlFor="book-title" className={labelStyles}>Title *</label>
                 <input
+                  id="book-title"
                   type="text"
                   required
                   value={bookForm.title}
@@ -271,8 +288,9 @@ export default function AdminLibraryPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Author *</label>
+                <label htmlFor="book-author" className={labelStyles}>Author *</label>
                 <input
+                  id="book-author"
                   type="text"
                   required
                   value={bookForm.author}
@@ -281,8 +299,9 @@ export default function AdminLibraryPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>ISBN</label>
+                <label htmlFor="book-isbn" className={labelStyles}>ISBN</label>
                 <input
+                  id="book-isbn"
                   type="text"
                   value={bookForm.isbn}
                   onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
@@ -290,8 +309,9 @@ export default function AdminLibraryPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Publisher</label>
+                <label htmlFor="book-publisher" className={labelStyles}>Publisher</label>
                 <input
+                  id="book-publisher"
                   type="text"
                   value={bookForm.publisher}
                   onChange={(e) => setBookForm({ ...bookForm, publisher: e.target.value })}
@@ -299,17 +319,21 @@ export default function AdminLibraryPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Published Year</label>
+                <label htmlFor="book-year" className={labelStyles}>Published Year</label>
                 <input
+                  id="book-year"
                   type="number"
+                  min="1900"
+                  max="2100"
                   value={bookForm.publishedYear}
                   onChange={(e) => setBookForm({ ...bookForm, publishedYear: e.target.value })}
                   className={inputStyles}
                 />
               </div>
               <div>
-                <label className={labelStyles}>Category</label>
+                <label htmlFor="book-category" className={labelStyles}>Category</label>
                 <input
+                  id="book-category"
                   type="text"
                   value={bookForm.category}
                   onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
@@ -317,18 +341,21 @@ export default function AdminLibraryPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Number of Copies</label>
+                <label htmlFor="book-copies" className={labelStyles}>Number of Copies</label>
                 <input
+                  id="book-copies"
                   type="number"
                   min="1"
+                  max="500"
                   value={bookForm.copies}
                   onChange={(e) => setBookForm({ ...bookForm, copies: e.target.value })}
                   className={inputStyles}
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Description</label>
+                <label htmlFor="book-description" className={labelStyles}>Description</label>
                 <textarea
+                  id="book-description"
                   value={bookForm.description}
                   onChange={(e) => setBookForm({ ...bookForm, description: e.target.value })}
                   rows={3}

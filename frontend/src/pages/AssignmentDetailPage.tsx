@@ -61,6 +61,13 @@ export default function AssignmentDetailPage() {
     setError('');
     setMessage('');
     try {
+      // L4: instant client rejection for oversized files instead of a 120s
+      // hung upload that the server would refuse anyway.
+      if (file && file.size > 20 * 1024 * 1024) {
+        setError('File is too large (maximum 20MB)');
+        setSubmitting(false);
+        return;
+      }
       const formData = new FormData();
       formData.append('content', content);
       if (file) formData.append('file', file);
@@ -79,12 +86,24 @@ export default function AssignmentDetailPage() {
 
   const handleGrade = async (submissionId: string, e: FormEvent) => {
     e.preventDefault();
+    // L4: validate the score client-side with an inline error instead of a
+    // confusing server 400 (empty/abc input must never reach the API).
+    const rawScore = gradeScores[submissionId];
+    const score = Number(rawScore);
+    if (rawScore === undefined || rawScore === '' || !Number.isFinite(score) || score < 0) {
+      setError('Score must be a number of 0 or more');
+      return;
+    }
+    if (assignment && score > assignment.maxScore) {
+      setError(`Score cannot exceed the max score (${assignment.maxScore})`);
+      return;
+    }
     setGradingId(submissionId);
     setError('');
     setMessage('');
     try {
       await api.post(`/submissions/${submissionId}/grade`, {
-        score: Number(gradeScores[submissionId] || 0),
+        score,
         feedback: gradeFeedbacks[submissionId] || '',
       });
       setMessage('Submission graded');
@@ -245,8 +264,9 @@ export default function AssignmentDetailPage() {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className={labelStyles}>Your answer</label>
+                    <label htmlFor="submit-answer" className={labelStyles}>Your answer</label>
                     <textarea
+                      id="submit-answer"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       rows={5}
@@ -255,8 +275,9 @@ export default function AssignmentDetailPage() {
                     />
                   </div>
                   <div>
-                    <label className={labelStyles}>Attach a file (optional, max 20MB)</label>
+                    <label htmlFor="submit-file" className={labelStyles}>Attach a file (optional, max 20MB)</label>
                     <input
+                      id="submit-file"
                       type="file"
                       onChange={(e) => setFile(e.target.files?.[0] || null)}
                       className="mt-1.5 block w-full cursor-pointer text-sm text-gray-600 dark:text-gray-400 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-500/10 dark:file:text-primary-400 hover:dark:file:bg-primary-500/20"
@@ -328,10 +349,14 @@ export default function AssignmentDetailPage() {
                       className="border-t border-gray-200 dark:border-gray-700 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3"
                     >
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        <label
+                          htmlFor={`grade-score-${sub.id}`}
+                          className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        >
                           Score (max {assignment.maxScore})
                         </label>
                         <input
+                          id={`grade-score-${sub.id}`}
                           type="number"
                           required
                           min={0}
@@ -343,8 +368,14 @@ export default function AssignmentDetailPage() {
                         />
                       </div>
                       <div className="sm:col-span-1">
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Feedback</label>
+                        <label
+                          htmlFor={`grade-feedback-${sub.id}`}
+                          className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        >
+                          Feedback
+                        </label>
                         <input
+                          id={`grade-feedback-${sub.id}`}
                           type="text"
                           value={gradeFeedbacks[sub.id] ?? sub.feedback ?? ''}
                           onChange={(e) => setGradeFeedbacks({ ...gradeFeedbacks, [sub.id]: e.target.value })}

@@ -306,8 +306,9 @@ export default function CoursesPage() {
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create a new course" wide>
         <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className={labelStyles}>Title *</label>
+            <label htmlFor="course-title" className={labelStyles}>Title *</label>
             <input
+              id="course-title"
               type="text"
               required
               autoFocus
@@ -318,8 +319,9 @@ export default function CoursesPage() {
             />
           </div>
           <div>
-            <label className={labelStyles}>Subject *</label>
+            <label htmlFor="course-subject" className={labelStyles}>Subject *</label>
             <input
+              id="course-subject"
               type="text"
               required
               value={form.subject}
@@ -329,8 +331,9 @@ export default function CoursesPage() {
             />
           </div>
           <div>
-            <label className={labelStyles}>Grade Level *</label>
+            <label htmlFor="course-grade" className={labelStyles}>Grade Level *</label>
             <input
+              id="course-grade"
               type="text"
               required
               value={form.gradeLevel}
@@ -340,8 +343,9 @@ export default function CoursesPage() {
             />
           </div>
           <div>
-            <label className={labelStyles}>Status</label>
+            <label htmlFor="course-status" className={labelStyles}>Status</label>
             <select
+              id="course-status"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
               className={inputStyles}
@@ -351,15 +355,16 @@ export default function CoursesPage() {
             </select>
           </div>
           <div>
-            <label className={labelStyles}>Preview</label>
+            <span className={labelStyles} aria-hidden="true">Preview</span>
             <div className={`flex h-[46px] items-center gap-2 rounded-xl px-3 text-white ${subjectTileClass(form.subject || undefined)}`}>
               <Icon name="book" className="h-4 w-4" />
               <span className="truncate text-sm font-semibold">{form.title || 'Course title…'}</span>
             </div>
           </div>
           <div className="sm:col-span-2">
-            <label className={labelStyles}>Description</label>
+            <label htmlFor="course-description" className={labelStyles}>Description</label>
             <textarea
+              id="course-description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}

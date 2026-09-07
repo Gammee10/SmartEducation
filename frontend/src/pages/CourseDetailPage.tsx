@@ -259,6 +259,12 @@ export default function CourseDetailPage() {
 
   const handleCreateAssignment = async (e: FormEvent) => {
     e.preventDefault();
+    // L4: numeric guard with inline error (empty/abc must never roundtrip).
+    const maxScore = Number(assignmentForm.maxScore);
+    if (!Number.isInteger(maxScore) || maxScore < 1) {
+      setError('Max score must be a positive whole number');
+      return;
+    }
     setCreatingAssignment(true);
     setError('');
     setMessage('');
@@ -266,7 +272,7 @@ export default function CourseDetailPage() {
       await api.post(`/courses/${id}/assignments`, {
         title: assignmentForm.title,
         instructions: assignmentForm.instructions,
-        maxScore: Number(assignmentForm.maxScore),
+        maxScore,
         dueDate: assignmentForm.dueDate || null,
         status: assignmentForm.status,
       });
@@ -283,6 +289,17 @@ export default function CourseDetailPage() {
 
   const handleCreateQuiz = async (e: FormEvent) => {
     e.preventDefault();
+    // L4: numeric guards with inline errors (empty/abc must never roundtrip).
+    const timeLimit = Number(quizForm.timeLimit);
+    const maxAttempts = Number(quizForm.maxAttempts);
+    if (!Number.isInteger(timeLimit) || timeLimit < 1 || timeLimit > 300) {
+      setError('Time limit must be a whole number between 1 and 300 minutes');
+      return;
+    }
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 10) {
+      setError('Max attempts must be a whole number between 1 and 10');
+      return;
+    }
     setCreatingQuiz(true);
     setError('');
     setQuizMessage('');
@@ -290,8 +307,8 @@ export default function CourseDetailPage() {
       await api.post(`/courses/${id}/quizzes`, {
         title: quizForm.title,
         description: quizForm.description,
-        timeLimit: Number(quizForm.timeLimit),
-        maxAttempts: Number(quizForm.maxAttempts),
+        timeLimit,
+        maxAttempts,
         shuffleQuestions: quizForm.shuffleQuestions,
         shuffleOptions: quizForm.shuffleOptions,
         status: quizForm.status,
@@ -557,8 +574,9 @@ export default function CourseDetailPage() {
           {showUpload && isTeacher && (
             <form onSubmit={handleUpload} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Title *</label>
+                <label htmlFor="content-title" className={labelStyles}>Title *</label>
                 <input
+                  id="content-title"
                   type="text"
                   required
                   value={form.title}
@@ -568,8 +586,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Type</label>
+                <label htmlFor="content-type" className={labelStyles}>Type</label>
                 <select
+                  id="content-type"
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                   className={inputStyles}
@@ -583,8 +602,9 @@ export default function CourseDetailPage() {
                 </select>
               </div>
               <div>
-                <label className={labelStyles}>URL *</label>
+                <label htmlFor="content-url" className={labelStyles}>URL *</label>
                 <input
+                  id="content-url"
                   type="url"
                   required
                   value={form.url}
@@ -594,8 +614,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Description</label>
+                <label htmlFor="content-description" className={labelStyles}>Description</label>
                 <textarea
+                  id="content-description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
@@ -691,8 +712,9 @@ export default function CourseDetailPage() {
           {showCreateAssignment && isTeacher && (
             <form onSubmit={handleCreateAssignment} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Title *</label>
+                <label htmlFor="assignment-title" className={labelStyles}>Title *</label>
                 <input
+                  id="assignment-title"
                   type="text"
                   required
                   value={assignmentForm.title}
@@ -702,8 +724,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Instructions</label>
+                <label htmlFor="assignment-instructions" className={labelStyles}>Instructions</label>
                 <textarea
+                  id="assignment-instructions"
                   value={assignmentForm.instructions}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, instructions: e.target.value })}
                   rows={3}
@@ -712,8 +735,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Max Score *</label>
+                <label htmlFor="assignment-maxscore" className={labelStyles}>Max Score *</label>
                 <input
+                  id="assignment-maxscore"
                   type="number"
                   required
                   min={1}
@@ -723,8 +747,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Due Date</label>
+                <label htmlFor="assignment-duedate" className={labelStyles}>Due Date</label>
                 <input
+                  id="assignment-duedate"
                   type="datetime-local"
                   value={assignmentForm.dueDate}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, dueDate: e.target.value })}
@@ -732,8 +757,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Status</label>
+                <label htmlFor="assignment-status" className={labelStyles}>Status</label>
                 <select
+                  id="assignment-status"
                   value={assignmentForm.status}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, status: e.target.value })}
                   className={inputStyles}
@@ -858,8 +884,9 @@ export default function CourseDetailPage() {
           {showCreateQuiz && isTeacher && (
             <form onSubmit={handleCreateQuiz} className="mb-6 rounded-2xl border border-gray-200/70 bg-white shadow-card ring-1 ring-black/[0.02] dark:border-gray-800 dark:bg-gray-900 dark:ring-white/[0.03] p-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:p-6">
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Title *</label>
+                <label htmlFor="quiz-new-title" className={labelStyles}>Title *</label>
                 <input
+                  id="quiz-new-title"
                   type="text"
                   required
                   value={quizForm.title}
@@ -869,8 +896,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className={labelStyles}>Description</label>
+                <label htmlFor="quiz-new-description" className={labelStyles}>Description</label>
                 <textarea
+                  id="quiz-new-description"
                   value={quizForm.description}
                   onChange={(e) => setQuizForm({ ...quizForm, description: e.target.value })}
                   rows={2}
@@ -878,8 +906,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Time Limit (minutes) *</label>
+                <label htmlFor="quiz-new-timelimit" className={labelStyles}>Time Limit (minutes) *</label>
                 <input
+                  id="quiz-new-timelimit"
                   type="number"
                   required
                   min={1}
@@ -890,8 +919,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Max Attempts *</label>
+                <label htmlFor="quiz-new-maxattempts" className={labelStyles}>Max Attempts *</label>
                 <input
+                  id="quiz-new-maxattempts"
                   type="number"
                   required
                   min={1}
@@ -902,8 +932,9 @@ export default function CourseDetailPage() {
                 />
               </div>
               <div>
-                <label className={labelStyles}>Status</label>
+                <label htmlFor="quiz-new-status" className={labelStyles}>Status</label>
                 <select
+                  id="quiz-new-status"
                   value={quizForm.status}
                   onChange={(e) => setQuizForm({ ...quizForm, status: e.target.value })}
                   className={inputStyles}
