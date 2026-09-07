@@ -236,7 +236,8 @@ model CourseEnrollment {
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt @map("updated_at")
 
-  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting a course must never wipe enrollment history.
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Restrict)
   student     Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
   enrolledBy  User    @relation("EnrollmentActor", fields: [enrolledById], references: [id], onDelete: Restrict)
 
@@ -261,7 +262,8 @@ model ContentItem {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  course       Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): course deletion must not destroy learning materials.
+  course       Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
   uploadedBy   User   @relation("ContentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
 
   @@index([courseId, isArchived])
@@ -286,7 +288,8 @@ model Assignment {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
-  course       Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): assignments + submissions + grades survive course deletion.
+  course       Course                 @relation(fields: [courseId], references: [id], onDelete: Restrict)
   createdBy    User                   @relation("AssignmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
   submissions  AssignmentSubmission[]
 
@@ -316,7 +319,8 @@ model AssignmentSubmission {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
 
-  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting an assignment must not wipe submissions/grades.
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
   student    Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
   gradedBy   User?      @relation("SubmissionGrader", fields: [gradedById], references: [id], onDelete: SetNull)
 
@@ -364,7 +368,8 @@ model Quiz {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  course    Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): quizzes + questions + attempts + answers survive course deletion.
+  course    Course                 @relation(fields: [courseId], references: [id], onDelete: Restrict)
   createdBy User                   @relation("QuizCreator", fields: [createdById], references: [id], onDelete: Restrict)
   questions QuizQuestion[]
   attempts  QuizAttempt[]
@@ -386,7 +391,8 @@ model QuizQuestion {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  quiz     Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting a quiz must not wipe questions/attempts history.
+  quiz     Quiz         @relation(fields: [quizId], references: [id], onDelete: Restrict)
   options  QuizOption[]
   answers  QuizAnswer[]
 
@@ -403,7 +409,8 @@ model QuizOption {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting a question must not wipe its options/answers.
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
   answers  QuizAnswer[]
 
   @@index([questionId])
@@ -423,7 +430,8 @@ model QuizAttempt {
   createdAt   DateTime          @default(now()) @map("created_at")
   updatedAt   DateTime          @updatedAt @map("updated_at")
 
-  quiz     Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting a quiz must not wipe attempts/answers.
+  quiz     Quiz          @relation(fields: [quizId], references: [id], onDelete: Restrict)
   student  Student       @relation(fields: [studentId], references: [id], onDelete: Restrict)
   answers  QuizAnswer[]
 
@@ -447,7 +455,8 @@ model QuizAnswer {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  attempt   QuizAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting an attempt must not silently wipe answers.
+  attempt   QuizAttempt   @relation(fields: [attemptId], references: [id], onDelete: Restrict)
   question  QuizQuestion  @relation(fields: [questionId], references: [id], onDelete: Restrict)
   option    QuizOption?   @relation(fields: [optionId], references: [id], onDelete: SetNull)
 
@@ -470,6 +479,7 @@ model Notification {
   metadata  Json?
   createdAt DateTime         @default(now()) @map("created_at")
 
+  // Cascade is intentional here: notifications are strictly owned by the user row.
   user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
@@ -513,7 +523,8 @@ model Attendance {
   updatedAt  DateTime         @updatedAt @map("updated_at")
 
   student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): attendance history survives course deletion.
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Restrict)
   markedBy  User    @relation("AttendanceMarker", fields: [markedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, courseId, date])
@@ -588,6 +599,7 @@ model ImportError {
   email     String?
   message   String
 
+  // Cascade is intentional here: import errors are strictly owned by their batch.
   batch ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   @@index([batchId])
@@ -605,7 +617,8 @@ model TimetableSlot {
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 
-  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): timetable history survives course deletion.
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
   teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
   @@index([teacherId, dayOfWeek])
@@ -651,7 +664,8 @@ model LibraryBookCopy {
   createdAt  DateTime              @default(now()) @map("created_at")
   updatedAt  DateTime              @updatedAt @map("updated_at")
 
-  book           LibraryBook           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  // Restrict (not Cascade): deleting a book must not wipe copies/loans history.
+  book           LibraryBook           @relation(fields: [bookId], references: [id], onDelete: Restrict)
   createdBy      User                  @relation("CreatedCopies", fields: [createdById], references: [id], onDelete: Restrict)
   loans          LibraryLoan[]
   borrowRequests LibraryBorrowRequest[]
