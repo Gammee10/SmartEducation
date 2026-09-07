@@ -22,6 +22,46 @@ function audienceMatches(audience: string, role: string): boolean {
   return false;
 }
 
+// M6: chunked fan-out. The recipient list is paged (500/chunk) and each
+// chunk gets its own createMany, so a 5k-user publish neither loads the
+// whole user table into memory nor trips Postgres parameter limits. The
+// publish itself stays in the caller's tx (a notify failure still blocks
+// publish); chunking only bounds each write.
+const FANOUT_CHUNK = 500;
+
+function audienceWhere(audience: AudienceScope): Record<string, unknown> {
+  return {
+    status: 'ACTIVE',
+    ...(audience === 'TEACHERS'
+      ? { role: { in: ['TEACHER'] } }
+      : audience === 'STUDENTS'
+        ? { role: { in: ['STUDENT'] } }
+        : { role: { in: ['TEACHER', 'STUDENT'] } }),
+  };
+}
+
+async function fanOutChunked(
+  tx: any,
+  where: Record<string, unknown>,
+  payload: { title: string; message: string; type: 'ANNOUNCEMENT' | 'EVENT'; metadata: Record<string, unknown> }
+): Promise<number> {
+  let notified = 0;
+  for (let skip = 0; ; skip += FANOUT_CHUNK) {
+    const batch = await tx.user.findMany({
+      where,
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      skip,
+      take: FANOUT_CHUNK,
+    });
+    if (batch.length === 0) break;
+    await notifyUsers({ ...payload, userIds: batch.map((u: any) => u.id) }, tx);
+    notified += batch.length;
+    if (batch.length < FANOUT_CHUNK) break;
+  }
+  return notified;
+}
+
 // ---------------------------------------------------------------
 // Announcements
 // ---------------------------------------------------------------
@@ -52,28 +92,13 @@ async function createAnnouncement(opts: {
       },
     });
 
-    // Fan out in-app notifications to the targeted audience.
-    const recipients = await tx.user.findMany({
-      where: {
-        status: 'ACTIVE',
-        ...(audience === 'TEACHERS'
-          ? { role: { in: ['TEACHER'] } }
-          : audience === 'STUDENTS'
-            ? { role: { in: ['STUDENT'] } }
-            : { role: { in: ['TEACHER', 'STUDENT'] } }),
-      },
-      select: { id: true },
+    // Fan out in-app notifications to the targeted audience (M6 chunked).
+    const notified = await fanOutChunked(tx, audienceWhere(audience), {
+      title: `Announcement: ${title}`,
+      message: body.slice(0, 200),
+      type: 'ANNOUNCEMENT',
+      metadata: { announcementId: created.id },
     });
-    await notifyUsers(
-      {
-        userIds: recipients.map((u: any) => u.id),
-        title: `Announcement: ${title}`,
-        message: body.slice(0, 200),
-        type: 'ANNOUNCEMENT',
-        metadata: { announcementId: created.id },
-      },
-      tx
-    );
 
     await writeAuditLog(
       {
@@ -81,7 +106,7 @@ async function createAnnouncement(opts: {
         action: 'ANNOUNCEMENT_PUBLISHED',
         entity: 'Announcement',
         entityId: created.id,
-        metadata: { title, audience, notified: recipients.length },
+        metadata: { title, audience, notified },
         ipAddress,
       },
       tx
@@ -122,19 +147,28 @@ async function listAnnouncements(opts: { role: string; page?: number; pageSize?:
 
 async function deleteAnnouncement(opts: {
   actorId: string;
+  actorRole?: string;
   announcementId: string;
   ipAddress?: string | null;
 }) {
-  const { actorId, announcementId, ipAddress } = opts;
+  const { actorId, actorRole, announcementId, ipAddress } = opts;
   const existing = await prisma.announcement.findUnique({ where: { id: announcementId } });
   if (!existing) throw new NotFoundError('Announcement not found');
+  // M8: teachers can delete their own announcements; admins can delete any.
+  if (actorRole !== 'ADMIN' && existing.publishedById !== actorId) {
+    throw new ForbiddenError('You can only delete your own announcements');
+  }
   await prisma.announcement.delete({ where: { id: announcementId } });
+  // Cleanup policy (M6/M8): already-delivered inbox notifications are
+  // retained as user history - notifications reference the announcement only
+  // via metadata (no FK), so no dangling references are possible. The delete
+  // audit records the retention choice explicitly.
   await writeAuditLog({
     actorId,
     action: 'ANNOUNCEMENT_DELETED',
     entity: 'Announcement',
     entityId: announcementId,
-    metadata: { title: existing.title },
+    metadata: { title: existing.title, notifications: 'retained-as-history' },
     ipAddress,
   });
   return { id: announcementId };
@@ -195,27 +229,13 @@ async function createEvent(opts: {
       include: { createdBy: { select: { id: true, fullName: true, email: true } } },
     });
 
-    const recipients = await tx.user.findMany({
-      where: {
-        status: 'ACTIVE',
-        ...(audience === 'TEACHERS'
-          ? { role: { in: ['TEACHER'] } }
-          : audience === 'STUDENTS'
-            ? { role: { in: ['STUDENT'] } }
-            : { role: { in: ['TEACHER', 'STUDENT'] } }),
-      },
-      select: { id: true },
+    // Fan out in-app notifications to the targeted audience (M6 chunked).
+    const notified = await fanOutChunked(tx, audienceWhere(audience), {
+      title: `Event: ${title}`,
+      message: `${startsAt.toISOString()}${data.location ? ` · ${data.location}` : ''}`,
+      type: 'EVENT',
+      metadata: { eventId: created.id },
     });
-    await notifyUsers(
-      {
-        userIds: recipients.map((u: any) => u.id),
-        title: `Event: ${title}`,
-        message: `${startsAt.toISOString()}${data.location ? ` · ${data.location}` : ''}`,
-        type: 'EVENT',
-        metadata: { eventId: created.id },
-      },
-      tx
-    );
 
     await writeAuditLog(
       {
@@ -223,7 +243,7 @@ async function createEvent(opts: {
         action: 'EVENT_CREATED',
         entity: 'Event',
         entityId: created.id,
-        metadata: { title, audience, startsAt: startsAt.toISOString() },
+        metadata: { title, audience, startsAt: startsAt.toISOString(), notified },
         ipAddress,
       },
       tx
@@ -266,17 +286,27 @@ async function listEvents(opts: { role: string; page?: number; pageSize?: number
   };
 }
 
-async function deleteEvent(opts: { actorId: string; eventId: string; ipAddress?: string | null }) {
-  const { actorId, eventId, ipAddress } = opts;
+async function deleteEvent(opts: {
+  actorId: string;
+  actorRole?: string;
+  eventId: string;
+  ipAddress?: string | null;
+}) {
+  const { actorId, actorRole, eventId, ipAddress } = opts;
   const existing = await prisma.event.findUnique({ where: { id: eventId } });
   if (!existing) throw new NotFoundError('Event not found');
+  // M8: teachers can delete their own events; admins can delete any.
+  if (actorRole !== 'ADMIN' && existing.createdById !== actorId) {
+    throw new ForbiddenError('You can only delete your own events');
+  }
   await prisma.event.delete({ where: { id: eventId } });
+  // Same retention policy as announcements: inbox history is kept.
   await writeAuditLog({
     actorId,
     action: 'EVENT_DELETED',
     entity: 'Event',
     entityId: eventId,
-    metadata: { title: existing.title },
+    metadata: { title: existing.title, notifications: 'retained-as-history' },
     ipAddress,
   });
   return { id: eventId };

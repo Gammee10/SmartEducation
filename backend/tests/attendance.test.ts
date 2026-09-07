@@ -50,12 +50,28 @@ const mockPrisma = {
     findFirst: async ({ where }: any) => {
       return state.enrollments.find((e: any) => e.studentId === where.studentId && where.courseId?.in?.includes(e.courseId)) || null;
     },
-    findMany: async ({ where }: any) => {
+    count: async ({ where }: any) => {
+      let result = state.enrollments;
+      if (where?.courseId) result = result.filter((e: any) => e.courseId === where.courseId);
+      if (where?.status) result = result.filter((e: any) => e.status === where.status);
+      return result.length;
+    },
+    findMany: async ({ where, skip = 0, take }: any) => {
       let result = state.enrollments;
       if (where?.studentId?.in) result = result.filter((e: any) => where.studentId.in.includes(e.studentId));
       if (where?.courseId) result = result.filter((e: any) => e.courseId === where.courseId);
       if (where?.status) result = result.filter((e: any) => e.status === where.status);
-      return result;
+      result = result.slice(skip, take === undefined ? undefined : skip + take);
+      // Mirror the roster include: student + user contact stub.
+      return result.map((e: any) => {
+        const student = state.students.find((s: any) => s.id === e.studentId);
+        return {
+          ...e,
+          student: student
+            ? { ...student, user: { id: student.userId, fullName: `Student ${student.studentCode}`, email: `${student.studentCode}@school.edu` } }
+            : null,
+        };
+      });
     },
   },
   attendance: {
@@ -93,6 +109,29 @@ const mockPrisma = {
       const rec = { id: `att-${state.attendances.length + 1}`, ...data, createdAt: new Date(), updatedAt: new Date() };
       state.attendances.push(rec);
       return rec;
+    },
+    // M7 bulk writes.
+    createMany: async ({ data }: any) => {
+      const base = state.attendances.length;
+      const rows = data.map((d: any, i: number) => ({
+        id: `att-${base + 1 + i}`,
+        ...d,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      state.attendances.push(...rows);
+      return { count: rows.length };
+    },
+    updateMany: async ({ where, data }: any) => {
+      const ids = where?.id?.in || [];
+      let count = 0;
+      for (const a of state.attendances) {
+        if (ids.includes(a.id)) {
+          Object.assign(a, data);
+          count++;
+        }
+      }
+      return { count };
     },
     update: async ({ where, data }: any) => {
       const idx = state.attendances.findIndex((a: any) => a.id === where.id);
@@ -170,6 +209,49 @@ test('listStudentAttendance rejects other student', async () => {
     attendanceService.listStudentAttendance({ studentId: 'student-1', role: 'STUDENT', userId: 'user-student-2' }),
     ForbiddenError
   );
+});
+
+test('listCourseAttendance paginates the roster independently (M7)', async () => {
+  const page1 = await attendanceService.listCourseAttendance({
+    courseId: 'course-1',
+    role: 'TEACHER',
+    userId: 'user-teacher-1',
+    rosterPage: 1,
+    rosterPageSize: 1,
+  });
+  assert.strictEqual(page1.enrolledStudents.length, 1);
+  assert.strictEqual(page1.enrolledCount, 2);
+  assert.strictEqual(page1.rosterPagination.totalPages, 2);
+  const page2 = await attendanceService.listCourseAttendance({
+    courseId: 'course-1',
+    role: 'TEACHER',
+    userId: 'user-teacher-1',
+    rosterPage: 2,
+    rosterPageSize: 1,
+  });
+  assert.strictEqual(page2.enrolledStudents.length, 1);
+  assert.notStrictEqual(page2.enrolledStudents[0].id, page1.enrolledStudents[0].id);
+});
+
+test('upsertAttendance bulk-updates changed rows and audits all dates (M7)', async () => {
+  const result = await attendanceService.upsertAttendance({
+    actorId: 'user-teacher-1',
+    records: [
+      { studentId: 'student-1', courseId: 'course-1', date: '2026-08-20', status: 'PRESENT' },
+      { studentId: 'student-2', courseId: 'course-1', date: '2026-08-20', status: 'ABSENT' },
+    ],
+  });
+  assert.strictEqual(result.length, 2);
+  // student-1 changed LATE -> PRESENT via the bulk update path (marker refreshed)
+  const s1 = state.attendances.find((a: any) => a.studentId === 'student-1');
+  assert.strictEqual(s1.status, 'PRESENT');
+  assert.strictEqual(s1.markedById, 'user-teacher-1');
+  assert.ok(s1.markedAt);
+  // student-2 unchanged ABSENT -> no-op, no crash
+  const audits = state.auditLogs.filter((l: any) => l.action === 'ATTENDANCE_MARKED');
+  const last = audits[audits.length - 1];
+  assert.ok(Array.isArray(last.metadata.dates), 'audit must list every batched date');
+  assert.strictEqual(last.metadata.count, 2);
 });
 
 

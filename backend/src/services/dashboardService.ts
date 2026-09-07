@@ -122,22 +122,27 @@ export async function getStudentDashboard(opts: { userId: string }): Promise<any
   ]);
   const attendanceRate = attendanceCount > 0 ? Math.round((presentCount / attendanceCount) * 100) : 0;
 
-  const gradedSubs = await prisma.assignmentSubmission.findMany({
-    where: { studentId: student.id, status: 'GRADED', score: { not: null } },
-    select: { score: true },
-  });
-  const avgAssignmentScore = gradedSubs.length > 0
-    ? Math.round((gradedSubs.reduce((s: number, x: any) => s + (x.score || 0), 0) / gradedSubs.length) * 100) / 100
-    : 0;
-
-  const attempts = await prisma.quizAttempt.findMany({
-    where: { studentId: student.id, status: 'SUBMITTED', score: { not: null } },
-    select: { score: true, maxScore: true },
-  });
-  const quizPct = attempts.filter((a: any) => a.maxScore && a.maxScore > 0).map((a: any) => (a.score || 0) / a.maxScore);
-  const avgQuizScore = quizPct.length > 0
-    ? Math.round((quizPct.reduce((s: number, p: number) => s + p, 0) / quizPct.length) * 10000) / 100
-    : 0;
+  // M5: SQL-level aggregation mirroring the admin path - constant query
+  // count no matter how long the student's history grows. Metric matches
+  // admin exactly: assignments = AVG(score), quizzes = SUM(score) /
+  // SUM(maxScore) weighted (larger quizzes weigh more; documented in the
+  // admin computation above).
+  const [subAgg, quizAgg] = await Promise.all([
+    prisma.assignmentSubmission.aggregate({
+      where: { studentId: student.id, status: 'GRADED', score: { not: null } },
+      _avg: { score: true },
+    }),
+    prisma.quizAttempt.aggregate({
+      where: { studentId: student.id, status: 'SUBMITTED', score: { not: null }, maxScore: { gt: 0 } },
+      _sum: { score: true, maxScore: true },
+      _count: true,
+    }),
+  ]);
+  const avgAssignmentScore = round2(subAgg._avg.score);
+  const avgQuizScore =
+    quizAgg._count > 0 && (quizAgg._sum.maxScore ?? 0) > 0
+      ? Math.round(((quizAgg._sum.score ?? 0) / (quizAgg._sum.maxScore ?? 1)) * 10000) / 100
+      : 0;
 
   return {
     stats: {

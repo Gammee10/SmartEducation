@@ -291,3 +291,16 @@ test('updateUser validates fields (H7)', async () => {
     ValidationError
   );
 });
+
+test('importUsersCsv processes a multi-row batch concurrently with correct counts (H5)', async () => {
+  const rows = Array.from(
+    { length: 8 },
+    (_, i) => `Bulk User ${i},h5user${i}@school.edu,STUDENT,Password123!,Grade 9,A`
+  );
+  const csv = ['fullName,email,role,password,gradeLevel,section,subject', ...rows].join('\n');
+  const result = await userAdminService.importUsersCsv({ actorId: 'user-admin-1', csv, filename: 'h5.csv' });
+  assert.strictEqual(result.totalRows, 8);
+  assert.strictEqual(result.successCount, 8);
+  assert.strictEqual(result.errorCount, 0);
+  assert.strictEqual(result.status, 'COMPLETED');
+});

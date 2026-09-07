@@ -14,9 +14,15 @@ interface ListBooksParams {
   category?: string;
   page?: number;
   pageSize?: number;
+  // M4: bound the per-book copies preview (default 10). The catalog badge
+  // uses the server-computed availableCopies; full copy detail stays on
+  // getBook. Pass a larger value only where the full list is truly needed.
+  copiesPreview?: number;
 }
 
-async function listBooks({ search, category, page = 1, pageSize = 20 }: ListBooksParams) {
+const MAX_COPIES_PREVIEW = 50;
+
+async function listBooks({ search, category, page = 1, pageSize = 20, copiesPreview = 10 }: ListBooksParams) {
   const where: Prisma.LibraryBookWhereInput = {};
 
   if (search) {
@@ -34,9 +40,17 @@ async function listBooks({ search, category, page = 1, pageSize = 20 }: ListBook
     prisma.libraryBook.findMany({
       where,
       include: {
+        // M4: bounded preview - 100 books x 500 copies used to fan out to
+        // ~50k rows per page. Counts below keep badges accurate.
+        // AVAILABLE-first ordering guarantees the preview contains a
+        // requestable copy whenever one exists (the catalog borrows
+        // avail[0]).
         copies: {
           select: { id: true, copyNumber: true, status: true, location: true },
+          orderBy: [{ status: 'asc' }, { copyNumber: 'asc' }],
+          take: Math.min(MAX_COPIES_PREVIEW, Math.max(0, copiesPreview)),
         },
+        _count: { select: { copies: true } },
       },
       orderBy: { title: 'asc' },
       skip: (page - 1) * pageSize,
@@ -45,8 +59,24 @@ async function listBooks({ search, category, page = 1, pageSize = 20 }: ListBook
     prisma.libraryBook.count({ where }),
   ]);
 
+  // One grouped query for availability badges (no N+1 per book).
+  const ids = books.map((b: any) => b.id);
+  const availability =
+    ids.length > 0
+      ? await prisma.libraryBookCopy.groupBy({
+          by: ['bookId'],
+          where: { bookId: { in: ids }, status: 'AVAILABLE' },
+          _count: { _all: true },
+        })
+      : [];
+  const availableByBook = new Map((availability as any[]).map((row) => [row.bookId, row._count._all]));
+
   return {
-    books,
+    books: books.map((b: any) => ({
+      ...b,
+      totalCopies: b._count?.copies ?? b.copies?.length ?? 0,
+      availableCopies: availableByBook.get(b.id) ?? 0,
+    })),
     pagination: {
       page,
       pageSize,

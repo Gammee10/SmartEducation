@@ -58,6 +58,9 @@ export async function listCourseAttendance({
   date,
   page = 1,
   pageSize = 50,
+  includeRoster = true,
+  rosterPage = 1,
+  rosterPageSize = 100,
 }: {
   courseId: string;
   role: string;
@@ -65,6 +68,11 @@ export async function listCourseAttendance({
   date?: string;
   page?: number;
   pageSize?: number;
+  // M7: the roster is paged independently of the attendance records - a
+  // 500-student course no longer dumps every enrollment on each date query.
+  includeRoster?: boolean;
+  rosterPage?: number;
+  rosterPageSize?: number;
 }) {
   if (role === 'TEACHER') {
     await assertTeacherOwnsCourse(userId, courseId);
@@ -81,22 +89,29 @@ export async function listCourseAttendance({
   // students get the roster names only (no emails), and classmate emails are
   // stripped from the attendance records themselves.
   const isStaff = role === 'TEACHER' || role === 'ADMIN';
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
-    include: {
-      enrollments: {
-        where: { status: 'ACTIVE' },
-        select: {
-          student: {
-            include: {
-              user: { select: isStaff ? userInfoSelect : { id: true, fullName: true } },
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) throw new NotFoundError('Course not found');
+
+  const rosterTake = Math.min(500, Math.max(1, Math.floor(Number(rosterPageSize) || 100)));
+  const rosterSkip = (Math.max(1, Math.floor(Number(rosterPage) || 1)) - 1) * rosterTake;
+  const [enrolledCount, roster] = includeRoster
+    ? await Promise.all([
+        prisma.courseEnrollment.count({ where: { courseId, status: 'ACTIVE' } }),
+        prisma.courseEnrollment.findMany({
+          where: { courseId, status: 'ACTIVE' },
+          include: {
+            student: {
+              include: {
+                user: { select: isStaff ? userInfoSelect : { id: true, fullName: true } },
+              },
             },
           },
-        },
-      },
-    },
-  });
-  if (!course) throw new NotFoundError('Course not found');
+          orderBy: { studentId: 'asc' },
+          skip: rosterSkip,
+          take: rosterTake,
+        }),
+      ])
+    : [0, []];
 
   const [attendance, total] = await Promise.all([
     prisma.attendance.findMany({
@@ -124,7 +139,14 @@ export async function listCourseAttendance({
 
   return {
     course: { id: course.id, title: course.title, subject: course.subject, gradeLevel: course.gradeLevel },
-    enrolledStudents: course.enrollments.map((e: any) => e.student),
+    enrolledStudents: roster.map((e: any) => e.student),
+    enrolledCount,
+    rosterPagination: {
+      page: Math.max(1, Math.floor(Number(rosterPage) || 1)),
+      pageSize: rosterTake,
+      total: enrolledCount,
+      totalPages: Math.ceil(enrolledCount / rosterTake),
+    },
     attendance: attendanceForRole,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
@@ -168,12 +190,12 @@ export async function upsertAttendance({
 
   await assertTeacherOwnsCourse(actorId, first.courseId);
 
-  const date = assertValidDate(first.date, 'Date');
-
   const processed = await prisma.$transaction(async (tx: any) => {
     // Batch validation reads (one query per table instead of 3 per record)
     const studentIds = [...new Set(records.map((r) => r.studentId))];
-    const recordDates = [...new Set(records.map((r) => assertValidDate(r.date, 'Date')))];
+    // Dedupe by timestamp (a Set of Date objects would never collapse).
+    const recordTimes = [...new Set(records.map((r) => assertValidDate(r.date, 'Date').getTime()))];
+    const recordDates = recordTimes.map((t) => new Date(t));
     const [students, enrollments, existingRecords] = await Promise.all([
       tx.student.findMany({ where: { id: { in: studentIds } } }),
       tx.courseEnrollment.findMany({
@@ -189,7 +211,13 @@ export async function upsertAttendance({
     const existingKey = (studentId: string, d: Date) => `${studentId}|${new Date(d).toISOString().slice(0, 10)}`;
     const existingByStudentDate = new Map<string, any>(existingRecords.map((a: any) => [existingKey(a.studentId, a.date), a] as [string, any]));
 
-    const results: any[] = [];
+    // M7: bulk writes. New rows go through one createMany; changed rows are
+    // grouped by (status, comment) into one updateMany each; unchanged rows
+    // skip the write entirely. Updates refresh markedById/markedAt (the old
+    // path left the original marker on corrections).
+    const toCreate: Array<Record<string, unknown>> = [];
+    const updateGroups = new Map<string, { status: string; comment: string | null; ids: string[] }>();
+    const untouched: any[] = [];
     for (const rec of records) {
       const recordDate = assertValidDate(rec.date, 'Date');
       const status = assertAttendanceStatus(rec.status);
@@ -200,32 +228,56 @@ export async function upsertAttendance({
       }
 
       const existing = existingByStudentDate.get(existingKey(rec.studentId, recordDate));
-
-      let saved;
-      if (existing) {
-        saved = await tx.attendance.update({
-          where: { id: existing.id },
-          data: {
-            status,
-            comment: rec.comment !== undefined ? rec.comment || null : existing.comment,
-          },
-          include: { student: { include: { user: { select: userInfoSelect } } }, course: true },
+      const nextComment = rec.comment !== undefined ? rec.comment || null : (existing?.comment ?? null);
+      if (!existing) {
+        toCreate.push({
+          studentId: rec.studentId,
+          courseId: first.courseId,
+          date: recordDate,
+          status,
+          comment: nextComment,
+          markedById: actorId,
         });
+      } else if (existing.status === status && (existing.comment ?? null) === (nextComment ?? null)) {
+        untouched.push(existing);
       } else {
-        saved = await tx.attendance.create({
-          data: {
-            studentId: rec.studentId,
-            courseId: first.courseId,
-            date: recordDate,
-            status,
-            comment: rec.comment || null,
-            markedById: actorId,
-          },
-          include: { student: { include: { user: { select: userInfoSelect } } }, course: true },
-        });
+        const key = `${status}|${nextComment ?? ''}`;
+        const group: { status: string; comment: string | null; ids: string[] } = updateGroups.get(key) || {
+          status,
+          comment: nextComment,
+          ids: [],
+        };
+        group.ids.push(existing.id);
+        updateGroups.set(key, group);
       }
-      results.push(saved);
     }
+
+    if (toCreate.length > 0) {
+      await tx.attendance.createMany({ data: toCreate });
+    }
+    const now = new Date();
+    for (const group of updateGroups.values()) {
+      await tx.attendance.updateMany({
+        where: { id: { in: group.ids } },
+        data: { status: group.status, comment: group.comment, markedById: actorId, markedAt: now },
+      });
+    }
+
+    // Re-read the written rows (createMany/updateMany return counts only),
+    // overlay them on the pre-write snapshot, and restore input order.
+    const byKey = new Map<string, any>(
+      existingRecords.map((a: any) => [existingKey(a.studentId, a.date), a] as [string, any])
+    );
+    if (toCreate.length > 0 || updateGroups.size > 0) {
+      const written = await tx.attendance.findMany({
+        where: { studentId: { in: studentIds }, courseId: first.courseId, date: { in: recordDates } },
+        include: { student: { include: { user: { select: userInfoSelect } } }, course: true },
+      });
+      for (const row of written) byKey.set(existingKey(row.studentId, row.date), row);
+    }
+    const results: any[] = records.map((rec: AttendanceRecordInput) =>
+      byKey.get(existingKey(rec.studentId, assertValidDate(rec.date, 'Date')))
+    );
 
     await writeAuditLog(
       {
@@ -235,7 +287,9 @@ export async function upsertAttendance({
         entityId: results.length === 1 ? results[0]?.id : null,
         metadata: {
           courseId: first.courseId,
-          date: date.toISOString(),
+          // M7: every date in the batch is recorded (the old code logged
+          // only the first record's date while multi-date batches exist).
+          dates: recordDates.map((d) => d.toISOString()),
           count: results.length,
           statuses: results.map((r: any) => r.status),
         },

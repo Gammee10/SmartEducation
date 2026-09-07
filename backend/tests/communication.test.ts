@@ -173,9 +173,43 @@ test('createEvent creates event with notification fan-out', async () => {
 
 test('deleteAnnouncement removes the record', async () => {
   const created = state.announcements[0];
-  const result = await communicationService.deleteAnnouncement({ actorId: 'user-admin-1', announcementId: created.id });
+  const result = await communicationService.deleteAnnouncement({
+    actorId: 'user-admin-1',
+    actorRole: 'ADMIN',
+    announcementId: created.id,
+  });
   assert.strictEqual(result.id, created.id);
   assert.ok(!state.announcements.find((a: any) => a.id === created.id));
+});
+
+test('deleteAnnouncement allows the owning teacher (M8)', async () => {
+  const created = await communicationService.createAnnouncement({
+    actorId: 'user-teacher-1',
+    actorRole: 'TEACHER',
+    data: { title: 'Own notice', body: 'Mine to remove', audience: 'ALL' },
+  });
+  const result = await communicationService.deleteAnnouncement({
+    actorId: 'user-teacher-1',
+    actorRole: 'TEACHER',
+    announcementId: created.id,
+  });
+  assert.strictEqual(result.id, created.id);
+});
+
+test('deleteAnnouncement rejects other teachers (M8)', async () => {
+  const created = await communicationService.createAnnouncement({
+    actorId: 'user-teacher-1',
+    actorRole: 'TEACHER',
+    data: { title: 'Foreign notice', body: 'Not yours', audience: 'ALL' },
+  });
+  await assert.rejects(
+    communicationService.deleteAnnouncement({
+      actorId: 'user-teacher-9',
+      actorRole: 'TEACHER',
+      announcementId: created.id,
+    }),
+    (err: any) => err instanceof ForbiddenError
+  );
 });
 
 test('deleteEvent throws NotFoundError for missing event', async () => {

@@ -78,7 +78,11 @@ export default function LibraryCatalogPage() {
     }
   };
 
+  // M4: the API returns a bounded copies preview (available-first) plus
+  // server counts. The badge uses the count (accurate for 500-copy
+  // books); the request button uses the first previewed available copy.
   const availableCopies = (book: Book) => book.copies?.filter((c) => c.status === 'AVAILABLE') || [];
+  const availableCount = (book: Book) => book.availableCopies ?? availableCopies(book).length;
 
   return (
     <div>
@@ -141,7 +145,8 @@ export default function LibraryCatalogPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
             {books.map((book) => {
               const avail = availableCopies(book);
-              const hasCopies = avail.length > 0;
+              const count = availableCount(book);
+              const hasCopies = count > 0;
               return (
                 <div
                   key={book.id}
@@ -157,7 +162,7 @@ export default function LibraryCatalogPage() {
                         hasCopies ? 'bg-white/15 text-white ring-1 ring-inset ring-white/25' : 'bg-gray-900/30 text-gray-100'
                       }`}
                     >
-                      {hasCopies ? `${avail.length} available` : 'All borrowed'}
+                      {hasCopies ? `${count} available` : 'All borrowed'}
                     </span>
                   </div>
 
@@ -173,7 +178,7 @@ export default function LibraryCatalogPage() {
                       </span>
                     )}
                     <div className="mt-auto pt-4">
-                      {isStudent && avail.length > 0 && (
+                      {isStudent && hasCopies && avail[0] && (
                         <button
                           onClick={() => handleRequest(avail[0].id)}
                           disabled={requesting === avail[0].id}
@@ -183,7 +188,7 @@ export default function LibraryCatalogPage() {
                           {requesting === avail[0].id ? 'Requesting…' : 'Request to Borrow'}
                         </button>
                       )}
-                      {isStudent && avail.length === 0 && (
+                      {isStudent && !hasCopies && (
                         <span className="block rounded-xl bg-gray-50 py-2.5 text-center text-sm font-medium text-gray-400 dark:bg-gray-800/50">
                           No copies available
                         </span>

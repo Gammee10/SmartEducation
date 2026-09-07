@@ -380,6 +380,11 @@ export default function AdminLibraryPage() {
                             <StatusBadge status={copy.status} />
                           </span>
                         ))}
+                        {(book.totalCopies ?? book.copies?.length ?? 0) > (book.copies?.length ?? 0) && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            +{(book.totalCopies ?? 0) - (book.copies?.length ?? 0)} more
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

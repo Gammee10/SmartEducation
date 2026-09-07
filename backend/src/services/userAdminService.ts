@@ -470,88 +470,122 @@ async function importUsersCsv(opts: {
   let warnedFallbackPassword = false;
   const status = () => (successCount === 0 ? 'FAILED' : errors.length > 0 ? 'PARTIAL' : 'COMPLETED');
 
-  // If anything unexpected escapes the per-row handling, mark the batch
-  // FAILED so it cannot be orphaned as PENDING forever, then rethrow.
-  try {
-    for (let i = 1; i < lines.length; i++) {
-    const rowNumber = i + 1; // 1-based including header
-    const fields = parseCsvLine(lines[i]);
+  // H5: one row, self-contained so rows can run concurrently. Throws on
+  // row failure; the caller records it and continues with the next row.
+  const processRow = async (rowNumber: number, line: string): Promise<void> => {
+    const fields = parseCsvLine(line);
     const get = (name: string) => {
       const idx = colIndex(name);
       return idx >= 0 ? fields[idx] : '';
     };
 
-    try {
-      const email = assertEmail(get('email'));
-      const fullName = get('fullname') || get('full_name');
-      if (!fullName) throw new ValidationError('fullName is required');
-      const role = (get('role') || '').toUpperCase();
-      if (!ROLES.includes(role)) throw new ValidationError('role must be ADMIN, TEACHER, or STUDENT');
+    const email = assertEmail(get('email'));
+    const fullName = get('fullname') || get('full_name');
+    if (!fullName) throw new ValidationError('fullName is required');
+    const role = (get('role') || '').toUpperCase();
+    if (!ROLES.includes(role)) throw new ValidationError('role must be ADMIN, TEACHER, or STUDENT');
 
-      const existing = await prisma.user.findUnique({ where: { email } });
-      if (existing) throw new ConflictError(`Duplicate email ${email}`);
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictError(`Duplicate email ${email}`);
 
-      // M12 secret hygiene: rows without an explicit password share the
-      // fallback secret. Warn loudly (once per import) so operators set
-      // DEFAULT_USER_PASSWORD and rotate these accounts after first login.
-      const rowPassword = get('password');
-      if (!rowPassword && !env.defaultUserPassword && !warnedFallbackPassword) {
-        warnedFallbackPassword = true;
-        console.warn(
-          'CSV import: rows without a password fall back to the built-in default - ' +
-            'set DEFAULT_USER_PASSWORD and rotate imported accounts after first login.'
-        );
-      }
-      const passwordHash = await bcrypt.hash(assertPassword(rowPassword), 10);
+    // M12 secret hygiene: rows without an explicit password share the
+    // fallback secret. Warn loudly (once per import) so operators set
+    // DEFAULT_USER_PASSWORD and rotate these accounts after first login.
+    const rowPassword = get('password');
+    if (!rowPassword && !env.defaultUserPassword && !warnedFallbackPassword) {
+      warnedFallbackPassword = true;
+      console.warn(
+        'CSV import: rows without a password fall back to the built-in default - ' +
+          'set DEFAULT_USER_PASSWORD and rotate imported accounts after first login.'
+      );
+    }
+    const passwordHash = await bcrypt.hash(assertPassword(rowPassword), 10);
 
-      await prisma.$transaction(async (tx: any) => {
-        const created = await tx.user.create({
-          data: {
-            email,
-            fullName,
-            role,
-            phone: get('phone') || null,
-            passwordHash,
-          },
-        });
-        if (role === 'STUDENT') {
-          const gradeLevel = get('gradelevel') || get('grade_level');
-          if (!gradeLevel) throw new ValidationError('gradeLevel is required for students');
-          const studentCode = await generateCode('STU');
-          await tx.student.create({
-            data: {
-              userId: created.id,
-              studentCode,
-              gradeLevel,
-              section: get('section') || null,
-            },
+    const phone = get('phone') || null;
+    const gradeLevel = get('gradelevel') || get('grade_level');
+    const section = get('section') || null;
+    const subject = get('subject') || null;
+
+    // H5: count-based generateCode can collide under concurrency (or with a
+    // parallel import). Retry code-collision P2002s with a regenerated code,
+    // mirroring createUser; email P2002s (pre-check race) are real
+    // duplicates and rethrown for the row catch to report.
+    let lastCodeCollision: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await prisma.$transaction(async (tx: any) => {
+          const created = await tx.user.create({
+            data: { email, fullName, role, phone, passwordHash },
           });
-        } else if (role === 'TEACHER') {
-          const employeeCode = await generateCode('TCH');
-          await tx.teacher.create({
-            data: {
-              userId: created.id,
-              employeeCode,
-              subject: get('subject') || null,
-            },
+          if (role === 'STUDENT') {
+            if (!gradeLevel) throw new ValidationError('gradeLevel is required for students');
+            const studentCode = await generateCode('STU');
+            await tx.student.create({
+              data: { userId: created.id, studentCode, gradeLevel, section },
+            });
+          } else if (role === 'TEACHER') {
+            const employeeCode = await generateCode('TCH');
+            await tx.teacher.create({
+              data: { userId: created.id, employeeCode, subject },
+            });
+          }
+        });
+        lastCodeCollision = null;
+        break;
+      } catch (err: any) {
+        if (err?.code === 'P2002' && /Code/.test(JSON.stringify(err?.meta?.target || ''))) {
+          lastCodeCollision = err;
+          continue;
+        }
+        throw err;
+      }
+    }
+    if (lastCodeCollision) throw lastCodeCollision;
+  };
+
+  const safeEmail = (line: string): string | null => {
+    try {
+      const fields = parseCsvLine(line);
+      const idx = colIndex('email');
+      return assertEmail(idx >= 0 ? fields[idx] : '');
+    } catch {
+      return null;
+    }
+  };
+
+  // If anything unexpected escapes the per-row handling, mark the batch
+  // FAILED so it cannot be orphaned as PENDING forever, then rethrow.
+  try {
+    // H5: bounded concurrency (4 rows at a time). Fully sequential imports
+    // cost ~100ms of bcrypt + 3 DB roundtrips per row (5000 rows = many
+    // minutes in one request -> gateway timeout); unbounded concurrency
+    // would starve the event loop and the pool. Long-term: background queue
+    // (BullMQ/pg-boss) + ImportBatch polling.
+    const IMPORT_CONCURRENCY = 4;
+    for (let i = 1; i < lines.length; i += IMPORT_CONCURRENCY) {
+      const chunk = lines.slice(i, i + IMPORT_CONCURRENCY);
+      const settled = await Promise.allSettled(
+        chunk.map((line, offset) => processRow(i + 1 + offset, line))
+      );
+      for (let k = 0; k < settled.length; k++) {
+        const outcome = settled[k];
+        if (outcome.status === 'fulfilled') {
+          successCount += 1;
+        } else {
+          const err: any = (outcome as PromiseRejectedResult).reason;
+          const line = chunk[k];
+          const email = safeEmail(line);
+          errors.push({
+            rowNumber: i + 1 + k,
+            email,
+            message:
+              err?.code === 'P2002'
+                ? `Duplicate email ${email || '(unknown)'}`
+                : err?.message || 'Unknown error',
           });
         }
-      });
-      successCount += 1;
-    } catch (err: any) {
-      errors.push({
-        rowNumber,
-        email: (() => {
-          try {
-            return assertEmail(get('email'));
-          } catch {
-            return null;
-          }
-        })(),
-        message: err.message || 'Unknown error',
-      });
+      }
     }
-  }
 
   await prisma.$transaction(async (tx: any) => {
     await tx.importBatch.update({

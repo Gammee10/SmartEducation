@@ -2,6 +2,10 @@
 import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
 
+function round2(value: number | null | undefined): number {
+  return value ? Math.round(value * 100) / 100 : 0;
+}
+
 export async function getStudentSummary(opts: { studentId: string; role: string; userId: string }): Promise<any> {
   const { studentId, role, userId } = opts;
   // Privacy: teachers share one course with the student - they get the name,
@@ -36,27 +40,29 @@ export async function getStudentSummary(opts: { studentId: string; role: string;
     include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } } },
     orderBy: { createdAt: 'desc' },
   });
-  const [attendanceCount, presentCount, gradedSubs, attempts] = await Promise.all([
+  const [attendanceCount, presentCount, subAgg, quizAgg] = await Promise.all([
     prisma.attendance.count({ where: { studentId } }),
     prisma.attendance.count({ where: { studentId, status: { in: ['PRESENT', 'LATE'] } } }),
-    prisma.assignmentSubmission.findMany({
+    // M5: SQL-level aggregation (same metric as the admin/student
+    // dashboards: assignments AVG(score), quizzes weighted SUM/SUM) so
+    // profile views stay constant-cost as history grows.
+    prisma.assignmentSubmission.aggregate({
       where: { studentId, status: 'GRADED', score: { not: null } },
-      select: { score: true },
+      _avg: { score: true },
     }),
-    prisma.quizAttempt.findMany({
-      where: { studentId, status: 'SUBMITTED', score: { not: null } },
-      select: { score: true, maxScore: true },
+    prisma.quizAttempt.aggregate({
+      where: { studentId, status: 'SUBMITTED', score: { not: null }, maxScore: { gt: 0 } },
+      _sum: { score: true, maxScore: true },
+      _count: true,
     }),
   ]);
 
   const attendanceRate = attendanceCount > 0 ? Math.round((presentCount / attendanceCount) * 100) : 0;
-  const avgAssignmentScore = gradedSubs.length > 0
-    ? Math.round((gradedSubs.reduce((s: number, x: any) => s + (x.score || 0), 0) / gradedSubs.length) * 100) / 100
-    : 0;
-  const quizPct = attempts.filter((a: any) => a.maxScore && a.maxScore > 0).map((a: any) => (a.score || 0) / a.maxScore);
-  const avgQuizScore = quizPct.length > 0
-    ? Math.round((quizPct.reduce((s: number, p: number) => s + p, 0) / quizPct.length) * 10000) / 100
-    : 0;
+  const avgAssignmentScore = round2(subAgg._avg.score);
+  const avgQuizScore =
+    quizAgg._count > 0 && (quizAgg._sum.maxScore ?? 0) > 0
+      ? Math.round(((quizAgg._sum.score ?? 0) / (quizAgg._sum.maxScore ?? 1)) * 10000) / 100
+      : 0;
 
   const recentAttempts = await prisma.quizAttempt.findMany({
     where: { studentId, status: 'SUBMITTED' },

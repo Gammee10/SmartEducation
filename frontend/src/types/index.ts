@@ -40,6 +40,9 @@ export interface Book {
   description?: string | null;
   coverUrl?: string | null;
   copies?: BookCopy[];
+  // M4: server-computed counts accompanying the bounded copies preview.
+  totalCopies?: number;
+  availableCopies?: number;
 }
 
 export interface BorrowRequest {

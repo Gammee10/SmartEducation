@@ -58,7 +58,7 @@ const state: any = {
 
 const mockPrisma = {
   libraryBook: {
-    findMany: async ({ where, skip, take }: any) => {
+    findMany: async ({ where, skip, take, include }: any) => {
       let result = state.books;
       if (where?.OR) {
         result = result.filter((b: any) =>
@@ -72,7 +72,14 @@ const mockPrisma = {
       if (where?.category) {
         result = result.filter((b: any) => b.category === where.category);
       }
-      return result.slice(skip || 0, (skip || 0) + (take || 20));
+      return result.slice(skip || 0, (skip || 0) + (take || 20)).map((b: any) => {
+        // Mirror the bounded copies preview + counts of the real query.
+        if (include?.copies && typeof include.copies.take === 'number') {
+          const all = b.copies || [];
+          return { ...b, copies: all.slice(0, include.copies.take), _count: { copies: all.length } };
+        }
+        return b;
+      });
     },
     count: async ({ where }: any) => {
       let result = state.books;
@@ -123,6 +130,16 @@ const mockPrisma = {
       );
       for (const c of matches) Object.assign(c, data);
       return { count: matches.length };
+    },
+    // M4: availability badge aggregation.
+    groupBy: async ({ where }: any) => {
+      const counts = new Map<string, number>();
+      for (const c of state.copies) {
+        if (where?.bookId?.in && !where.bookId.in.includes(c.bookId)) continue;
+        if (where?.status && c.status !== where.status) continue;
+        counts.set(c.bookId, (counts.get(c.bookId) || 0) + 1);
+      }
+      return [...counts.entries()].map(([bookId, n]) => ({ bookId, _count: { _all: n } }));
     },
   },
   libraryBorrowRequest: {
@@ -648,4 +665,17 @@ test('updateBook normalizes empty ISBN to null (M3)', async () => {
   });
   const second = await libraryService.updateBook({ actorId: 'admin-1', bookId: book2.id, data: { isbn: '' } });
   assert.strictEqual(second.isbn, null, 'second empty ISBN must also succeed (no P2002 on "")');
+});
+
+test('listBooks bounds the copies preview but reports full counts (M4)', async () => {
+  await libraryService.createBook({
+    actorId: 'admin-1',
+    data: { title: 'Big Book of Copies', author: 'Anon', copies: 15 },
+  });
+  const result = await libraryService.listBooks({ search: 'Big Book of Copies', page: 1, pageSize: 20 });
+  assert.strictEqual(result.books.length, 1);
+  const book = result.books[0];
+  assert.ok(book.copies.length <= 10, `preview bounded, got ${book.copies.length}`);
+  assert.strictEqual(book.totalCopies, 15);
+  assert.strictEqual(typeof book.availableCopies, 'number');
 });

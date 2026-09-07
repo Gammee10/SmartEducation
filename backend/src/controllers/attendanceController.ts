@@ -11,13 +11,17 @@ function getIp(req: Request): string | null {
 
 export async function listCourseAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { date } = req.query;
+    const { date, includeRoster, rosterPage, rosterPageSize } = req.query;
     const result = await attendanceService.listCourseAttendance({
       courseId: req.params.id as string,
       role: req.user!.role,
       userId: req.user!.id,
       date: date as string | undefined,
       ...parsePagination(req.query),
+      // M7: roster paging is independent of record paging.
+      includeRoster: includeRoster === undefined ? true : String(includeRoster) !== 'false',
+      rosterPage: rosterPage !== undefined ? Number(rosterPage) : undefined,
+      rosterPageSize: rosterPageSize !== undefined ? Number(rosterPageSize) : undefined,
     });
     success(res, result, 'Attendance retrieved');
   } catch (err) {

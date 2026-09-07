@@ -3,7 +3,7 @@ import { Router } from 'express';
 import * as communicationController from '../controllers/communicationController';
 import authenticate from '../middleware/auth';
 import { authenticatedLimiter } from '../middleware/rateLimit';
-import { requireAdmin, requireTeacher } from '../middleware/rbac';
+import { requireRole } from '../middleware/rbac';
 
 const router = Router();
 router.use(authenticate);
@@ -11,17 +11,19 @@ router.use(authenticate);
 router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
-// Announcements - all roles read (audience-filtered server-side)
+// Announcements - all roles read (audience-filtered server-side).
+// Creates: teachers and admins (service enforces). Deletes (M8): owner
+// teacher or admin (service enforces ownership).
 // ---------------------------------------------------------------
 router.get('/announcements', communicationController.listAnnouncements);
-router.post('/announcements', requireTeacher, communicationController.createAnnouncement);
-router.delete('/announcements/:id', requireAdmin, communicationController.deleteAnnouncement);
+router.post('/announcements', requireRole('TEACHER', 'ADMIN'), communicationController.createAnnouncement);
+router.delete('/announcements/:id', requireRole('TEACHER', 'ADMIN'), communicationController.deleteAnnouncement);
 
 // ---------------------------------------------------------------
 // Events - all roles read (audience-filtered server-side)
 // ---------------------------------------------------------------
 router.get('/events', communicationController.listEvents);
-router.post('/events', requireTeacher, communicationController.createEvent);
-router.delete('/events/:id', requireAdmin, communicationController.deleteEvent);
+router.post('/events', requireRole('TEACHER', 'ADMIN'), communicationController.createEvent);
+router.delete('/events/:id', requireRole('TEACHER', 'ADMIN'), communicationController.deleteEvent);
 
 export default router;

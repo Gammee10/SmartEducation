@@ -38,6 +38,7 @@ export async function deleteAnnouncement(req: Request, res: Response, next: Next
   try {
     const result = await communicationService.deleteAnnouncement({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       announcementId: req.params.id as string,
       ipAddress: getIp(req),
     });
@@ -79,6 +80,7 @@ export async function deleteEvent(req: Request, res: Response, next: NextFunctio
   try {
     const result = await communicationService.deleteEvent({
       actorId: req.user!.id,
+      actorRole: req.user!.role,
       eventId: req.params.id as string,
       ipAddress: getIp(req),
     });
