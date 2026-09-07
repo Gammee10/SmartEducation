@@ -31,6 +31,15 @@ function errorHandler(err: Error, req: Request, res: Response, _next: NextFuncti
         data: {},
       });
     }
+    if (prismaErr.code === 'P2023') {
+      // Malformed identifier (e.g. a non-UUID path param hitting a Uuid
+      // column) must never surface as a raw 500 - treat it as not found.
+      return res.status(404).json({
+        success: false,
+        message: 'Record not found',
+        data: {},
+      });
+    }
     if (prismaErr.code === 'P2003') {
       // Defense-in-depth (C4): with Restrict FKs (C1) any delete that would
       // orphan history fails here. Never leak a raw 500 for it - the caller
