@@ -2,10 +2,13 @@
 import { Router } from 'express';
 import * as communicationController from '../controllers/communicationController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireAdmin, requireTeacher } from '../middleware/rbac';
 
 const router = Router();
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
 // Announcements - all roles read (audience-filtered server-side)

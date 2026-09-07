@@ -2,9 +2,12 @@
 import { Router } from 'express';
 import * as notificationController from '../controllers/notificationController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 
 const router = Router();
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // All routes are scoped to the authenticated user
 router.get('/notifications', notificationController.listNotifications);

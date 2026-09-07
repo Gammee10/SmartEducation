@@ -3,6 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import * as assignmentController from '../controllers/assignmentController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireStudent, requireTeacher } from '../middleware/rbac';
 import { ValidationError } from '../utils/errors';
 
@@ -42,6 +43,8 @@ const upload = multer({
 
 // All assignment routes require authentication
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
 // Assignments (top-level)

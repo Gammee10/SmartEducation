@@ -2,10 +2,13 @@
 import { Router } from 'express';
 import * as timetableController from '../controllers/timetableController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireAdmin } from '../middleware/rbac';
 
 const router = Router();
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // List timetable slots (all roles, role-filtered)
 router.get('/timetable', timetableController.listTimetableSlots);

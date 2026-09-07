@@ -5,12 +5,15 @@ import * as assignmentController from '../controllers/assignmentController';
 import * as quizController from '../controllers/quizController';
 import * as attendanceController from '../controllers/attendanceController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireAdmin, requireTeacher } from '../middleware/rbac';
 
 const router = Router();
 
 // All course routes require authentication
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
 // Courses

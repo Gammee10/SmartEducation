@@ -2,12 +2,15 @@
 import { Router } from 'express';
 import * as quizController from '../controllers/quizController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireStudent, requireTeacher } from '../middleware/rbac';
 
 const router = Router();
 
 // All quiz routes require authentication
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
 // Quizzes (top-level)

@@ -2,12 +2,15 @@
 import { Router } from 'express';
 import * as libraryController from '../controllers/libraryController';
 import authenticate from '../middleware/auth';
+import { authenticatedLimiter } from '../middleware/rateLimit';
 import { requireAdmin, requireStudent } from '../middleware/rbac';
 
 const router = Router();
 
 // All library routes require authentication
 router.use(authenticate);
+// Per-user budget (C3) - mounted after auth so req.user exists.
+router.use(authenticatedLimiter);
 
 // ---------------------------------------------------------------
 // Books (catalog - all authenticated users can view)

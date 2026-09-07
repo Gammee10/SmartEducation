@@ -51,4 +51,20 @@ const env = {
   defaultUserPassword: process.env.DEFAULT_USER_PASSWORD || '',
 };
 
+// C3 fail-fast: behind any hosted proxy (Render/Fly/Railway) req.ip is the
+// proxy IP unless TRUST_PROXY is set, which collapses the IP-keyed edge
+// limiter into one global bucket (one busy NAT locks out all logins) and
+// records the proxy IP in audit logs. Refuse to boot in that situation;
+// otherwise log a loud warning so single-server prod deploys notice too.
+if (nodeEnv === 'production' && (process.env.TRUST_PROXY || '') === '') {
+  const managedProxy =
+    process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.FLY_APP_NAME || process.env.RAILWAY_ENVIRONMENT;
+  const message =
+    'TRUST_PROXY is not set: behind a reverse proxy all clients share one rate-limit bucket and audit IPs will record the proxy. Set TRUST_PROXY to the number of proxy hops (e.g. TRUST_PROXY=1).';
+  if (managedProxy) {
+    throw new Error(message);
+  }
+  console.warn(`WARNING (production): ${message}`);
+}
+
 export default env;
