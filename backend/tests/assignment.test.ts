@@ -658,3 +658,44 @@ test('updateAssignment allows raising maxScore and audits old->new (H9)', async 
   const last = updates[updates.length - 1];
   assert.deepStrictEqual(last.metadata.maxScore, { from: 120, to: 200 });
 });
+
+test('submitAssignment deletes the uploaded file when the DB insert fails (H4)', async () => {
+  state.assignments.push({
+    id: 'assignment-h4',
+    courseId: 'course-1',
+    title: 'Orphan Homework',
+    maxScore: 40,
+    dueDate: null,
+    status: 'PUBLISHED',
+    createdById: 'user-teacher-1',
+    course: mockCourse,
+  });
+  const storage = require('../src/services/fileStorageService');
+  const deleted: string[] = [];
+  const origDelete = storage.deleteFile;
+  storage.deleteFile = async (publicId: string) => {
+    deleted.push(publicId);
+  };
+  const origCreate = mockPrisma.assignmentSubmission.create;
+  mockPrisma.assignmentSubmission.create = async () => {
+    const err: any = new Error('duplicate');
+    err.code = 'P2002';
+    throw err;
+  };
+  try {
+    await assert.rejects(
+      () =>
+        assignmentService.submitAssignment({
+          actorId: 'user-student-1',
+          assignmentId: 'assignment-h4',
+          data: { content: 'My work' },
+          file: { buffer: Buffer.from('pdf-bytes'), mimetype: 'application/pdf', size: 1024 },
+        }),
+      (err: any) => err instanceof ConflictError
+    );
+    assert.deepStrictEqual(deleted, ['assignment-submissions/submission']);
+  } finally {
+    mockPrisma.assignmentSubmission.create = origCreate;
+    storage.deleteFile = origDelete;
+  }
+});

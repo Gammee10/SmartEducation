@@ -19,6 +19,33 @@ function assertTimeRange(s: string, e: string): void {
   if (toMin(e) - toMin(s) < 15) throw new ValidationError('Slot must be at least 15 minutes');
 }
 function xover(a1: number, a2: number, b1: number, b2: number): boolean { return a1 < b2 && b1 < a2; }
+
+// H3: room names are compared canonically - "Room 101", "room 101 " and
+// "ROOM  101" are the same room. Display casing is preserved in storage
+// (trimmed); comparison lowercases.
+function normalizeRoom(room: string | null | undefined): string | null {
+  if (room === null || room === undefined) return null;
+  const trimmed = String(room).trim().replace(/\s+/g, ' ');
+  return trimmed === '' ? null : trimmed;
+}
+function roomKey(room: string | null | undefined): string | null {
+  const normalized = normalizeRoom(room);
+  return normalized ? normalized.toLowerCase() : null;
+}
+
+// H3: serialization guard. The conflict check runs inside the tx, but under
+// READ COMMITTED two concurrent txs can both read "no conflict" and both
+// insert (the old comment claiming the tx alone closes the race was wrong).
+// Postgres advisory locks (scoped to the tx) serialize writers per room-day
+// and per teacher-day before the check re-runs on the tx client.
+async function acquireSlotLocks(tx: any, day: DayOfWeek, key: string | null, teacherId: string | null): Promise<void> {
+  if (key) {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'timetable:room:' + day + ':' + key}))`;
+  }
+  if (teacherId) {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'timetable:teacher:' + day + ':' + teacherId}))`;
+  }
+}
 export async function listTimetableSlots(opts: { role: string; userId: string; dayOfWeek?: string }): Promise<any> {
   const { role, userId, dayOfWeek } = opts;
   const where: Record<string, unknown> = {};
@@ -56,13 +83,15 @@ export async function createTimetableSlot(opts: { actorId: string; data: any; ip
     if (!t) throw new NotFoundError('Teacher not found');
     teacherId = t.id;
   }
+  const room = normalizeRoom(data.room);
 
-  // Conflict check runs inside the transaction so two concurrent creates
-  // cannot both pass the check and double-book a room or teacher.
   const slot = await prisma.$transaction(async (tx: any) => {
-    await checkConflicts(tx, day, data.startTime, data.endTime, data.room || null, teacherId, null);
+    // H3: serialize concurrent writers for this room-day/teacher-day, then
+    // re-check conflicts on the tx client.
+    await acquireSlotLocks(tx, day, roomKey(room), teacherId);
+    await checkConflicts(tx, day, data.startTime, data.endTime, room, teacherId, null);
     const created = await tx.timetableSlot.create({
-      data: { courseId: data.courseId, teacherId, dayOfWeek: day, startTime: data.startTime, endTime: data.endTime, room: data.room || null },
+      data: { courseId: data.courseId, teacherId, dayOfWeek: day, startTime: data.startTime, endTime: data.endTime, room },
       include: { course: { select: { id: true, title: true, subject: true, gradeLevel: true } }, teacher: { include: { user: { select: { id: true, fullName: true } } } } },
     });
     await writeAuditLog(
@@ -81,7 +110,7 @@ export async function updateTimetableSlot(opts: { actorId: string; slotId: strin
   const day = data.dayOfWeek ? assertDay(data.dayOfWeek) : existing.dayOfWeek;
   const start = data.startTime ?? existing.startTime;
   const end = data.endTime ?? existing.endTime;
-  const room = data.room !== undefined ? data.room : existing.room;
+  const room = data.room !== undefined ? normalizeRoom(data.room) : normalizeRoom(existing.room);
   const teacherId = data.teacherId !== undefined ? data.teacherId : existing.teacherId;
   if (data.courseId) {
     const c = await prisma.course.findUnique({ where: { id: data.courseId } });
@@ -94,7 +123,10 @@ export async function updateTimetableSlot(opts: { actorId: string; slotId: strin
   assertTimeRange(start, end);
 
   const slot = await prisma.$transaction(async (tx: any) => {
-    await checkConflicts(tx, day, start, end, room || null, teacherId || null, slotId);
+    // H3: serialize concurrent writers for this room-day/teacher-day, then
+    // re-check conflicts on the tx client.
+    await acquireSlotLocks(tx, day, roomKey(room), teacherId || null);
+    await checkConflicts(tx, day, start, end, room, teacherId || null, slotId);
     const updated = await tx.timetableSlot.update({
       where: { id: slotId },
       data: { ...(data.courseId ? { courseId: data.courseId } : {}), teacherId: teacherId, dayOfWeek: day, startTime: start, endTime: end, room: room },
@@ -124,15 +156,19 @@ export async function deleteTimetableSlot(opts: { actorId: string; slotId: strin
   return { id: slotId };
 }
 
-// Accepts a prisma/tx client so the check can run inside the creating
-// transaction (closing the check-then-insert race).
+// Accepts a prisma/tx client so the check runs inside the creating
+// transaction after the advisory locks are held (H3). Room comparison is
+// case/whitespace-insensitive via roomKey.
 async function checkConflicts(tx: any, day: DayOfWeek, startTime: string, endTime: string, room: string | null, teacherId: string | null, excludeId: string | null): Promise<void> {
   const s = toMin(startTime);
   const e = toMin(endTime);
-  if (room) {
-    const slots = await tx.timetableSlot.findMany({ where: { dayOfWeek: day, room, NOT: excludeId ? { id: excludeId } : undefined } });
+  const key = roomKey(room);
+  if (key) {
+    const slots = await tx.timetableSlot.findMany({ where: { dayOfWeek: day, NOT: excludeId ? { id: excludeId } : undefined } });
     for (const x of slots) {
-      if (xover(s, e, toMin(x.startTime), toMin(x.endTime))) throw new ConflictError(`Room "${room}" is already booked ${x.startTime}-${x.endTime} on ${day}`);
+      if (roomKey(x.room) === key && xover(s, e, toMin(x.startTime), toMin(x.endTime))) {
+        throw new ConflictError(`Room "${room}" is already booked ${x.startTime}-${x.endTime} on ${day}`);
+      }
     }
   }
   if (teacherId) {

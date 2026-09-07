@@ -56,6 +56,8 @@ const mockPrisma = {
     },
   },
   $transaction: async (fn: any) => fn(mockPrisma),
+  // H3: advisory-lock probe - no-op under the mock.
+  $queryRaw: async () => [],
 };
 
 const prismaClientPath = require.resolve('../src/prisma/client');
@@ -114,4 +116,19 @@ test('deleteTimetableSlot removes a slot', async () => {
   const result = await timetableService.deleteTimetableSlot({ actorId: 'user-admin-1', slotId: slot.id });
   assert.strictEqual(result.id, slot.id);
   assert.strictEqual(state.timetableSlots.length, 0);
+});
+
+test('createTimetableSlot treats room variants as the same room (H3)', async () => {
+  await timetableService.createTimetableSlot({
+    actorId: 'user-admin-1',
+    data: { courseId: 'course-2', dayOfWeek: 'TUESDAY', startTime: '10:00', endTime: '11:00', room: 'Room 101' },
+  });
+  // Same room, different casing/spacing, overlapping time, different teacher.
+  await assert.rejects(
+    timetableService.createTimetableSlot({
+      actorId: 'user-admin-1',
+      data: { courseId: 'course-1', dayOfWeek: 'TUESDAY', startTime: '10:30', endTime: '11:30', room: '  room 101 ' },
+    }),
+    (err: any) => err instanceof ConflictError
+  );
 });

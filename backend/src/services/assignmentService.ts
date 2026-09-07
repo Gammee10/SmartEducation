@@ -3,7 +3,7 @@ import prisma from '../prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
-import { uploadFile } from './fileStorageService';
+import { uploadFile, deleteFile } from './fileStorageService';
 import { getCourse as getCourseWithAccess } from './courseService';
 
 
@@ -422,8 +422,10 @@ async function submitAssignment({ actorId, assignmentId, data, file, ipAddress }
 
   // Upload submission file through Cloudinary (if provided)
   let fileFields: Record<string, unknown> = {};
+  let uploadedPublicId: string | null = null;
   if (file) {
     const upload = await uploadFile(file as never, 'assignment-submissions');
+    uploadedPublicId = upload.publicId;
     fileFields = {
       fileUrl: upload.url,
       publicId: upload.publicId,
@@ -449,6 +451,13 @@ async function submitAssignment({ actorId, assignmentId, data, file, ipAddress }
       },
     });
   } catch (err: any) {
+    // H4: the upload already succeeded and the asset is billable in
+    // Cloudinary, but the DB row never persisted (duplicate-submit P2002 or
+    // any other insert failure). Compensate by deleting the orphan before
+    // rethrowing so retries cannot leak storage objects.
+    if (uploadedPublicId) {
+      await deleteFile(uploadedPublicId);
+    }
     // Double-click / retry races pass the pre-check above; the unique
     // constraint is the authoritative guard.
     if (err?.code === 'P2002') {
