@@ -109,7 +109,7 @@ const mockPrisma = {
     findUnique: async ({ where }: any) => state.copies.find((c: any) => c.id === where.id) || null,
     findMany: async ({ where }: any) => state.copies.filter((c: any) => c.bookId === where.bookId),
     createMany: async ({ data }: any) => {
-      state.copies.push(...data.map((d: any) => ({ id: `copy-${state.copies.length + 1}`, ...d })));
+      state.copies.push(...data.map((d: any) => ({ id: `copy-${state.copies.length + 1}`, status: 'AVAILABLE', ...d })));
       return { count: data.length };
     },
     update: async ({ where, data }: any) => {
@@ -152,12 +152,21 @@ const mockPrisma = {
       let result = state.requests;
       if (where?.status) result = result.filter((r: any) => r.status === where.status);
       if (where?.studentId) result = result.filter((r: any) => r.studentId === where.studentId);
+      if (where?.bookCopyId) result = result.filter((r: any) => r.bookCopyId === where.bookCopyId);
       return result.length;
     },
     update: async ({ where, data }: any) => {
       const idx = state.requests.findIndex((r: any) => r.id === where.id);
       state.requests[idx] = { ...state.requests[idx], ...data };
       return state.requests[idx];
+    },
+    // H1: atomic claim used by the reject path - only PENDING rows flip.
+    updateMany: async ({ where, data }: any) => {
+      const matches = state.requests.filter(
+        (r: any) => (!where.id || r.id === where.id) && (!where.status || r.status === where.status)
+      );
+      for (const r of matches) Object.assign(r, data);
+      return { count: matches.length };
     },
   },
   libraryLoan: {
@@ -210,6 +219,8 @@ const mockPrisma = {
     },
   },
   $transaction: async (fn: any) => fn(mockPrisma),
+  // M2: row-lock probe used by createBorrowRequest - no-op under the mock.
+  $queryRaw: async () => [],
 };
 
 // Inject mock prisma
@@ -527,4 +538,114 @@ test('returnLoan throws NotFoundError for missing loan', async () => {
     () => libraryService.returnLoan({ actorId: 'admin-1', loanId: 'missing' }),
     (err: any) => err instanceof NotFoundError
   );
+});
+
+test('reject loses the race against approve: no orphan loan on decided request (H1)', async () => {
+  // req-race is still PENDING; approve it first, then a late reject must
+  // fail instead of flipping APPROVED -> REJECTED under a live loan.
+  const raceReq = state.requests.find((r: any) => r.id === 'req-race');
+  if (raceReq && raceReq.status === 'PENDING') {
+    const copyIdx = state.copies.findIndex((c: any) => c.id === 'copy-1');
+    state.copies[copyIdx] = { ...state.copies[copyIdx], status: 'AVAILABLE' };
+    // The mock stores a shared stale bookCopy snapshot on the request;
+    // refresh it so the pre-check sees the reset copy.
+    raceReq.bookCopy = { ...(raceReq.bookCopy || {}), status: 'AVAILABLE' };
+    await libraryService.decideBorrowRequest({
+      actorId: 'admin-1',
+      requestId: 'req-race',
+      decision: 'APPROVED',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    });
+  }
+  const decided = state.requests.find((r: any) => r.id === 'req-race');
+  assert.strictEqual(decided.status, 'APPROVED');
+  await assert.rejects(
+    () => libraryService.decideBorrowRequest({ actorId: 'admin-1', requestId: 'req-race', decision: 'REJECTED' }),
+    (err: any) => err instanceof ConflictError
+  );
+  assert.strictEqual(
+    state.requests.find((r: any) => r.id === 'req-race').status,
+    'APPROVED',
+    'late reject must not overwrite the approval'
+  );
+});
+
+test('returnLoan with condition DAMAGED keeps copy out of circulation (H2)', async () => {
+  const copyIdx = state.copies.findIndex((c: any) => c.id === 'copy-2');
+  state.copies[copyIdx] = { ...state.copies[copyIdx], status: 'BORROWED' };
+  state.loans.push({
+    id: 'loan-damaged',
+    studentId: 'student-1',
+    bookCopyId: 'copy-2',
+    status: 'ACTIVE',
+    issuedAt: new Date(),
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+  const loan = await libraryService.returnLoan({ actorId: 'admin-1', loanId: 'loan-damaged', condition: 'DAMAGED' });
+  assert.strictEqual(loan.status, 'RETURNED');
+  assert.strictEqual(state.copies.find((c: any) => c.id === 'copy-2').status, 'DAMAGED');
+});
+
+test('returnLoan without condition leaves LOST copies lost (H2)', async () => {
+  const copyIdx = state.copies.findIndex((c: any) => c.id === 'copy-2');
+  state.copies[copyIdx] = { ...state.copies[copyIdx], status: 'LOST' };
+  state.loans.push({
+    id: 'loan-lost',
+    studentId: 'student-1',
+    bookCopyId: 'copy-2',
+    status: 'ACTIVE',
+    issuedAt: new Date(),
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+  const loan = await libraryService.returnLoan({ actorId: 'admin-1', loanId: 'loan-lost' });
+  assert.strictEqual(loan.status, 'RETURNED');
+  assert.strictEqual(
+    state.copies.find((c: any) => c.id === 'copy-2').status,
+    'LOST',
+    'return must not resurrect LOST copies without an explicit condition'
+  );
+});
+
+test('returnLoan rejects invalid condition (H2)', async () => {
+  state.loans.push({
+    id: 'loan-badcond',
+    studentId: 'student-1',
+    bookCopyId: 'copy-2',
+    status: 'ACTIVE',
+    issuedAt: new Date(),
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+  await assert.rejects(
+    () => libraryService.returnLoan({ actorId: 'admin-1', loanId: 'loan-badcond', condition: 'MINT' }),
+    (err: any) => err instanceof ValidationError
+  );
+});
+
+test('createBorrowRequest caps pending queue per copy (M2)', async () => {
+  const added = await libraryService.addCopies({ actorId: 'admin-1', bookId: 'book-1', count: 1 });
+  assert.strictEqual(added.count, 1);
+  const freshCopy = state.copies[state.copies.length - 1];
+  assert.strictEqual(freshCopy.status, 'AVAILABLE');
+  for (let i = 0; i < 5; i++) {
+    const req = await libraryService.createBorrowRequest({
+      studentId: `student-cap-${i}`,
+      bookCopyId: freshCopy.id,
+    });
+    assert.strictEqual(req.status, 'PENDING');
+  }
+  await assert.rejects(
+    () => libraryService.createBorrowRequest({ studentId: 'student-cap-5', bookCopyId: freshCopy.id }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('updateBook normalizes empty ISBN to null (M3)', async () => {
+  const first = await libraryService.updateBook({ actorId: 'admin-1', bookId: 'book-1', data: { isbn: '' } });
+  assert.strictEqual(first.isbn, null);
+  const book2 = await libraryService.createBook({
+    actorId: 'admin-1',
+    data: { title: 'Second Book', author: 'Anon' },
+  });
+  const second = await libraryService.updateBook({ actorId: 'admin-1', bookId: book2.id, data: { isbn: '' } });
+  assert.strictEqual(second.isbn, null, 'second empty ISBN must also succeed (no P2002 on "")');
 });

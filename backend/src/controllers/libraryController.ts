@@ -186,6 +186,7 @@ async function returnLoan(req: Request, res: Response, next: NextFunction): Prom
       actorId: req.user!.id,
       loanId: req.params.id as string,
       notes: req.body.notes,
+      condition: req.body.condition,
       ipAddress: getIp(req),
     });
     success(res, { loan }, 'Loan returned');

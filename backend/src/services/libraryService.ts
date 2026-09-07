@@ -141,6 +141,12 @@ interface UpdateBookParams {
   ipAddress?: string | null;
 }
 
+// M3: empty/whitespace-only strings carry no information - store NULL so
+// unique-null semantics hold (two "" ISBNs would otherwise collide).
+function emptyToNull(value: string | undefined): string | null {
+  return value !== undefined && value.trim() !== '' ? value : null;
+}
+
 async function updateBook({ actorId, bookId, data, ipAddress }: UpdateBookParams) {
   const existing = await prisma.libraryBook.findUnique({ where: { id: bookId } });
   if (!existing) throw new NotFoundError('Book not found');
@@ -150,11 +156,14 @@ async function updateBook({ actorId, bookId, data, ipAddress }: UpdateBookParams
     data: {
       title: data.title ?? existing.title,
       author: data.author ?? existing.author,
-      isbn: data.isbn !== undefined ? data.isbn : existing.isbn,
-      publisher: data.publisher !== undefined ? data.publisher : existing.publisher,
+      // M3: normalize empty strings to NULL like createBook does (`isbn ||
+      // null`). Unique-null semantics allow many NULLs but a second ""
+      // would trip P2002 - and "" is never a real ISBN/publisher.
+      isbn: data.isbn !== undefined ? emptyToNull(data.isbn) : existing.isbn,
+      publisher: data.publisher !== undefined ? emptyToNull(data.publisher) : existing.publisher,
       publishedYear: data.publishedYear !== undefined ? parseInt(String(data.publishedYear), 10) : existing.publishedYear,
-      category: data.category !== undefined ? data.category : existing.category,
-      description: data.description !== undefined ? data.description : existing.description,
+      category: data.category !== undefined ? emptyToNull(data.category) : existing.category,
+      description: data.description !== undefined ? emptyToNull(data.description) : existing.description,
       coverUrl: data.coverUrl !== undefined ? assertOptionalHttpUrl(data.coverUrl, 'Cover URL') : existing.coverUrl,
     },
   });
@@ -234,31 +243,50 @@ interface CreateBorrowRequestParams {
 }
 
 async function createBorrowRequest({ studentId, actorId, bookCopyId, reason, ipAddress }: CreateBorrowRequestParams) {
-  const copy = await prisma.libraryBookCopy.findUnique({
-    where: { id: bookCopyId },
-    include: { book: true },
-  });
-  if (!copy) throw new NotFoundError('Book copy not found');
-  if (copy.status !== 'AVAILABLE') {
-    throw new ConflictError('This book copy is not available for borrowing');
-  }
+  // M2: bound the pending queue per copy so N students racing for one
+  // AVAILABLE copy cannot create an unbounded PENDING pile-up. The copy row
+  // is locked (SELECT ... FOR UPDATE) inside the tx so concurrent creators
+  // serialize on the count check before inserting.
+  const MAX_PENDING_PER_COPY = 5;
 
-  const existingPending = await prisma.libraryBorrowRequest.findFirst({
-    where: { studentId, bookCopyId, status: 'PENDING' },
-  });
-  if (existingPending) {
-    throw new ConflictError('You already have a pending request for this book copy');
-  }
+  let bookTitle: string | null = null;
+  const request = await prisma.$transaction(async (tx) => {
+    const copy = await tx.libraryBookCopy.findUnique({
+      where: { id: bookCopyId },
+      include: { book: true },
+    });
+    if (!copy) throw new NotFoundError('Book copy not found');
+    if (copy.status !== 'AVAILABLE') {
+      throw new ConflictError('This book copy is not available for borrowing');
+    }
+    bookTitle = copy.book?.title ?? null;
 
-  const request = await prisma.libraryBorrowRequest.create({
-    data: {
-      studentId,
-      bookCopyId,
-      reason: reason || null,
-    },
-    include: {
-      bookCopy: { include: { book: true } },
-    },
+    await tx.$queryRaw`SELECT 1 FROM "library_book_copies" WHERE "id" = ${bookCopyId}::uuid FOR UPDATE`;
+
+    const pendingCount = await tx.libraryBorrowRequest.count({
+      where: { bookCopyId, status: 'PENDING' },
+    });
+    if (pendingCount >= MAX_PENDING_PER_COPY) {
+      throw new ConflictError('This book copy already has the maximum number of pending requests');
+    }
+
+    const existingPending = await tx.libraryBorrowRequest.findFirst({
+      where: { studentId, bookCopyId, status: 'PENDING' },
+    });
+    if (existingPending) {
+      throw new ConflictError('You already have a pending request for this book copy');
+    }
+
+    return tx.libraryBorrowRequest.create({
+      data: {
+        studentId,
+        bookCopyId,
+        reason: reason || null,
+      },
+      include: {
+        bookCopy: { include: { book: true } },
+      },
+    });
   });
 
   await writeAuditLog({
@@ -266,7 +294,7 @@ async function createBorrowRequest({ studentId, actorId, bookCopyId, reason, ipA
     action: 'LIBRARY_BORROW_REQUESTED',
     entity: 'LibraryBorrowRequest',
     entityId: request.id,
-    metadata: { studentId, bookCopyId, bookTitle: copy.book.title },
+    metadata: { studentId, bookCopyId, bookTitle },
     ipAddress,
   });
 
@@ -450,26 +478,44 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
   }
 
   if (decision === 'REJECTED') {
-    const updatedRequest = await prisma.libraryBorrowRequest.update({
-      where: { id: requestId },
-      data: {
-        status: 'REJECTED',
-        decidedById: actorId,
-        decidedAt: new Date(),
-        reason: reason || null,
-      },
+    // H1: reject must claim the request atomically like approve does.
+    // A plain update() let a concurrent approve win the copy-claim tx and
+    // then get overwritten APPROVED -> REJECTED, orphaning a live loan on a
+    // rejected request. updateMany with the PENDING guard + tx audit means
+    // exactly one decision wins.
+    const result = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.libraryBorrowRequest.updateMany({
+        where: { id: requestId, status: 'PENDING' },
+        data: {
+          status: 'REJECTED',
+          decidedById: actorId,
+          decidedAt: new Date(),
+          reason: reason || null,
+        },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictError('This request has already been decided');
+      }
+
+      const updatedRequest = await tx.libraryBorrowRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId,
+          action: 'LIBRARY_BORROW_REJECTED',
+          entity: 'LibraryBorrowRequest',
+          entityId: requestId,
+          metadata: { reason },
+          ipAddress,
+        },
+      });
+
+      return { request: updatedRequest, loan: null };
     });
 
-    await writeAuditLog({
-      actorId,
-      action: 'LIBRARY_BORROW_REJECTED',
-      entity: 'LibraryBorrowRequest',
-      entityId: requestId,
-      metadata: { reason },
-      ipAddress,
-    });
-
-    return { request: updatedRequest, loan: null };
+    return result;
   }
 
   throw new ValidationError('Decision must be APPROVED or REJECTED');
@@ -482,9 +528,9 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
 // Overdue loans are derived at read time (pilot-appropriate): ACTIVE loans
 // whose dueDate has passed are annotated as OVERDUE, and filtering by
 // status=OVERDUE returns ACTIVE loans past due. No cron job required.
-const now = new Date();
-
-function annotateOverdue(loans: any[]): any[] {
+// M1: `now` is computed per request - a module-load timestamp would freeze
+// after the first call and hide newly-overdue loans until process restart.
+function annotateOverdue(loans: any[], now: Date): any[] {
   return loans.map((loan) =>
     loan.status === 'ACTIVE' && new Date(loan.dueDate) < now ? { ...loan, status: 'OVERDUE' } : loan
   );
@@ -498,6 +544,7 @@ function loanStatusFilter(status?: string): Prisma.LibraryLoanWhereInput['status
 }
 
 async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
+  const now = new Date();
   const where: Prisma.LibraryLoanWhereInput = {};
   const validatedStatus = assertLoanStatus(status);
   const statusFilter = loanStatusFilter(validatedStatus);
@@ -523,7 +570,7 @@ async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
   ]);
 
   return {
-    loans: annotateOverdue(loans),
+    loans: annotateOverdue(loans, now),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
@@ -551,7 +598,7 @@ async function listMyLoans({ studentId, page = 1, pageSize = 20 }: ListMyLoansPa
   ]);
 
   return {
-    loans: annotateOverdue(loans),
+    loans: annotateOverdue(loans, new Date()),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
@@ -560,10 +607,14 @@ interface ReturnLoanParams {
   actorId: string;
   loanId: string;
   notes?: string;
+  // Explicit copy condition assessed by staff at return time (H2).
+  condition?: string;
   ipAddress?: string | null;
 }
 
-async function returnLoan({ actorId, loanId, notes, ipAddress }: ReturnLoanParams) {
+const RETURN_CONDITIONS = ['AVAILABLE', 'DAMAGED', 'LOST'];
+
+async function returnLoan({ actorId, loanId, notes, condition, ipAddress }: ReturnLoanParams) {
   const loan = await prisma.libraryLoan.findUnique({
     where: { id: loanId },
     include: { bookCopy: true },
@@ -572,9 +623,14 @@ async function returnLoan({ actorId, loanId, notes, ipAddress }: ReturnLoanParam
   if (loan.status === 'RETURNED') {
     throw new ConflictError('This loan has already been returned');
   }
+  if (condition !== undefined && !RETURN_CONDITIONS.includes(condition)) {
+    throw new ValidationError('Invalid return condition - must be AVAILABLE, DAMAGED, or LOST');
+  }
 
-  // Transaction: claim loan (idempotent under concurrency) + mark copy
-  // available + audit
+  // Transaction: claim loan (idempotent under concurrency) + settle the copy
+  // + audit. H2: a copy previously marked LOST/DAMAGED is NOT silently
+  // resurrected as borrowable - only BORROWED copies flip to AVAILABLE, and
+  // anything else requires an explicit staff-assessed condition.
   const result = await prisma.$transaction(async (tx) => {
     // Atomically claim the loan so concurrent double-returns cannot both pass
     const claimed = await tx.libraryLoan.updateMany({
@@ -590,15 +646,25 @@ async function returnLoan({ actorId, loanId, notes, ipAddress }: ReturnLoanParam
       throw new ConflictError('This loan has already been returned');
     }
 
-    const updatedLoan = await tx.libraryLoan.update({
+    const updatedLoan = await tx.libraryLoan.findUnique({
       where: { id: loanId },
-      data: {},
     });
 
-    await tx.libraryBookCopy.update({
+    const copy = await tx.libraryBookCopy.findUnique({
       where: { id: loan.bookCopyId },
-      data: { status: 'AVAILABLE' },
     });
+    let nextStatus = copy?.status ?? 'AVAILABLE';
+    if (condition) {
+      nextStatus = condition as typeof nextStatus;
+    } else if (nextStatus === 'BORROWED') {
+      nextStatus = 'AVAILABLE';
+    }
+    if (copy && nextStatus !== copy.status) {
+      await tx.libraryBookCopy.update({
+        where: { id: loan.bookCopyId },
+        data: { status: nextStatus },
+      });
+    }
 
     await tx.auditLog.create({
       data: {
@@ -606,7 +672,7 @@ async function returnLoan({ actorId, loanId, notes, ipAddress }: ReturnLoanParam
         action: 'LIBRARY_LOAN_RETURNED',
         entity: 'LibraryLoan',
         entityId: loanId,
-        metadata: { bookCopyId: loan.bookCopyId, notes },
+        metadata: { bookCopyId: loan.bookCopyId, notes, condition: condition ?? null, copyStatus: nextStatus },
         ipAddress,
       },
     });
