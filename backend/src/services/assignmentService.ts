@@ -282,6 +282,21 @@ async function updateAssignment({ actorId, assignmentId, data, ipAddress }: Upda
     if (!Number.isInteger(maxScore) || maxScore < 1) {
       throw new ValidationError('Max score must be a positive whole number');
     }
+    // H9: never lower maxScore below an already-awarded score (would create
+    // score > maxScore states and retroactively change averages). Raising is
+    // allowed and audited old->new below.
+    if (maxScore < assignment.maxScore) {
+      const top = await prisma.assignmentSubmission.aggregate({
+        where: { assignmentId },
+        _max: { score: true },
+      });
+      const maxAwarded = top._max.score;
+      if (maxAwarded != null && maxScore < maxAwarded) {
+        throw new ConflictError(
+          `Cannot lower max score below the highest awarded score (${maxAwarded})`
+        );
+      }
+    }
     updateData.maxScore = maxScore;
   }
 
@@ -310,7 +325,14 @@ async function updateAssignment({ actorId, assignmentId, data, ipAddress }: Upda
     action: 'ASSIGNMENT_UPDATED',
     entity: 'Assignment',
     entityId: assignmentId,
-    metadata: { courseId: assignment.courseId, title: updated.title, status: updated.status },
+    metadata: {
+      courseId: assignment.courseId,
+      title: updated.title,
+      status: updated.status,
+      ...(updateData.maxScore !== undefined && updateData.maxScore !== assignment.maxScore
+        ? { maxScore: { from: assignment.maxScore, to: updateData.maxScore } }
+        : {}),
+    },
     ipAddress,
   });
 

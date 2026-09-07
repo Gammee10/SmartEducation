@@ -29,6 +29,16 @@ function errorHandler(err: Error, req: Request, res: Response, _next: NextFuncti
         data: {},
       });
     }
+    if (prismaErr.code === 'P2003') {
+      // Defense-in-depth (C4): with Restrict FKs (C1) any delete that would
+      // orphan history fails here. Never leak a raw 500 for it - the caller
+      // must use the archival flow or resolve dependents first.
+      return res.status(409).json({
+        success: false,
+        message: 'This record cannot be deleted because other records depend on it',
+        data: {},
+      });
+    }
   }
 
   // Operational errors we created

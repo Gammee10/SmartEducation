@@ -53,6 +53,27 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 /**
+ * Content freeze (C4): quiz questions/points are grading keys. Once a quiz
+ * leaves DRAFT or collects its first attempt, editing questions would
+ * silently rewrite history (QuizAnswer.isCorrect/pointsEarned dangle,
+ * optionId nulls via SetNull) and deleting questions throws raw FK errors.
+ * Freeze content at that point - create a new quiz to change questions.
+ */
+async function assertQuizContentMutable(quizId: string, quizStatus: string): Promise<void> {
+  if (quizStatus !== 'DRAFT') {
+    throw new ConflictError(
+      'Quiz content is frozen after publishing - create a new quiz to change questions'
+    );
+  }
+  const attempts = await prisma.quizAttempt.count({ where: { quizId } });
+  if (attempts > 0) {
+    throw new ConflictError(
+      'Quiz content is frozen once attempts exist - create a new quiz to change questions'
+    );
+  }
+}
+
+/**
  * Build the question payload returned to students (no correct answers),
  * applying the quiz's shuffle settings. Used both for new attempts and for
  * resuming an existing IN_PROGRESS attempt.
@@ -487,6 +508,9 @@ async function addQuestion({ actorId, quizId, data, ipAddress }: AddQuestionPara
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
 
+  // C4 content freeze: no new questions after publishing or first attempt.
+  await assertQuizContentMutable(quizId, quiz.status);
+
   const question = await prisma.quizQuestion.create({
     data: {
       quizId,
@@ -538,6 +562,9 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
 
+  // C4 content freeze: no edits after publishing or first attempt.
+  await assertQuizContentMutable(existing.quizId, existing.quiz.status);
+
   // If options are provided, validate the full question
   if (data.options && data.options.length > 0) {
     validateQuestion(
@@ -562,6 +589,22 @@ async function updateQuestion({ actorId, questionId, data, ipAddress }: UpdateQu
     const points = Number(data.points);
     if (!Number.isInteger(points) || points < 1) {
       throw new ValidationError('Points must be a positive whole number');
+    }
+    // H9: never lower points below already-awarded scores (would create
+    // pointsEarned > points states and retroactively change averages).
+    // The C4 freeze above already blocks this for published/attempted
+    // quizzes; this is defense-in-depth for the DRAFT race window.
+    if (points < existing.points) {
+      const maxEarned = await prisma.quizAnswer.aggregate({
+        where: { questionId },
+        _max: { pointsEarned: true },
+      });
+      const top = maxEarned._max.pointsEarned;
+      if (top != null && points < top) {
+        throw new ConflictError(
+          `Cannot lower points below the highest awarded score (${top}) - create a new quiz instead`
+        );
+      }
     }
     updateData.points = points;
   }
@@ -635,6 +678,10 @@ async function deleteQuestion({ actorId, questionId, ipAddress }: DeleteQuestion
   if (!teacher || teacher.id !== existing.quiz.course.teacherId) {
     throw new ForbiddenError('You can only manage questions in your own courses');
   }
+
+  // C4 content freeze: no deletes after publishing or first attempt (a
+  // delete with answers would otherwise throw a raw FK error as a 500).
+  await assertQuizContentMutable(existing.quizId, existing.quiz.status);
 
   await prisma.quizQuestion.delete({ where: { id: questionId } });
 

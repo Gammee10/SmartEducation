@@ -223,6 +223,12 @@ const mockPrisma = {
       state.submissions[idx] = { ...state.submissions[idx], ...data };
       return state.submissions[idx];
     },
+    aggregate: async ({ where }: any) => {
+      let result = state.submissions;
+      if (where?.assignmentId) result = result.filter((s: any) => s.assignmentId === where.assignmentId);
+      const scores = result.map((s: any) => s.score).filter((v: any) => v != null);
+      return { _max: { score: scores.length ? Math.max(...scores) : null } };
+    },
   },
   auditLog: {
     create: async ({ data }: any) => {
@@ -626,4 +632,29 @@ test('gradeSubmission re-grade is audited with previous score', async () => {
   const last = reGrade[reGrade.length - 1];
   assert.strictEqual(last.metadata.score, 90);
   assert.strictEqual(last.metadata.previousScore, 85);
+});
+
+test('updateAssignment rejects lowering maxScore below awarded scores (H9)', async () => {
+  // submission-1 was graded 90 above; assignment-1 maxScore is 120.
+  await assert.rejects(
+    () =>
+      assignmentService.updateAssignment({
+        actorId: 'user-teacher-1',
+        assignmentId: 'assignment-1',
+        data: { maxScore: 50 },
+      }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('updateAssignment allows raising maxScore and audits old->new (H9)', async () => {
+  const updated = await assignmentService.updateAssignment({
+    actorId: 'user-teacher-1',
+    assignmentId: 'assignment-1',
+    data: { maxScore: 200 },
+  });
+  assert.strictEqual(updated.maxScore, 200);
+  const updates = state.auditLogs.filter((l: any) => l.action === 'ASSIGNMENT_UPDATED');
+  const last = updates[updates.length - 1];
+  assert.deepStrictEqual(last.metadata.maxScore, { from: 120, to: 200 });
 });

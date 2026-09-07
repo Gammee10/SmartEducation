@@ -314,6 +314,12 @@ const mockPrisma = {
       state.answers.push(...data);
       return { count: data.length };
     },
+    aggregate: async ({ where }: any) => {
+      let result = state.answers;
+      if (where?.questionId) result = result.filter((a: any) => a.questionId === where.questionId);
+      const earned = result.map((a: any) => a.pointsEarned).filter((v: any) => v != null);
+      return { _max: { pointsEarned: earned.length ? Math.max(...earned) : null } };
+    },
   },
   auditLog: {
     create: async ({ data }: any) => {
@@ -591,9 +597,17 @@ test('archiveQuiz archives quiz with audit log', async () => {
 // ---------------------------------------------------------------
 
 test('addQuestion creates question with options', async () => {
+  // C4: content edits are only allowed on DRAFT quizzes with zero attempts,
+  // so each content test below mints its own draft quiz (quiz-draft is
+  // published by the updateQuiz status test above).
+  const draft = await quizService.createQuiz({
+    actorId: 'user-teacher-1',
+    courseId: 'course-1',
+    data: { title: 'Content Draft' },
+  });
   const question = await quizService.addQuestion({
     actorId: 'user-teacher-1',
-    quizId: 'quiz-1',
+    quizId: draft.id,
     data: {
       prompt: 'What is 10/2?',
       type: 'SINGLE_CHOICE',
@@ -611,11 +625,16 @@ test('addQuestion creates question with options', async () => {
 });
 
 test('addQuestion validates at least 2 options', async () => {
+  const draft = await quizService.createQuiz({
+    actorId: 'user-teacher-1',
+    courseId: 'course-1',
+    data: { title: 'Validation Draft' },
+  });
   await assert.rejects(
     () =>
       quizService.addQuestion({
         actorId: 'user-teacher-1',
-        quizId: 'quiz-1',
+        quizId: draft.id,
         data: { prompt: 'Q', options: [{ optionText: 'A', isCorrect: true }] },
       }),
     (err: any) => err instanceof ValidationError
@@ -635,13 +654,102 @@ test('addQuestion throws ForbiddenError for non-owner teacher', async () => {
 });
 
 test('deleteQuestion deletes and audits', async () => {
+  // C4: delete from a fresh DRAFT quiz (quiz-1 is PUBLISHED and frozen).
+  const draft = await quizService.createQuiz({
+    actorId: 'user-teacher-1',
+    courseId: 'course-1',
+    data: { title: 'Delete Draft' },
+  });
+  const created = await quizService.addQuestion({
+    actorId: 'user-teacher-1',
+    quizId: draft.id,
+    data: {
+      prompt: 'Temporary question?',
+      type: 'SINGLE_CHOICE',
+      points: 1,
+      options: [
+        { optionText: 'Yes', isCorrect: true },
+        { optionText: 'No', isCorrect: false },
+      ],
+    },
+  });
   const result = await quizService.deleteQuestion({
     actorId: 'user-teacher-1',
-    questionId: 'question-1',
+    questionId: created.id,
     ipAddress: '127.0.0.1',
   });
   assert.strictEqual(result.deleted, true);
   assert.strictEqual(state.auditLogs.some((l: any) => l.action === 'QUIZ_QUESTION_DELETED'), true);
+});
+
+test('addQuestion is frozen on published quizzes (C4)', async () => {
+  await assert.rejects(
+    () =>
+      quizService.addQuestion({
+        actorId: 'user-teacher-1',
+        quizId: 'quiz-1', // PUBLISHED
+        data: {
+          prompt: 'Late question?',
+          type: 'SINGLE_CHOICE',
+          points: 1,
+          options: [
+            { optionText: 'A', isCorrect: true },
+            { optionText: 'B', isCorrect: false },
+          ],
+        },
+      }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('deleteQuestion is frozen on published quizzes (C4)', async () => {
+  await assert.rejects(
+    () => quizService.deleteQuestion({ actorId: 'user-teacher-1', questionId: 'question-1' }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('updateQuestion is frozen on published quizzes (C4)', async () => {
+  await assert.rejects(
+    () =>
+      quizService.updateQuestion({
+        actorId: 'user-teacher-1',
+        questionId: 'question-1',
+        data: { prompt: 'Rewritten after submissions?' },
+      }),
+    (err: any) => err instanceof ConflictError
+  );
+});
+
+test('updateQuestion rejects lowering points below awarded scores (H9)', async () => {
+  const draft = await quizService.createQuiz({
+    actorId: 'user-teacher-1',
+    courseId: 'course-1',
+    data: { title: 'Points Draft' },
+  });
+  const created = await quizService.addQuestion({
+    actorId: 'user-teacher-1',
+    quizId: draft.id,
+    data: {
+      prompt: 'Points guard?',
+      type: 'SINGLE_CHOICE',
+      points: 3,
+      options: [
+        { optionText: 'A', isCorrect: true },
+        { optionText: 'B', isCorrect: false },
+      ],
+    },
+  });
+  state.answers.push({ id: 'ans-h9', questionId: created.id, pointsEarned: 2 });
+  await assert.rejects(
+    () =>
+      quizService.updateQuestion({
+        actorId: 'user-teacher-1',
+        questionId: created.id,
+        data: { points: 1 },
+      }),
+    (err: any) => err instanceof ConflictError
+  );
 });
 
 // ---------------------------------------------------------------
