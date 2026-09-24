@@ -1,205 +1,339 @@
+<div align="center">
+
 # 🎓 Smart Education System
 
-> **A pilot-ready full-stack platform for Ethiopian high schools** — built as a modular monolith with React, Express, and PostgreSQL.
+**A pilot-ready full-stack platform for Ethiopian high schools** — a modular monolith for daily school operations: learning, records, and communication in one place.
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com)
-[![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+[![CI](https://github.com/Gammee10/SmartEducation/actions/workflows/ci.yml/badge.svg)](https://github.com/Gammee10/SmartEducation/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)](https://expressjs.com)
+[![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Tests](https://img.shields.io/badge/backend_tests-268_passing-3fb950)](#testing)
+[![License](https://img.shields.io/badge/license-educational-lightgrey)](#license)
+
+</div>
 
 ---
 
-## ✨ What's Inside
+## Table of Contents
 
-A complete digital school platform with **six feature modules already built** and working end-to-end:
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Demo Accounts](#demo-accounts)
+- [Feature Modules](#feature-modules)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
+- [Environment Variables](#environment-variables)
+- [Testing & CI](#testing--ci)
+- [Security Model](#security-model)
+- [Deployment](#deployment)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
-| 🏗️ Module | 📦 Status | 🎯 What it does |
+---
+
+## Overview
+
+Smart Education System is a digital platform for a single school (pilot) covering six operational areas: **identity & library**, **LMS courses & content**, **assignments & grading**, **quizzes & assessment**, **attendance, timetable & dashboards**, and **communication, notifications & user administration**.
+
+```mermaid
+flowchart LR
+  A["Admin"] --> P["Smart Education System"]
+  T["Teacher"] --> P
+  S["Student"] --> P
+  P --> M1["Auth · RBAC · Audit"]
+  P --> M2["Library"]
+  P --> M3["Courses & Content"]
+  P --> M4["Assignments & Grading"]
+  P --> M5["Quizzes & Assessment"]
+  P --> M6["Attendance · Timetable · Dashboards"]
+  P --> M7["Communication · Notifications"]
+  P --> M8["User Admin & CSV Import"]
+```
+
+**Design principles**
+
+- **Modular monolith** — one deployable backend with clear domain boundaries, not microservices.
+- **Server is the sole enforcer** — RBAC, ownership, quiz timing/secrecy, audience filtering, and file policy are all enforced in the API; the UI only mirrors them for affordance.
+- **History is preserved** — soft-delete/archival and `Restrict` foreign keys protect academic records (grades, attendance, attempts, loans).
+- **Auditable by default** — sensitive writes (grading, corrections, approvals, archival, logins) are written to an audit log, typically inside the same transaction.
+
+---
+
+## Tech Stack
+
+| Layer | Choice | Why |
 |---|---|---|
-| 🔐 **Foundation, Auth & Library** | ✅ Member 1 | JWT auth, RBAC (Admin/Teacher/Student), audit logging, library catalog, borrow requests, loans & returns |
-| 📚 **LMS Courses & Content** | ✅ Member 2 | Course creation, enrollment, content uploads (Cloudinary), course detail pages |
-| 📝 **Assignments & Grading** | ✅ Member 3 | Assignment creation, student submissions (text + files), teacher grading with feedback & notifications |
-| 🧠 **Quizzes & Assessment** | ✅ Member 4 | Quiz builder, timed attempts, auto-grading, answer secrecy, attempt limits, results & notifications |
-| 📊 **SIS, Attendance & Dashboards** | ✅ Member 5 | Attendance marking & corrections, weekly timetable with conflict detection, role-specific dashboards, student profiles |
-| 💬 **Communication, Notifications & User Admin** | ✅ Member 6 | Announcements & events with audience targeting, notification bell & inbox, admin user management with CSV bulk import |
+| Frontend | **React 18 + Vite 5 + Tailwind 3** | Fast dev server, utility-first styling, small bundle |
+| Routing / data | **React Router 6** + a per-domain `api/` layer on **axios** | Contract isolation from backend routes |
+| Backend | **Node.js 20+ + Express 4 (TypeScript)** | Familiar, explicit, easy to reason about |
+| Database | **PostgreSQL 16 via Prisma 5** | Typed queries, migrations, `Restrict` FKs |
+| DB hosting | **Supabase** (pooler for app, direct for migrations) | Managed Postgres with connection pooling |
+| File storage | **Cloudinary** | Assignment submission files only (content upload is URL-based) |
+| Auth | **JWT (HS256) + bcrypt**, `tokenVersion` revocation | Stateless session with server-side kill switch |
+| Notifications | **In-app only** (polling bell) | No push/SMTP/Redis infra for the pilot |
+| CI | **GitHub Actions** | Backend tests + integration + audit, frontend build, Docker images |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-Get the whole platform running in **under 5 minutes**:
+> **Prerequisites:** [Node.js](https://nodejs.org) **>= 20** and a PostgreSQL database ([Supabase](https://supabase.com) free tier works).
 
-### 1. Prerequisites
-
-- [Node.js](https://nodejs.org) **>= 18**
-- A PostgreSQL database — [Supabase](https://supabase.com) is recommended (free tier works great)
-
-### 2. Install & configure
+<details open>
+<summary><b>1 · Clone & install</b></summary>
 
 ```bash
-# Clone the repo
 git clone https://github.com/Gammee10/SmartEducation.git
 cd SmartEducation
+npm install          # installs both backend and frontend workspaces
+```
+</details>
 
-# Install all dependencies (backend + frontend workspaces)
-npm install
+<details open>
+<summary><b>2 · Configure environment</b></summary>
 
-# Configure environment
+```bash
 cd backend
 cp .env.example .env
-# ✏️ Edit .env with your DATABASE_URL, DIRECT_URL, and JWT_SECRET
-cd ..
+# then edit backend/.env (see Environment Variables below)
 ```
 
-### 3. Set up the database
+Minimum for local dev: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`. Cloudinary and a private `DEFAULT_USER_PASSWORD` are needed for uploads and production.
+</details>
+
+<details open>
+<summary><b>3 · Create the schema & seed demo data</b></summary>
 
 ```bash
-# Create the database schema
-npm run prisma:migrate
-
-# Seed demo users + sample library books
-npm run prisma:seed
+npm run prisma:migrate     # apply migrations
+npm run prisma:seed        # demo admin/teacher/student + sample library books
 ```
+</details>
 
-### 4. Start the platform 🎉
+<details open>
+<summary><b>4 · Run it</b></summary>
 
 ```bash
-# Terminal 1 — Backend API (http://localhost:5000)
+# Terminal 1 — API  → http://localhost:5000
 npm run dev:backend
 
-# Terminal 2 — Frontend app (http://localhost:5173)
+# Terminal 2 — SPA  → http://localhost:5173
 npm run dev:frontend
 ```
 
-Open **[http://localhost:5173](http://localhost:5173)** in your browser and log in!
+Open **http://localhost:5173** and log in. The Vite dev server proxies `/api` to `localhost:5000` (override with `VITE_API_PROXY`).
+</details>
+
+<details>
+<summary><b>Root scripts cheat-sheet</b></summary>
+
+| Command | Purpose |
+|---|---|
+| `npm run dev:backend` / `dev:frontend` | Start each app in watch mode |
+| `npm run build` | Type-check + build backend and frontend |
+| `npm run typecheck` | Type-check both workspaces |
+| `npm run lint` | ESLint over `backend/src` and `frontend/src` |
+| `npm run test:backend` | Backend unit tests (Node test runner) |
+| `npm run prisma:generate` / `migrate` / `seed` | Prisma helpers |
+</details>
 
 ---
 
-## 👤 Demo Accounts
+## Demo Accounts
 
-Seeded via `npm run prisma:seed` (dev only). The seed password defaults to
-`SEED_PASSWORD` when set, otherwise a dev-only fallback - override it with
-`SEED_PASSWORD="a-private-value"` and rotate seeded accounts immediately
-after first login in any shared environment.
+Seeded by `npm run prisma:seed` (dev only). The password is `SEED_PASSWORD` if set, otherwise a dev-only default — **set `SEED_PASSWORD` and rotate these accounts in any shared environment**.
 
-| Role | Email | Password | Can do |
-|---|---|---|---|
-| 🛡️ **Admin** | `admin@school.edu` | `<SEED_PASSWORD>` | Manage library, enroll students, view everything |
-| 👩‍🏫 **Teacher** | `teacher@school.edu` | `<SEED_PASSWORD>` | Create courses, upload content, assign & grade, build quizzes |
-| 🧑‍🎓 **Student** | `student@school.edu` | `<SEED_PASSWORD>` | Browse courses, submit work, take quizzes, borrow books |
+| Role | Email | Can do |
+|---|---|---|
+| 🛡️ Admin | `admin@school.edu` | Manage library, enroll students, manage users, view everything |
+| 👩‍🏫 Teacher | `teacher@school.edu` | Create courses/content, assign & grade, build quizzes, mark attendance |
+| 🧑‍🎓 Student | `student@school.edu` | Browse courses, submit work, take quizzes, borrow books |
 
 ---
 
-## 🧩 Feature Tour
+## Feature Modules
 
-### 🔐 Authentication & Roles
-- JWT-based login with bcrypt-hashed passwords
-- Role-based access control enforced **server-side** (never trust the frontend!)
-- No public registration — admins control user creation
-- Every sensitive action is written to an **audit log**
+<details open>
+<summary>🔐 <b>Identity, RBAC & Library</b></summary>
 
-### 📚 Library
-- Full book catalog with search by title/author/ISBN
-- Copy-level tracking (available, borrowed, lost, damaged)
-- Student borrow requests → admin approval → loan with due dates
-- Return tracking with full history — **no hard deletes**
+- JWT login with bcrypt password hashing; `tokenVersion` revokes sessions on password change/reset/archive.
+- Role-based access control (Admin / Teacher / Student) enforced server-side; **no public registration**.
+- Full audit logging for sensitive actions (including login success/failure).
+- Book catalog with search; copy-level tracking (available / borrowed / damaged / lost).
+- Student borrow requests → admin approval → loan with due date → return with condition; atomic copy claim prevents double-loans.
+</details>
 
-### 📖 LMS Courses & Content
-- Teachers create courses with subject, grade level, and status
-- Admins enroll/unenroll students
-- Content items (video, PDF, document, image, link) uploaded through **Cloudinary**
-- Students see only their enrolled, active courses
+<details open>
+<summary>📚 <b>LMS Courses & Content</b></summary>
 
-### 📝 Assignments
-- Teachers create assignments with instructions, max score, and due dates
-- Students submit text and/or files (up to 50MB via Cloudinary)
-- Late submissions automatically flagged
-- Teachers grade with score + feedback → student gets an in-app **notification**
+- Teachers create courses (subject, grade level, status); admins enroll/unenroll students.
+- Content items (video / document / PDF / image / link) with URL validation (`http(s)` only).
+- Students see only their active, enrolled courses; teacher/admin roster visibility differs for privacy.
+- Course-scoped assignments, quizzes, and attendance live under `/api/courses/:id/...`.
+</details>
 
-### 🧠 Quizzes
-- Teachers build quizzes with single/multiple-choice questions and point values
-- Configurable time limits, max attempts, and question/option shuffling
-- **Server-side timing enforcement** — attempts auto-expire
-- **Auto-grading** with exact-match anti-cheating logic
-- Correct answers are **never leaked** to students before submission
-- Results trigger `QUIZ_RESULT` notifications
+<details open>
+<summary>📝 <b>Assignments & Grading</b></summary>
 
-### 📊 SIS: Attendance, Timetable & Dashboards
-- Teachers **mark attendance per course per day** (Present / Absent / Late / Excused) in bulk
-- Attendance corrections are **audited** with before/after snapshots
-- Students see their own attendance history and rate; teachers only their own courses
-- Weekly **timetable** grouped by day — admins create/delete slots with automatic **room & teacher conflict detection**
-- Role-specific dashboards:
-  - **Admin**: school-wide stats (courses, students, teachers, attendance rate, average scores)
-  - **Teacher**: course list with counts + recent submissions & grades
-  - **Student**: enrollment stats, attendance rate, average scores, course links
-- **Student profile page**: summary stats, courses, recent quiz attempts, full attendance history
+- Teachers create assignments with instructions, max score, and due date; lowering max score below an awarded score is blocked.
+- Students submit text and/or a file (documents/images/archives, **20 MB** max) stored on Cloudinary; late submissions are flagged.
+- Teachers grade with score + feedback; grading, audit, and the student notification happen in one transaction.
+- Failed DB writes after a successful upload compensate by deleting the orphaned Cloudinary asset.
+</details>
 
-### 💬 Communication, Notifications & User Admin
-- **Announcements & events** with audience targeting (Everyone / Teachers / Students) — filtering enforced **server-side**
-- Publishing an announcement or event **fans out in-app notifications** to the targeted audience
-- **Notification bell** in the navbar with live unread badge (polls every 30s)
-- **Notification inbox** — unread filter, mark one read, mark all read; users can only access their own notifications
-- **Admin user management** — create students/teachers manually (auto-generated `STU-####`/`TCH-####` codes), update details, archive (soft delete)
-- **CSV bulk import** with per-row validation and clear error reporting (`ImportBatch`/`ImportError` tracking)
-- No public registration — all user creation is admin-controlled and audited
+<details open>
+<summary>🧠 <b>Quizzes & Assessment</b></summary>
+
+- Teacher-built quizzes with single/multiple-choice questions, point values, time limits, max attempts, and shuffle options.
+- **Server-side timing** — attempts auto-expire; **attempt limits** enforced; in-progress attempts resume without resetting the timer.
+- **Auto-grading** with exact-set matching; foreign/forged option ids are dropped and duplicates deduplicated.
+- Correct answers are **never sent** to students before submission; quiz content is frozen once published or attempted.
+- Results trigger `QUIZ_RESULT` notifications.
+</details>
+
+<details open>
+<summary>📊 <b>SIS — Attendance, Timetable & Dashboards</b></summary>
+
+- Bulk attendance per course/day (Present / Absent / Late / Excused); corrections are audited with before/after snapshots.
+- Students see only their own attendance; teachers only their own courses.
+- Weekly timetable with **room & teacher conflict detection** (advisory-lock serialized).
+- Role dashboards: admin (school-wide counts, attendance rate, averages), teacher (courses + recent activity), student (enrollment, rates, scores), plus a student profile page.
+</details>
+
+<details open>
+<summary>💬 <b>Communication, Notifications & User Admin</b></summary>
+
+- Announcements & events with audience targeting (Everyone / Teachers / Students), filtered **server-side**.
+- Publishing fans out in-app notifications (chunked) atomically with the post.
+- Notification bell with unread badge + inbox (unread filter, mark one/all read; owner-only).
+- Admin user management with auto-generated `STU-####` / `TCH-####` codes, archive (soft delete), and password reset.
+- **CSV bulk import** with per-row validation, bounded concurrency, and `ImportBatch` / `ImportError` tracking.
+</details>
 
 ---
 
-## 🗂️ Project Structure
+## Architecture
 
+```mermaid
+flowchart TB
+  subgraph Client["Client"]
+    SPA["React SPA<br/>pages → api/domain-modules → axios"]
+  end
+
+  subgraph API["Express API (modular monolith)"]
+    RT["routes/*<br/>auth · RBAC · rate-limit"]
+    CT["controllers/*<br/>parse · validate · shape"]
+    SV["services/domain/*<br/>policy · persistence · side-effects"]
+    K["shared kernel<br/>accessPolicy · audit · notify · validation · filePolicy · tx"]
+  end
+
+  DB[("PostgreSQL<br/>Prisma")]
+  CDN[("Cloudinary<br/>assignment files")]
+
+  SPA -->|"/api (same-origin)"| RT
+  RT --> CT --> SV --> K --> DB
+  SV --> CDN
 ```
+
+**Layering rule:** `routes → controllers → services → shared kernel → prisma`. Services never import another service's internals; cross-domain policy (course access, audit, notifications, validation, file rules) lives in the shared kernel. See [`docs/REFACTORING_PLAN.md`](docs/REFACTORING_PLAN.md) for the architecture hardening work and its status.
+
+<details>
+<summary><b>Request lifecycle (example: login)</b></summary>
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant R as Express routes
+  participant S as authService
+  participant D as PostgreSQL
+  B->>R: POST /api/auth/login
+  R->>S: login(email, password)
+  S->>D: find user + write audit log
+  D-->>S: user row
+  S-->>R: JWT + sanitized user
+  R-->>B: { success, message, data }
+```
+</details>
+
+<details>
+<summary><b>Data model (25 Prisma models)</b></summary>
+
+Users & profiles, academic structure (courses, enrollments, content), assessment (assignments, submissions, quizzes, questions, options, attempts, answers), school operations (attendance, timetable, announcements, events), and platform records (notifications, audit logs, import batches/errors, library books/copies/requests/loans).
+
+Schema source of truth: [`backend/prisma/schema.prisma`](backend/prisma/schema.prisma).
+</details>
+
+---
+
+## Project Structure
+
+```text
 SmartEducation/
-├── backend/                    # Express API (TypeScript)
+├── backend/                         # Express API (TypeScript)
 │   ├── prisma/
-│   │   ├── schema.prisma       # Database source of truth (20+ models)
-│   │   └── seed.ts             # Demo users + sample data
+│   │   ├── schema.prisma            # 25 models — database source of truth
+│   │   └── seed.ts                  # demo users + sample data
 │   ├── src/
-│   │   ├── config/             # Environment configuration
-│   │   ├── controllers/        # HTTP request handlers
-│   │   ├── middleware/         # Auth, RBAC, error handler
-│   │   ├── routes/             # Express route definitions
-│   │   ├── services/           # Business logic (auth, library, courses, assignments, quizzes, attendance, timetable, dashboards)
-│   │   ├── utils/              # Response/error helpers
-│   │   ├── app.ts              # Express app
-│   │   └── index.ts            # Server entry
-│   └── tests/                  # Node test runner tests (175 passing)
-└── frontend/                   # React SPA (TypeScript + Vite + Tailwind)
-    └── src/
-        ├── api/                # Axios client with JWT interceptor
-        ├── components/         # Layout, ProtectedRoute
-        ├── context/            # AuthContext
-        ├── pages/              # Login, Dashboard, Courses, Assignments, Quizzes, Library, Timetable, Attendance, Student Profile, Announcements, Events, Notifications, User Admin
-        └── types/              # Shared TypeScript types
+│   │   ├── shared/                  # kernel: accessPolicy, audit, notify, validation, filePolicy, tx
+│   │   ├── services/                # domain logic; leaf modules + thin barrels
+│   │   │   ├── courses/  assignments/  quizzes/  library/  users/
+│   │   │   └── auth/ notification/ attendance/ timetable/ communication/ dashboard …
+│   │   ├── controllers/             # HTTP layer (parse / validate / shape)
+│   │   ├── routes/                  # route wiring + role gates + multer config
+│   │   ├── middleware/              # auth, RBAC, rate limits, error handler
+│   │   ├── utils/                   # response envelope, errors, pagination, logger
+│   │   ├── config/                  # env validation
+│   │   ├── app.ts  index.ts
+│   │   └── prisma/client.ts         # single shared PrismaClient
+│   └── tests/                       # unit tests + tests/integration (real Postgres)
+├── frontend/                        # React SPA (TypeScript + Vite + Tailwind)
+│   └── src/
+│       ├── api/                     # per-domain API modules + envelope helper
+│       ├── components/              # Layout, ui design system, guards
+│       ├── context/                 # AuthContext
+│       ├── hooks/                   # useApi, useTheme, usePageTitle
+│       ├── pages/                   # one file per screen
+│       ├── types/                   # shared TypeScript types
+│       └── utils/                   # apiError, safeUrl, notificationBus
+├── docs/                            # architecture, plans, handoff packages
+└── .github/workflows/ci.yml         # backend · frontend · docker jobs
 ```
 
 ---
 
-## 🔌 API Overview
+## API Reference
 
-All responses use a consistent shape:
+All responses share one envelope (paginated endpoints add a `pagination` sibling):
 
 ```json
-{
-  "success": true,
-  "message": "Operation completed successfully",
-  "data": {}
-}
+{ "success": true, "message": "Operation completed successfully", "data": {} }
 ```
 
-### 🔐 Auth
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| POST | `/api/auth/login` | Login and get JWT | Public |
-| GET | `/api/auth/me` | Get current user | Auth |
+<details>
+<summary><b>🔐 Auth</b></summary>
 
-### 📚 Library
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| GET | `/api/library/books` | List/search books | Auth |
+| POST | `/api/auth/login` | Login, returns JWT | Public |
+| GET | `/api/auth/me` | Current user | Auth |
+| PUT | `/api/auth/password` | Change own password (revokes sessions) | Auth |
+</details>
+
+<details>
+<summary><b>📚 Library</b></summary>
+
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| GET | `/api/library/books` | List / search books | Auth |
 | GET | `/api/library/books/:id` | Book detail | Auth |
 | POST | `/api/library/books` | Create book | Admin |
 | PUT | `/api/library/books/:id` | Update book | Admin |
@@ -207,59 +341,71 @@ All responses use a consistent shape:
 | POST | `/api/library/requests` | Submit borrow request | Student |
 | GET | `/api/library/requests/mine` | My requests | Student |
 | GET | `/api/library/requests` | All requests | Admin |
-| POST | `/api/library/requests/:id/decide` | Approve/reject | Admin |
+| POST | `/api/library/requests/:id/decide` | Approve / reject | Admin |
 | GET | `/api/library/loans/mine` | My loans | Student |
 | GET | `/api/library/loans` | All loans | Admin |
-| POST | `/api/library/loans/:id/return` | Record return | Admin |
+| POST | `/api/library/loans/:id/return` | Record return (+ condition) | Admin |
+</details>
 
-### 📖 Courses & Content
+<details>
+<summary><b>📖 Courses & Content</b></summary>
+
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | GET | `/api/courses` | List courses | Auth |
 | GET | `/api/courses/:id` | Course detail | Auth |
 | POST | `/api/courses` | Create course | Teacher |
-| PUT | `/api/courses/:id` | Update course | Teacher |
+| PUT | `/api/courses/:id` | Update course | Teacher / Admin |
 | POST | `/api/courses/:id/enroll` | Enroll student | Admin |
 | POST | `/api/courses/:id/unenroll` | Unenroll student | Admin |
 | GET | `/api/courses/:id/content` | List content | Auth |
-| POST | `/api/courses/:courseId/content` | Upload content | Teacher |
-| POST | `/api/courses/content/:id/archive` | Archive content | Teacher |
+| POST | `/api/courses/:courseId/content` | Upload content (URL) | Teacher |
+| POST | `/api/courses/content/:id/archive` | Archive content | Teacher / Admin |
+</details>
 
-### 📝 Assignments
+<details>
+<summary><b>📝 Assignments</b></summary>
+
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | GET | `/api/courses/:id/assignments` | List course assignments | Auth |
 | POST | `/api/courses/:id/assignments` | Create assignment | Teacher |
 | GET | `/api/assignments/:id` | Assignment detail | Auth |
-| PUT | `/api/assignments/:id` | Update assignment | Teacher |
-| POST | `/api/assignments/:id/archive` | Archive assignment | Teacher |
+| PUT | `/api/assignments/:id` | Update assignment | Teacher / Admin |
+| POST | `/api/assignments/:id/archive` | Archive assignment | Teacher / Admin |
 | POST | `/api/assignments/:id/submit` | Submit work (text/file) | Student |
-| GET | `/api/assignments/:id/submissions` | List submissions | Teacher |
-| POST | `/api/submissions/:id/grade` | Grade submission | Teacher |
+| GET | `/api/assignments/:id/submissions` | List submissions | Teacher / Admin |
+| POST | `/api/submissions/:id/grade` | Grade submission | Teacher / Admin |
+</details>
 
-### 🧠 Quizzes
+<details>
+<summary><b>🧠 Quizzes</b></summary>
+
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | GET | `/api/courses/:id/quizzes` | List course quizzes | Auth |
 | POST | `/api/courses/:id/quizzes` | Create quiz | Teacher |
-| GET | `/api/quizzes/:id` | Quiz detail (answers hidden for students) | Auth |
-| PUT | `/api/quizzes/:id` | Update quiz | Teacher |
-| POST | `/api/quizzes/:id/archive` | Archive quiz | Teacher |
-| POST | `/api/quizzes/:id/questions` | Add question | Teacher |
-| PUT | `/api/quizzes/questions/:questionId` | Update question | Teacher |
-| DELETE | `/api/quizzes/questions/:questionId` | Delete question | Teacher |
-| POST | `/api/quizzes/:id/attempt` | Start attempt | Student |
+| GET | `/api/quizzes/:id` | Quiz detail (answers hidden from students) | Auth |
+| PUT | `/api/quizzes/:id` | Update quiz | Teacher / Admin |
+| POST | `/api/quizzes/:id/archive` | Archive quiz | Teacher / Admin |
+| POST | `/api/quizzes/:id/questions` | Add question | Teacher / Admin |
+| PUT | `/api/quizzes/questions/:questionId` | Update question | Teacher / Admin |
+| DELETE | `/api/quizzes/questions/:questionId` | Delete question | Teacher / Admin |
+| POST | `/api/quizzes/:id/attempt` | Start / resume attempt | Student |
 | POST | `/api/attempts/:id/submit` | Submit & auto-grade | Student |
-| GET | `/api/attempts/:id` | Attempt detail | Auth |
-| GET | `/api/quizzes/:id/results` | Quiz results | Auth |
+| GET | `/api/attempts/:id` | Attempt detail | Auth (owner / staff) |
+| GET | `/api/quizzes/:id/results` | Quiz results | Auth (owner / staff) |
+</details>
 
-### 📊 SIS - Attendance, Timetable & Dashboards
+<details>
+<summary><b>📊 Attendance, Timetable & Dashboards</b></summary>
+
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | GET | `/api/courses/:id/attendance` | Course attendance by date | Auth (role-filtered) |
-| POST | `/api/attendance/upsert` | Mark attendance (bulk or single) | Teacher |
-| PUT | `/api/attendance/:id` | Correct a record (audited) | Teacher/Admin |
-| GET | `/api/students/:id/attendance` | Student attendance history | Self/Teacher/Admin |
+| POST | `/api/attendance/upsert` | Mark attendance (bulk/single) | Teacher |
+| PUT | `/api/attendance/:id` | Correct a record (audited) | Teacher / Admin |
+| GET | `/api/students/:id/attendance` | Student attendance history | Self / Teacher / Admin |
 | GET | `/api/timetable` | Weekly timetable slots | Auth (role-filtered) |
 | POST | `/api/timetable` | Create slot (conflict-checked) | Admin |
 | PUT | `/api/timetable/:id` | Update slot | Admin |
@@ -267,114 +413,157 @@ All responses use a consistent shape:
 | GET | `/api/dashboard/admin` | School-wide stats | Admin |
 | GET | `/api/dashboard/teacher` | Teacher stats & activity | Teacher |
 | GET | `/api/dashboard/student` | Student stats & courses | Student |
-| GET | `/api/students/:id/summary` | Academic profile summary | Self/Teacher/Admin |
+| GET | `/api/students/:id/summary` | Academic profile summary | Self / Teacher / Admin |
+</details>
 
-### 💬 Communication, Notifications & User Admin
+<details>
+<summary><b>💬 Communication, Notifications & User Admin</b></summary>
+
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
 | GET | `/api/announcements` | List announcements (audience-filtered) | Auth |
-| POST | `/api/announcements` | Publish announcement (+ notify audience) | Teacher/Admin |
-| DELETE | `/api/announcements/:id` | Delete announcement | Admin |
+| POST | `/api/announcements` | Publish (+ notify audience) | Teacher / Admin |
+| DELETE | `/api/announcements/:id` | Delete announcement | Admin / owner |
 | GET | `/api/events` | List events (audience-filtered) | Auth |
-| POST | `/api/events` | Create event (+ notify audience) | Teacher/Admin |
-| DELETE | `/api/events/:id` | Delete event | Admin |
-| GET | `/api/notifications` | My notifications (supports `unreadOnly`) | Auth |
+| POST | `/api/events` | Create event (+ notify audience) | Teacher / Admin |
+| DELETE | `/api/events/:id` | Delete event | Admin / owner |
+| GET | `/api/notifications` | My notifications (`unreadOnly`, paged) | Auth |
 | GET | `/api/notifications/unread-count` | Unread count for bell | Auth |
 | PUT | `/api/notifications/:id/read` | Mark one read (owner only) | Auth |
 | PUT | `/api/notifications/read-all` | Mark all read | Auth |
-| GET | `/api/users` | List/filter/search users | Admin |
-| POST | `/api/users` | Create student/teacher/admin | Admin |
-| PUT | `/api/users/:id` | Update user details/status | Admin |
+| GET | `/api/users` | List / filter / search users | Admin |
+| POST | `/api/users` | Create user | Admin |
+| PUT | `/api/users/:id` | Update user details / status | Admin |
 | POST | `/api/users/:id/archive` | Archive user (soft delete) | Admin |
-| POST | `/api/users/import` | CSV bulk import with error report | Admin |
+| POST | `/api/users/:id/reset-password` | Generate temporary password | Admin |
+| POST | `/api/users/import` | CSV bulk import (JSON `{ csv, filename }`) | Admin |
+</details>
 
-### 🩺 Health
+<details>
+<summary><b>🩺 Health</b></summary>
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/api/health` | Service health check |
+</details>
 
 ---
 
-## 🧪 Testing
+## Environment Variables
+
+Configured in `backend/.env` (copy from [`backend/.env.example`](backend/.env.example)); **never commit `.env`**.
+
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | Prod | App queries via the **pooler** (e.g. Supabase port 6543) |
+| `DIRECT_URL` | Prod | Migrations/seed use the **direct** connection (port 5432) |
+| `JWT_SECRET` | Prod | Required in production; long random value |
+| `JWT_EXPIRES_IN` | No | Defaults to `12h` |
+| `CLIENT_URLS` | Prod | Comma-separated allowed origins (must be `https://` in prod) |
+| `TRUST_PROXY` | Prod | Number of proxy hops; set `1` on Render/Fly/Railway |
+| `DEFAULT_USER_PASSWORD` | Prod | Initial password for admin-created/imported users |
+| `SEED_PASSWORD` | No | Dev seed account password (dev-only default otherwise) |
+| `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | Uploads | Required for assignment file uploads |
+| `PORT` | No | API port (default `5000`) |
+| `NODE_ENV` | No | `development` / `production` (prod fail-fast checks) |
+| `LOG_LEVEL` / `SENTRY_DSN` | No | Log verbosity; optional error tracker hook |
+
+---
+
+## Testing & CI
 
 ```bash
-# Run the full backend test suite (175 tests)
-npm run test:backend
+npm run test:backend                                   # 268 unit tests (mocked Prisma)
+npm run test:integration --workspace backend           # needs TEST_DATABASE_URL
+npm run typecheck && npm run lint && npm run build
 ```
 
-**Coverage includes:**
-- ✅ Response/error helpers
-- ✅ RBAC middleware
-- ✅ Auth service (login, current user, sanitization)
-- ✅ Audit service
-- ✅ Library workflows (catalog, requests, approvals, loans, returns)
-- ✅ Course & enrollment workflows
-- ✅ Assignment submission & grading
-- ✅ Quiz creation, answer secrecy, attempt limits, expiry, and scoring
-- ✅ Attendance marking, corrections with audit trail, and history access control
-- ✅ Timetable slot CRUD with room/teacher conflict detection
-- ✅ Admin/teacher/student dashboard aggregation
-- ✅ Announcements/events with server-side audience targeting and notification fan-out
-- ✅ Notification inbox ownership, read state, and unread counts
-- ✅ User creation validation, duplicate email rejection, soft-delete archiving
-- ✅ CSV import parsing, per-row validation, and batch/error tracking
+<details>
+<summary><b>What the 268 backend tests cover</b></summary>
+
+- Response/error helpers, pagination, RBAC middleware, logger redaction
+- Auth: login, sanitization, password change, `tokenVersion` revocation, 72-byte guard
+- Audit payloads; library catalog/requests/approvals/loans/returns (incl. race guards)
+- Courses, enrollment, content; assignments submission/grading (incl. Cloudinary compensation)
+- Quizzes: answer secrecy, attempt limits, expiry, exact-set scoring, content freeze
+- Attendance marking/corrections with before/after audit; timetable conflict detection
+- Dashboards, announcements/events audience filtering + fan-out, notification ownership
+- User admin: validation, archive guards, CSV per-row errors
+- Refactoring characterization/contract tests (envelope shape, access matrix, scoring)
+</details>
+
+**CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs three jobs on every PR:
+
+```mermaid
+flowchart LR
+  PR["Pull request"] --> BE["backend<br/>install · prisma generate/validate · typecheck · lint · unit tests · migrations · integration tests · audit · build"]
+  PR --> FE["frontend<br/>typecheck · build"]
+  BE --> DK["docker<br/>build backend + frontend images"]
+  FE --> DK
+```
+
+> Integration tests run against a real PostgreSQL service in CI; the security audit gate fails on **high** severity.
 
 ---
 
-## 🛡️ Security
+## Security Model
 
-- 🔒 **No public registration** — admins control user creation
-- 🔑 Passwords hashed with **bcrypt**
-- 🎫 JWT required for all protected routes
-- 👮 RBAC enforced **server-side** (Admin/Teacher/Student)
-- 🧑‍🎓 Students can only access their **own** borrowing history, submissions, and attempts
-- 🕵️ Correct quiz answers are **never exposed** to students before submission
-- ⏱️ Quiz timing and attempt limits enforced **server-side**
-- 📝 Sensitive actions are **audited**
-- 🗄️ No hard deletion of historical records
-
----
-
-## 🗺️ Roadmap
-
-| Phase | Module | Status |
-|---|---|---|
-| 1 | Foundation, Auth, RBAC, Audit, Library | ✅ **Done** |
-| 2 | LMS Courses, Enrollment, Content | ✅ **Done** |
-| 3 | Assignments, Submissions, Grading | ✅ **Done** |
-| 4 | Quizzes, Attempts, Assessment Engine | ✅ **Done** |
-| 5 | SIS, Attendance, Timetable, Dashboards | ✅ **Done** |
-| 6 | Communication, Notifications, User Admin | ✅ **Done** |
-| 7 | Cross-module integration & deployment | ⏳ Planned |
+- 🔒 No public registration — admin-controlled user creation only.
+- 🔑 bcrypt password hashing; 72-byte guard; passwords never logged or returned.
+- 🎫 JWT (HS256) on every protected route, with server-side `tokenVersion` revocation.
+- 👮 RBAC **and** ownership checks in the service layer — the UI is never trusted.
+- 🕵️ Quiz correct answers never leave the server before submission; timing/limits server-enforced.
+- 🗂️ Sensitive write actions are audited (often in the same transaction).
+- 🧾 Historical records are never hard-deleted (soft-delete/archival + `Restrict` FKs).
+- 🧱 Upload hardening: MIME allowlist + magic-byte sniffing + active-markup scan + size cap.
+- 🚦 Layered rate limits (api / auth / authenticated / sensitive / upload).
+- ⚙️ Production fail-fast on missing `JWT_SECRET`, `DEFAULT_USER_PASSWORD`, `DATABASE_URL`, or insecure CORS/`TRUST_PROXY`.
 
 ---
 
-## 🤝 Contributing
+## Deployment
 
-This project is built by a team of six members using **feature-based ownership**. Each member works on their own branch and merges via pull requests in a defined order.
+Both apps ship as Docker images (see `backend/Dockerfile`, `frontend/Dockerfile`):
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m 'Add some feature'`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+```bash
+docker build -f backend/Dockerfile -t smartedu-backend .
+docker build -f frontend/Dockerfile -t smartedu-frontend .
+```
 
-> ⚠️ **Merge order matters** — see `TEAM_WORK_ORDER.md` for the dependency order.
+- **Backend image** — Node 20 slim; generates the Prisma client, builds `dist`, prunes dev deps, applies migrations on boot, then starts the API.
+- **Frontend image** — Vite build served by nginx; `/api/` is reverse-proxied to the `backend` host (same-origin, so no CORS in production).
+
+Set the environment variables above on your host (Supabase for the database, a value for `TRUST_PROXY` behind a proxy).
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |---|---|
 | [`docs/FINAL_ARCHITECTURE.md`](docs/FINAL_ARCHITECTURE.md) | System architecture & design decisions |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | Implementation phases & exit criteria |
-| [`docs/DEVELOPMENT_HANDOFF_PACKAGE.md`](docs/DEVELOPMENT_HANDOFF_PACKAGE.md) | Team handoff packages |
+| [`docs/REFACTORING_PLAN.md`](docs/REFACTORING_PLAN.md) | Architectural hardening plan + implementation status |
+| [`docs/DEVELOPMENT_HANDOFF_PACKAGE.md`](docs/DEVELOPMENT_HANDOFF_PACKAGE.md) | Team handoff overview |
+| [`docs/handoff/`](docs/handoff/) | Per-member handoff packages |
+| [`docs/AGENTS.md`](docs/AGENTS.md) | Repository conventions for AI agents |
 | [`TEAM_WORK_ORDER.md`](TEAM_WORK_ORDER.md) | Merge order & team coordination |
-| [`member-handoff-packages/`](member-handoff-packages/) | Per-member Codex handoff files |
 
 ---
 
-## 📄 License
+## Contributing
 
-This project is for educational use. Built with ❤️ for Ethiopian high schools.
+This project is built by a team of six using **feature-based ownership** — each member works on a branch and merges via pull requests in a defined order.
+
+1. Create a feature branch (`git checkout -b feature/your-feature`)
+2. Make scoped changes; keep the public API and envelope stable
+3. Run `npm run typecheck && npm run lint && npm run test:backend`
+4. Push and open a Pull Request
+
+> ⚠️ Merge order matters — see [`TEAM_WORK_ORDER.md`](TEAM_WORK_ORDER.md).
+
+---
+
+## License
+
+For educational use. Built with ❤️ for Ethiopian high schools.
