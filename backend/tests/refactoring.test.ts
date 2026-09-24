@@ -87,11 +87,13 @@ function installMock(overrides: Record<string, any> = {}) {
     loaded: true,
     exports: mock,
   } as any;
-  // Drop previously loaded service modules so they rebind to this mock
-  for (const mod of ['../src/services/quizService', '../src/services/assignmentService', '../src/services/attendanceService', '../src/services/communicationService', '../src/services/libraryService', '../src/services/userAdminService', '../src/services/courseService', '../src/services/authService', '../src/services/auditService', '../src/services/notificationService']) {
-    try {
-      delete require.cache[require.resolve(mod)];
-    } catch { /* not loaded yet */ }
+  // Drop previously loaded service/kernel modules so they rebind to this
+  // mock. Leaf modules (post Stage-3 split) must be evicted too, otherwise a
+  // stale binding from an earlier test survives the barrel eviction.
+  for (const key of Object.keys(require.cache)) {
+    if (key.includes('src\\services') || key.includes('src\\shared') || key.includes('src/services') || key.includes('src/shared')) {
+      delete require.cache[key];
+    }
   }
   calls.audit = [];
   calls.notification = [];
