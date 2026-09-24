@@ -6,7 +6,7 @@ import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
 import { uploadFile, deleteFile } from './fileStorageService';
 import { assertValidDate } from '../shared/validation';
-import { getCourse as getCourseWithAccess, isAdminRole, adminOverrideMeta } from './courseService';
+import { requireCourseAccess, isAdminRole, adminOverrideMeta } from '../shared/accessPolicy';
 
 
 
@@ -56,7 +56,7 @@ interface ListCourseAssignmentsParams extends PaginationParams {
 
 async function listCourseAssignments({ courseId, role, userId, status, page = 1, pageSize = 20 }: ListCourseAssignmentsParams) {
   // Enforce course access (teacher owner, enrolled student, or admin)
-  await getCourseWithAccess({ courseId, role, userId });
+  await requireCourseAccess({ courseId, role, userId });
 
   const where: Prisma.AssignmentWhereInput = { courseId };
   if (status) {

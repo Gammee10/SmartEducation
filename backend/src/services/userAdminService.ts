@@ -5,7 +5,8 @@ import prisma from '../prisma/client';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
-import { sanitizeUser, assertPasswordBytes } from './authService';
+import { sanitizeUser } from '../shared/sanitize';
+import { assertPasswordBytes } from '../shared/password';
 import logger from '../utils/logger';
 import env from '../config/env';
 

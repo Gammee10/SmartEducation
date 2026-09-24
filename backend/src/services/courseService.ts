@@ -499,6 +499,4 @@ export {
   listContent,
   uploadContent,
   archiveContent,
-  isAdminRole,
-  adminOverrideMeta,
 };

@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
-import { getCourse as getCourseWithAccess, isAdminRole, adminOverrideMeta } from './courseService';
+import { requireCourseAccess, isAdminRole, adminOverrideMeta } from '../shared/accessPolicy';
 
 
 
@@ -179,7 +179,7 @@ interface ListCourseQuizzesParams extends PaginationParams {
 
 async function listCourseQuizzes({ courseId, role, userId, page = 1, pageSize = 20 }: ListCourseQuizzesParams) {
   // Enforce course access (teacher owner, enrolled student, or admin)
-  await getCourseWithAccess({ courseId, role, userId });
+  await requireCourseAccess({ courseId, role, userId });
 
   const where: Prisma.QuizWhereInput = { courseId };
   if (role === 'STUDENT') {
