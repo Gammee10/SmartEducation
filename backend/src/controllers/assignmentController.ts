@@ -1,9 +1,11 @@
 import { parsePagination } from '../utils/pagination';
 // Assignment controller - handles assignment, submission, and grading HTTP requests.
+// HTTP stage only: parse/validate input, call the service, shape the response.
+// Role enforcement lives in the route wiring (requireRole/requireStudent) and
+// the service/kernel own ownership + course-access checks (D3).
 import { Request, Response, NextFunction } from 'express';
 import * as assignmentService from '../services/assignmentService';
 import { success, created, paginated } from '../utils/response';
-import { ForbiddenError } from '../utils/errors';
 
 function getIp(req: Request): string | null {
   return req.ip || req.socket?.remoteAddress || null;
@@ -31,10 +33,6 @@ async function listCourseAssignments(req: Request, res: Response, next: NextFunc
 
 async function createAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can create assignments'));
-      return;
-    }
     const assignment = await assignmentService.createAssignment({
       actorId: req.user!.id,
       courseId: req.params.id as string,
@@ -95,10 +93,6 @@ async function archiveAssignment(req: Request, res: Response, next: NextFunction
 
 async function submitAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'STUDENT') {
-      next(new ForbiddenError('Only students can submit assignments'));
-      return;
-    }
     const submission = await assignmentService.submitAssignment({
       actorId: req.user!.id,
       assignmentId: req.params.id as string,
@@ -137,10 +131,6 @@ async function listSubmissions(req: Request, res: Response, next: NextFunction):
 
 async function gradeSubmission(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER' && req.user!.role !== 'ADMIN') {
-      next(new ForbiddenError('Only teachers and admins can grade submissions'));
-      return;
-    }
     const submission = await assignmentService.gradeSubmission({
       actorId: req.user!.id,
       actorRole: req.user!.role,

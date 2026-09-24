@@ -1,9 +1,9 @@
 import { parsePagination } from '../utils/pagination';
 // Attendance controller - handles attendance HTTP requests.
+// HTTP stage only; role enforcement lives in route wiring (D3).
 import { Request, Response, NextFunction } from 'express';
 import * as attendanceService from '../services/attendanceService';
 import { success, created } from '../utils/response';
-import { ForbiddenError } from '../utils/errors';
 
 function getIp(req: Request): string | null {
   return req.ip || req.socket?.remoteAddress || null;
@@ -31,10 +31,6 @@ export async function listCourseAttendance(req: Request, res: Response, next: Ne
 
 export async function upsertAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can mark attendance'));
-      return;
-    }
     const records = Array.isArray(req.body.records) ? req.body.records : [req.body];
     const result = await attendanceService.upsertAttendance({
       actorId: req.user!.id,
