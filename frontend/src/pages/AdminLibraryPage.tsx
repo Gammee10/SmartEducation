@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, FormEvent, Fragment } from 'react';
-import api from '../api/client';
+import { listBooks, createBook, listBorrowRequests, decideBorrowRequest, listLoans, returnLoan } from '../api/library';
 import StatusBadge from '../components/StatusBadge';
 import {
   buttonPrimary,
@@ -81,8 +81,8 @@ export default function AdminLibraryPage() {
 
   const fetchBooks = useCallback(async () => {
     try {
-      const response = await api.get('/library/books', { params: { pageSize: 100 } });
-      setBooks(response.data.data);
+      const { books: list } = await listBooks({ pageSize: 100 });
+      setBooks(list);
     } catch (err: any) {
       setError(getApiError(err, 'Failed to load books'));
     }
@@ -90,8 +90,8 @@ export default function AdminLibraryPage() {
 
   const fetchRequests = useCallback(async () => {
     try {
-      const response = await api.get('/library/requests', { params: { pageSize: 100 } });
-      setRequests(response.data.data);
+      const { requests: list } = await listBorrowRequests({ pageSize: 100 });
+      setRequests(list);
     } catch (err: any) {
       setError(getApiError(err, 'Failed to load requests'));
     }
@@ -99,8 +99,8 @@ export default function AdminLibraryPage() {
 
   const fetchLoans = useCallback(async () => {
     try {
-      const response = await api.get('/library/loans', { params: { pageSize: 100 } });
-      setLoans(response.data.data);
+      const { loans: list } = await listLoans({ pageSize: 100 });
+      setLoans(list);
     } catch (err: any) {
       setError(getApiError(err, 'Failed to load loans'));
     }
@@ -138,7 +138,7 @@ export default function AdminLibraryPage() {
     }
     setSavingBook(true);
     try {
-      await api.post('/library/books', {
+      await createBook({
         ...bookForm,
         publishedYear: year || undefined,
         copies,
@@ -172,13 +172,13 @@ export default function AdminLibraryPage() {
     setError('');
     setMessage('');
     try {
-      const body: Record<string, string> = { decision };
+      const body: { decision: string; reason?: string; dueDate?: string } = { decision };
       if (decision === 'APPROVED') {
         body.dueDate = dueDate;
       } else {
         body.reason = rejectReason.trim();
       }
-      await api.post(`/library/requests/${requestId}/decide`, body);
+      await decideBorrowRequest(requestId, body);
       setMessage(`Request ${decision.toLowerCase()} successfully`);
       cancelDecision();
       fetchRequests();
@@ -196,7 +196,7 @@ export default function AdminLibraryPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/library/loans/${loanId}/return`, {});
+      await returnLoan(loanId);
       setMessage('Loan returned successfully');
       fetchLoans();
       fetchBooks();

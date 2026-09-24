@@ -170,6 +170,19 @@ const AVATAR_SOLIDS = [
   'bg-slate-600',
 ] as const;
 
+// Single source of truth for name -> initials (previously copy-pasted in
+// AttendancePage, CourseDetailPage, and StudentProfilePage).
+export function getInitials(name?: string): string {
+  return (
+    (name ?? '?')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join('') || '?'
+  );
+}
+
 export function Avatar({
   name,
   size = 'md',
@@ -179,12 +192,7 @@ export function Avatar({
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
 }) {
-  const initials = (name ?? '?')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join('') || '?';
+  const initials = getInitials(name);
   let hash = 0;
   for (let i = 0; i < (name ?? '?').length; i++) hash += (name ?? '?').charCodeAt(i);
   const solid = AVATAR_SOLIDS[hash % AVATAR_SOLIDS.length];

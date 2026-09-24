@@ -1,6 +1,7 @@
 // Audit service - reusable audit logging for sensitive operations.
 import { Prisma } from '@prisma/client';
 import prisma from '../prisma/client';
+import type { AuditWriter } from '../shared/tx';
 
 interface AuditLogParams {
   actorId?: string | null;
@@ -25,9 +26,7 @@ async function writeAuditLog(
     metadata = null,
     ipAddress = null,
   }: AuditLogParams,
-  client: { auditLog: { create: (args: unknown) => Promise<unknown> } } = prisma as {
-    auditLog: { create: (args: unknown) => Promise<unknown> };
-  }
+  client: AuditWriter = prisma
 ) {
   return client.auditLog.create({
     data: {

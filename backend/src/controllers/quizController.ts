@@ -1,9 +1,9 @@
 import { parsePagination } from '../utils/pagination';
 // Quiz controller - handles quiz, question, attempt, and result HTTP requests.
+// HTTP stage only; role enforcement lives in route wiring (D3).
 import { Request, Response, NextFunction } from 'express';
 import * as quizService from '../services/quizService';
 import { success, created, paginated } from '../utils/response';
-import { ForbiddenError } from '../utils/errors';
 
 function getIp(req: Request): string | null {
   return req.ip || req.socket?.remoteAddress || null;
@@ -29,10 +29,6 @@ async function listCourseQuizzes(req: Request, res: Response, next: NextFunction
 
 async function createQuiz(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can create quizzes'));
-      return;
-    }
     const quiz = await quizService.createQuiz({
       actorId: req.user!.id,
       courseId: req.params.id as string,
@@ -141,10 +137,6 @@ async function deleteQuestion(req: Request, res: Response, next: NextFunction): 
 
 async function startAttempt(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'STUDENT') {
-      next(new ForbiddenError('Only students can take quizzes'));
-      return;
-    }
     const result = await quizService.startAttempt({
       actorId: req.user!.id,
       quizId: req.params.id as string,
@@ -158,10 +150,6 @@ async function startAttempt(req: Request, res: Response, next: NextFunction): Pr
 
 async function submitAttempt(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'STUDENT') {
-      next(new ForbiddenError('Only students can submit quiz attempts'));
-      return;
-    }
     const result = await quizService.submitAttempt({
       actorId: req.user!.id,
       attemptId: req.params.id as string,

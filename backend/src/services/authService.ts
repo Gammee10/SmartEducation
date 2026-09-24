@@ -5,6 +5,8 @@ import prisma from '../prisma/client';
 import env from '../config/env';
 import { UnauthorizedError, NotFoundError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
+import { sanitizeUser } from '../shared/sanitize';
+import { assertPasswordBytes, MAX_PASSWORD_BYTES } from '../shared/password';
 import logger from '../utils/logger';
 
 interface LoginInput {
@@ -48,23 +50,10 @@ function signToken(userId: string, tokenVersion = 0): string {
   });
 }
 
-function sanitizeUser<T extends { passwordHash?: string; tokenVersion?: unknown }>(
-  user: T | null
-): Omit<T, 'passwordHash' | 'tokenVersion'> | null {
-  if (!user) return null;
-  const { passwordHash: _passwordHash, tokenVersion: _tokenVersion, ...safe } = user;
-  return safe;
-}
-
-// bcrypt silently truncates at 72 bytes - a longer password would not
-// actually protect the account, so reject it with a clear error (M12).
-const MAX_PASSWORD_BYTES = 72;
-
-function assertPasswordBytes(value: string, field = 'Password'): void {
-  if (Buffer.byteLength(value, 'utf8') > MAX_PASSWORD_BYTES) {
-    throw new ValidationError(`${field} must be at most ${MAX_PASSWORD_BYTES} bytes`);
-  }
-}
+// sanitizeUser/assertPasswordBytes/MAX_PASSWORD_BYTES are owned by the
+// shared kernel (../shared/sanitize, ../shared/password) and re-exported
+// here as a deprecated shim for one stage (see REFACTORING_PLAN Stage 1);
+// new code imports from the kernel directly.
 
 async function login({ email, password, ipAddress }: LoginInput) {
   const normalizedEmail = String(email || '').toLowerCase().trim();

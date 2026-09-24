@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import api from '../api/client';
+import { listEvents, createEvent, deleteEvent } from '../api/communication';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
@@ -32,7 +32,7 @@ export default function EventsPage() {
   const { isAdmin, isTeacher } = useAuth();
   const canPost = isAdmin || isTeacher;
   const { data, loading: loadingEvents, error: loadError, reload } = useApi<SchoolEvent[]>((signal) =>
-    api.get('/events', { params: { pageSize: 50 }, signal }).then((res) => res.data.data.events)
+    listEvents({ pageSize: 50 }, signal).then((res) => res.events)
   );
   const events = data || [];
   const [message, setMessage] = useState('');
@@ -69,7 +69,7 @@ export default function EventsPage() {
     }
     setSaving(true);
     try {
-      await api.post('/events', {
+      await createEvent({
         title: form.title,
         description: form.description || undefined,
         location: form.location || undefined,
@@ -91,7 +91,7 @@ export default function EventsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this event?')) return;
     try {
-      await api.delete(`/events/${id}`);
+      await deleteEvent(id);
       reload();
     } catch (err: any) {
       setActionError(getApiError(err, 'Failed to delete event'));

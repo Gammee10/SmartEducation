@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import api from '../api/client';
+import { listAnnouncements, createAnnouncement, deleteAnnouncement } from '../api/communication';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
@@ -31,7 +31,7 @@ export default function AnnouncementsPage() {
     error: loadError,
     reload,
   } = useApi<Announcement[]>((signal) =>
-    api.get('/announcements', { params: { pageSize: 50 }, signal }).then((res) => res.data.data.announcements)
+    listAnnouncements({ pageSize: 50 }, signal).then((res) => res.announcements)
   );
   const announcements = loaded ?? [];
   const [error, setError] = useState('');
@@ -48,7 +48,7 @@ export default function AnnouncementsPage() {
     setError('');
     setMessage('');
     try {
-      await api.post('/announcements', form);
+      await createAnnouncement(form);
       setMessage('Announcement published');
       setShowForm(false);
       setForm(emptyForm);
@@ -63,7 +63,7 @@ export default function AnnouncementsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this announcement?')) return;
     try {
-      await api.delete(`/announcements/${id}`);
+      await deleteAnnouncement(id);
       reload();
     } catch (err: any) {
       setError(getApiError(err, 'Failed to delete announcement'));

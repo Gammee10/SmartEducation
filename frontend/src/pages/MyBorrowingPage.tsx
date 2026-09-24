@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../api/client';
+import { listMyBorrowRequests, listMyLoans } from '../api/library';
 import StatusBadge from '../components/StatusBadge';
 import { Card, EmptyState, LoadingState, PageHeader, Banner } from '../components/ui';
 import type { BorrowRequest, Loan } from '../types';
@@ -16,11 +16,11 @@ export default function MyBorrowingPage() {
     setError('');
     try {
       const [reqRes, loanRes] = await Promise.all([
-        api.get('/library/requests/mine', { params: { pageSize: 50 } }),
-        api.get('/library/loans/mine', { params: { pageSize: 50 } }),
+        listMyBorrowRequests({ pageSize: 50 }),
+        listMyLoans({ pageSize: 50 }),
       ]);
-      setRequests(reqRes.data.data);
-      setLoans(loanRes.data.data);
+      setRequests(reqRes.requests);
+      setLoans(loanRes.loans);
     } catch (err: any) {
       setError(getApiError(err, 'Failed to load borrowing data'));
     } finally {

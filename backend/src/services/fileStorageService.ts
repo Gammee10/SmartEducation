@@ -3,6 +3,7 @@ import fs from 'fs';
 import { v2 as cloudinary } from 'cloudinary';
 import env from '../config/env';
 import { AppError, ValidationError } from '../utils/errors';
+import { MAX_FILE_SIZE } from '../shared/filePolicy';
 import logger from '../utils/logger';
 
 interface UploadFile {
@@ -17,8 +18,7 @@ cloudinary.config({
   api_key: env.cloudinaryApiKey,
   api_secret: env.cloudinaryApiSecret,
 });
-
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB - documents only; content upload is URL-based
+// MAX_FILE_SIZE lives in shared/filePolicy (single definition with the route gate).
 
 // Bound concurrent upload memory: buffered uploads are held in RAM (and were
 // historically base64-doubled at ~2.3x). Disk-backed uploads stream from

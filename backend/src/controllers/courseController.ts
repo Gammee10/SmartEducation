@@ -1,9 +1,9 @@
 import { parsePagination } from '../utils/pagination';
 // Course controller - handles course, enrollment, and content HTTP requests.
+// HTTP stage only; role enforcement lives in route wiring (D3).
 import { Request, Response, NextFunction } from 'express';
 import * as courseService from '../services/courseService';
 import { success, created, paginated } from '../utils/response';
-import { ForbiddenError } from '../utils/errors';
 
 function getIp(req: Request): string | null {
   return req.ip || req.socket?.remoteAddress || null;
@@ -43,10 +43,6 @@ async function getCourse(req: Request, res: Response, next: NextFunction): Promi
 
 async function createCourse(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can create courses'));
-      return;
-    }
     const course = await courseService.createCourse({
       actorId: req.user!.id,
       data: req.body,
@@ -79,10 +75,6 @@ async function updateCourse(req: Request, res: Response, next: NextFunction): Pr
 
 async function enrollStudent(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'ADMIN') {
-      next(new ForbiddenError('Only admins can enroll students'));
-      return;
-    }
     const enrollment = await courseService.enrollStudent({
       actorId: req.user!.id,
       courseId: req.params.id as string,
@@ -97,10 +89,6 @@ async function enrollStudent(req: Request, res: Response, next: NextFunction): P
 
 async function unenrollStudent(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'ADMIN') {
-      next(new ForbiddenError('Only admins can unenroll students'));
-      return;
-    }
     const enrollment = await courseService.unenrollStudent({
       actorId: req.user!.id,
       courseId: req.params.id as string,
@@ -133,10 +121,6 @@ async function listContent(req: Request, res: Response, next: NextFunction): Pro
 
 async function uploadContent(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    if (req.user!.role !== 'TEACHER') {
-      next(new ForbiddenError('Only teachers can upload content'));
-      return;
-    }
     const item = await courseService.uploadContent({
       actorId: req.user!.id,
       courseId: req.params.courseId as string,

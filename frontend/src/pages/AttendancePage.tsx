@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api/client';
+import { listCourseAttendance, upsertAttendance, correctAttendance } from '../api/attendance';
 import { useAuth } from '../context/AuthContext';
-import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner } from '../components/ui';
+import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner, getInitials } from '../components/ui';
 import type { CourseAttendanceView, AttendanceStatus } from '../types';
 import { getApiError } from '../utils/apiError';
 
@@ -14,16 +14,6 @@ const statusStyles: Record<AttendanceStatus, string> = {
   LATE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400',
   EXCUSED: 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400',
 };
-
-function getInitials(fullName?: string): string {
-  if (!fullName) return '?';
-  return fullName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -48,10 +38,8 @@ export default function AttendancePage() {
     if (!courseId) return;
     setLoading(true);
     setError('');
-    api
-      .get(`/courses/${courseId}/attendance`, { params: { date } })
-      .then((res) => {
-        const view: CourseAttendanceView = res.data.data;
+    listCourseAttendance(courseId, { date })
+      .then((view) => {
         setData(view);
         // Pre-fill drafts from existing records (roster is only present for
         // teacher/admin responses)
@@ -89,7 +77,7 @@ export default function AttendancePage() {
         setActionError('Mark at least one student before saving.');
         return;
       }
-      await api.post('/attendance/upsert', { records });
+      await upsertAttendance(records);
       setSavedMsg(`Attendance saved for ${records.length} student(s)`);
       load();
     } catch (err: any) {
@@ -103,7 +91,7 @@ export default function AttendancePage() {
     setActionError('');
     setSavedMsg('');
     try {
-      await api.put(`/attendance/${attendanceId}`, { status });
+      await correctAttendance(attendanceId, status);
       setSavedMsg('Attendance corrected');
       load();
     } catch (err: any) {

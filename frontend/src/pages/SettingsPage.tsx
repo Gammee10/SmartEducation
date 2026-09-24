@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { FormEvent, useState } from 'react';
-import api from '../api/client';
+import { changePassword } from '../api/auth';
 import { buttonPrimary, inputStyles, PageHeader, Banner, Spinner } from '../components/ui';
 import { getApiError } from '../utils/apiError';
 
@@ -42,7 +42,7 @@ export default function SettingsPage() {
     }
     setSaving(true);
     try {
-      await api.put('/auth/password', { currentPassword, newPassword });
+      await changePassword(currentPassword, newPassword);
       setMessage('Password changed successfully.');
       setCurrentPassword('');
       setNewPassword('');

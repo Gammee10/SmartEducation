@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../api/client';
+import { getStudentSummary } from '../api/dashboards';
+import { listStudentAttendance } from '../api/attendance';
 import {
   Card,
   CardHeader,
@@ -8,6 +9,7 @@ import {
   ErrorState,
   Icon,
   LoadingState,
+  getInitials,
 } from '../components/ui';
 import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type { StudentSummary, StudentAttendanceView, AttendanceStatus } from '../types';
@@ -21,16 +23,6 @@ const STATUS_META: Record<AttendanceStatus, { bar: string; pill: string }> = {
 };
 
 const ALL_STATUSES: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'];
-
-function getInitials(name?: string): string {
-  if (!name) return '?';
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
 
 type ProfileTab = 'courses' | 'attempts' | 'attendance';
 
@@ -48,17 +40,15 @@ export default function StudentProfilePage() {
 
   useEffect(() => {
     if (!studentId) return;
-    api
-      .get(`/students/${studentId}/summary`)
-      .then((res) => setSummary(res.data.data))
+    getStudentSummary(studentId)
+      .then(setSummary)
       .catch((err) => setError(getApiError(err, 'Failed to load profile')));
     // Track attendance loading/errors separately so a transient failure is
     // not silently rendered as "No attendance records yet."
     setAttendanceLoading(true);
     setAttendanceError('');
-    api
-      .get(`/students/${studentId}/attendance`)
-      .then((res) => setAttendance(res.data.data))
+    listStudentAttendance(studentId)
+      .then(setAttendance)
       .catch((err) =>
         setAttendanceError(getApiError(err, 'Failed to load attendance history'))
       )

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import api from '../api/client';
+import { login as apiLogin, getCurrentUser } from '../api/auth';
 import type { User } from '../types';
 
 interface AuthContextType {
@@ -36,8 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = useCallback(async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password });
-    const { token, user: userData } = response.data.data;
+    const { token, user: userData } = await apiLogin(email, password);
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -66,8 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const response = await api.get('/auth/me');
-      const userData = response.data.data.user;
+      const userData = await getCurrentUser();
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return userData;

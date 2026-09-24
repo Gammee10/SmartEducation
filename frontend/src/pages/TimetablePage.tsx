@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import api from '../api/client';
+import { listTimetable, createSlot, deleteSlot } from '../api/timetable';
+import { listCourses } from '../api/courses';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
@@ -36,9 +37,7 @@ export default function TimetablePage() {
     loading,
     error: loadError,
     reload,
-  } = useApi<TimetableSlot[]>((signal) =>
-    api.get('/timetable', { signal }).then((res) => res.data.data.slots)
-  );
+  } = useApi<TimetableSlot[]>((signal) => listTimetable({}, signal));
   const slots = loadedSlots ?? [];
   const [courses, setCourses] = useState<Course[]>([]);
   const [error, setError] = useState('');
@@ -60,9 +59,8 @@ export default function TimetablePage() {
     // Surface course-list failures instead of silently rendering an empty
     // course dropdown for admins (server message preserved).
     if (isAdmin) {
-      api
-        .get('/courses')
-        .then((res) => setCourses(res.data.data.courses || res.data.data))
+      listCourses()
+        .then((res) => setCourses(res.courses))
         .catch((err: any) =>
           setError(`${getApiError(err, 'Failed to load courses')} You may not be able to add slots until this is fixed.`)
         );
@@ -84,7 +82,7 @@ export default function TimetablePage() {
     }
     setSaving(true);
     try {
-      await api.post('/timetable', {
+      await createSlot({
         courseId: form.courseId,
         dayOfWeek: form.dayOfWeek,
         startTime: form.startTime,
@@ -106,7 +104,7 @@ export default function TimetablePage() {
     setError('');
     setMessage('');
     try {
-      await api.delete(`/timetable/${id}`);
+      await deleteSlot(id);
       setMessage('Timetable slot deleted');
       reload();
     } catch (err: any) {

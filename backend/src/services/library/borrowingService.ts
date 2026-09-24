@@ -1,0 +1,466 @@
+// Library borrowing - borrow requests, admin decisions, loans, and returns.
+// Split out of libraryService (REFACTORING_PLAN Stage 3). All multi-row
+// writes stay transactional with audit inside the same tx.
+import { Prisma } from '@prisma/client';
+import prisma from '../../prisma/client';
+import { NotFoundError, ConflictError, ValidationError } from '../../utils/errors';
+import { writeAuditLog } from '../auditService';
+
+interface CreateBorrowRequestParams {
+  studentId: string;
+  // Acting user (the student) so the audit log records the actor, not null.
+  actorId?: string;
+  bookCopyId: string;
+  reason?: string;
+  ipAddress?: string | null;
+}
+
+async function createBorrowRequest({ studentId, actorId, bookCopyId, reason, ipAddress }: CreateBorrowRequestParams) {
+  // M2: bound the pending queue per copy so N students racing for one
+  // AVAILABLE copy cannot create an unbounded PENDING pile-up. The copy row
+  // is locked (SELECT ... FOR UPDATE) inside the tx so concurrent creators
+  // serialize on the count check before inserting.
+  const MAX_PENDING_PER_COPY = 5;
+
+  let bookTitle: string | null = null;
+  const request = await prisma.$transaction(async (tx) => {
+    const copy = await tx.libraryBookCopy.findUnique({
+      where: { id: bookCopyId },
+      include: { book: true },
+    });
+    if (!copy) throw new NotFoundError('Book copy not found');
+    if (copy.status !== 'AVAILABLE') {
+      throw new ConflictError('This book copy is not available for borrowing');
+    }
+    bookTitle = copy.book?.title ?? null;
+
+    await tx.$queryRaw`SELECT 1 FROM "library_book_copies" WHERE "id" = ${bookCopyId}::uuid FOR UPDATE`;
+
+    const pendingCount = await tx.libraryBorrowRequest.count({
+      where: { bookCopyId, status: 'PENDING' },
+    });
+    if (pendingCount >= MAX_PENDING_PER_COPY) {
+      throw new ConflictError('This book copy already has the maximum number of pending requests');
+    }
+
+    const existingPending = await tx.libraryBorrowRequest.findFirst({
+      where: { studentId, bookCopyId, status: 'PENDING' },
+    });
+    if (existingPending) {
+      throw new ConflictError('You already have a pending request for this book copy');
+    }
+
+    return tx.libraryBorrowRequest.create({
+      data: {
+        studentId,
+        bookCopyId,
+        reason: reason || null,
+      },
+      include: {
+        bookCopy: { include: { book: true } },
+      },
+    });
+  });
+
+  await writeAuditLog({
+    actorId: actorId || null,
+    action: 'LIBRARY_BORROW_REQUESTED',
+    entity: 'LibraryBorrowRequest',
+    entityId: request.id,
+    metadata: { studentId, bookCopyId, bookTitle },
+    ipAddress,
+  });
+
+  return request;
+}
+
+interface ListParams {
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+// Known status filter values - invalid filters produce a 422 instead of a
+// raw Prisma validation error (500). OVERDUE is a read-time derived filter.
+const BORROW_REQUEST_STATUSES = ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'];
+const LOAN_STATUSES = ['ACTIVE', 'RETURNED', 'OVERDUE'];
+
+function assertBorrowRequestStatus(status: string | undefined) {
+  if (status !== undefined && !BORROW_REQUEST_STATUSES.includes(status)) {
+    throw new ValidationError('Invalid borrow request status');
+  }
+  return status;
+}
+
+function assertLoanStatus(status: string | undefined) {
+  if (status !== undefined && !LOAN_STATUSES.includes(status)) {
+    throw new ValidationError('Invalid loan status');
+  }
+  return status;
+}
+
+async function listBorrowRequests({ status, page = 1, pageSize = 20 }: ListParams) {
+  const where: Prisma.LibraryBorrowRequestWhereInput = {};
+  const validatedStatus = assertBorrowRequestStatus(status);
+  if (validatedStatus) where.status = validatedStatus as Prisma.LibraryBorrowRequestWhereInput['status'];
+
+  const [requests, total] = await Promise.all([
+    prisma.libraryBorrowRequest.findMany({
+      where,
+      include: {
+        student: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+        bookCopy: { include: { book: { select: { id: true, title: true, author: true, isbn: true } } } },
+      },
+      orderBy: { requestedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.libraryBorrowRequest.count({ where }),
+  ]);
+
+  return {
+    requests,
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
+
+interface ListMyBorrowRequestsParams {
+  studentId: string;
+  page?: number;
+  pageSize?: number;
+}
+
+async function listMyBorrowRequests({ studentId, page = 1, pageSize = 20 }: ListMyBorrowRequestsParams) {
+  const where: Prisma.LibraryBorrowRequestWhereInput = { studentId };
+
+  const [requests, total] = await Promise.all([
+    prisma.libraryBorrowRequest.findMany({
+      where,
+      include: {
+        bookCopy: { include: { book: { select: { id: true, title: true, author: true, isbn: true } } } },
+      },
+      orderBy: { requestedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.libraryBorrowRequest.count({ where }),
+  ]);
+
+  return {
+    requests,
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
+
+interface DecideBorrowRequestParams {
+  actorId: string;
+  requestId: string;
+  decision: string;
+  reason?: string;
+  dueDate?: string;
+  ipAddress?: string | null;
+}
+
+async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDate, ipAddress }: DecideBorrowRequestParams) {
+  const request = await prisma.libraryBorrowRequest.findUnique({
+    where: { id: requestId },
+    include: { bookCopy: true },
+  });
+  if (!request) throw new NotFoundError('Borrow request not found');
+  if (request.status !== 'PENDING') {
+    throw new ConflictError('This request has already been decided');
+  }
+
+  if (decision === 'APPROVED') {
+    if (!dueDate) {
+      throw new ValidationError('Due date is required when approving a request');
+    }
+    // Validate like attendance's assertValidDate: garbage must not reach
+    // Prisma, the due date must be in the future, and loans are capped.
+    const due = new Date(dueDate);
+    if (Number.isNaN(due.getTime())) {
+      throw new ValidationError('Due date is not a valid date');
+    }
+    if (due.getTime() <= Date.now()) {
+      throw new ValidationError('Due date must be in the future');
+    }
+    if (due.getTime() > Date.now() + 90 * 24 * 60 * 60 * 1000) {
+      throw new ValidationError('Due date cannot be more than 90 days from now');
+    }
+    if (request.bookCopy.status !== 'AVAILABLE') {
+      throw new ConflictError('This book copy is no longer available');
+    }
+
+    // Transaction: approve request + create loan + claim copy + audit
+    let result;
+    try {
+      result = await prisma.$transaction(async (tx) => {
+      // Atomically claim the copy so two admins approving two different
+      // pending requests for the same copy cannot both succeed.
+      const claimed = await tx.libraryBookCopy.updateMany({
+        where: { id: request.bookCopyId, status: 'AVAILABLE' },
+        data: { status: 'BORROWED' },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictError('This book copy is no longer available');
+      }
+
+      const updatedRequest = await tx.libraryBorrowRequest.update({
+        where: { id: requestId },
+        data: {
+          status: 'APPROVED',
+          decidedById: actorId,
+          decidedAt: new Date(),
+          reason: reason || null,
+        },
+      });
+
+      const loan = await tx.libraryLoan.create({
+        data: {
+          borrowReqId: requestId,
+          studentId: request.studentId,
+          bookCopyId: request.bookCopyId,
+          issuedById: actorId,
+          dueDate: new Date(dueDate),
+        },
+      });
+
+      await writeAuditLog(
+        {
+          actorId,
+          action: 'LIBRARY_BORROW_APPROVED',
+          entity: 'LibraryBorrowRequest',
+          entityId: requestId,
+          metadata: { loanId: loan.id, dueDate },
+          ipAddress,
+        },
+        tx
+      );
+
+      return { request: updatedRequest, loan };
+    });
+    } catch (err: any) {
+      // Two concurrent approvals of the same request: the loan's unique
+      // borrowReqId is the authoritative guard.
+      if (err?.code === 'P2002') {
+        throw new ConflictError('This request has already been approved');
+      }
+      throw err;
+    }
+
+    return result;
+  }
+
+  if (decision === 'REJECTED') {
+    // H1: reject must claim the request atomically like approve does.
+    // A plain update() let a concurrent approve win the copy-claim tx and
+    // then get overwritten APPROVED -> REJECTED, orphaning a live loan on a
+    // rejected request. updateMany with the PENDING guard + tx audit means
+    // exactly one decision wins.
+    const result = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.libraryBorrowRequest.updateMany({
+        where: { id: requestId, status: 'PENDING' },
+        data: {
+          status: 'REJECTED',
+          decidedById: actorId,
+          decidedAt: new Date(),
+          reason: reason || null,
+        },
+      });
+      if (claimed.count === 0) {
+        throw new ConflictError('This request has already been decided');
+      }
+
+      const updatedRequest = await tx.libraryBorrowRequest.findUnique({
+        where: { id: requestId },
+      });
+
+      await writeAuditLog(
+        {
+          actorId,
+          action: 'LIBRARY_BORROW_REJECTED',
+          entity: 'LibraryBorrowRequest',
+          entityId: requestId,
+          metadata: { reason },
+          ipAddress,
+        },
+        tx
+      );
+
+      return { request: updatedRequest, loan: null };
+    });
+
+    return result;
+  }
+
+  throw new ValidationError('Decision must be APPROVED or REJECTED');
+}
+
+// Overdue loans are derived at read time (pilot-appropriate): ACTIVE loans
+// whose dueDate has passed are annotated as OVERDUE, and filtering by
+// status=OVERDUE returns ACTIVE loans past due. No cron job required.
+// M1: `now` is computed per request - a module-load timestamp would freeze
+// after the first call and hide newly-overdue loans until process restart.
+function annotateOverdue(loans: any[], now: Date): any[] {
+  return loans.map((loan) =>
+    loan.status === 'ACTIVE' && new Date(loan.dueDate) < now ? { ...loan, status: 'OVERDUE' } : loan
+  );
+}
+
+function loanStatusFilter(status?: string): Prisma.LibraryLoanWhereInput['status'] {
+  if (status === 'OVERDUE') {
+    return undefined;
+  }
+  return status as Prisma.LibraryLoanWhereInput['status'];
+}
+
+async function listLoans({ status, page = 1, pageSize = 20 }: ListParams) {
+  const now = new Date();
+  const where: Prisma.LibraryLoanWhereInput = {};
+  const validatedStatus = assertLoanStatus(status);
+  const statusFilter = loanStatusFilter(validatedStatus);
+  if (statusFilter) {
+    where.status = statusFilter;
+  } else if (status === 'OVERDUE') {
+    where.status = 'ACTIVE';
+    where.dueDate = { lt: now };
+  }
+
+  const [loans, total] = await Promise.all([
+    prisma.libraryLoan.findMany({
+      where,
+      include: {
+        student: { include: { user: { select: { id: true, fullName: true, email: true } } } },
+        bookCopy: { include: { book: { select: { id: true, title: true, author: true, isbn: true } } } },
+      },
+      orderBy: { issuedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.libraryLoan.count({ where }),
+  ]);
+
+  return {
+    loans: annotateOverdue(loans, now),
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
+
+interface ListMyLoansParams {
+  studentId: string;
+  page?: number;
+  pageSize?: number;
+}
+
+async function listMyLoans({ studentId, page = 1, pageSize = 20 }: ListMyLoansParams) {
+  const where: Prisma.LibraryLoanWhereInput = { studentId };
+
+  const [loans, total] = await Promise.all([
+    prisma.libraryLoan.findMany({
+      where,
+      include: {
+        bookCopy: { include: { book: { select: { id: true, title: true, author: true, isbn: true } } } },
+      },
+      orderBy: { issuedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.libraryLoan.count({ where }),
+  ]);
+
+  return {
+    loans: annotateOverdue(loans, new Date()),
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
+
+interface ReturnLoanParams {
+  actorId: string;
+  loanId: string;
+  notes?: string;
+  // Explicit copy condition assessed by staff at return time (H2).
+  condition?: string;
+  ipAddress?: string | null;
+}
+
+const RETURN_CONDITIONS = ['AVAILABLE', 'DAMAGED', 'LOST'];
+
+async function returnLoan({ actorId, loanId, notes, condition, ipAddress }: ReturnLoanParams) {
+  const loan = await prisma.libraryLoan.findUnique({
+    where: { id: loanId },
+    include: { bookCopy: true },
+  });
+  if (!loan) throw new NotFoundError('Loan not found');
+  if (loan.status === 'RETURNED') {
+    throw new ConflictError('This loan has already been returned');
+  }
+  if (condition !== undefined && !RETURN_CONDITIONS.includes(condition)) {
+    throw new ValidationError('Invalid return condition - must be AVAILABLE, DAMAGED, or LOST');
+  }
+
+  // Transaction: claim loan (idempotent under concurrency) + settle the copy
+  // + audit. H2: a copy previously marked LOST/DAMAGED is NOT silently
+  // resurrected as borrowable - only BORROWED copies flip to AVAILABLE, and
+  // anything else requires an explicit staff-assessed condition.
+  const result = await prisma.$transaction(async (tx) => {
+    // Atomically claim the loan so concurrent double-returns cannot both pass
+    const claimed = await tx.libraryLoan.updateMany({
+      where: { id: loanId, status: { not: 'RETURNED' } },
+      data: {
+        status: 'RETURNED',
+        returnedAt: new Date(),
+        returnedById: actorId,
+        notes: notes || null,
+      },
+    });
+    if (claimed.count === 0) {
+      throw new ConflictError('This loan has already been returned');
+    }
+
+    const updatedLoan = await tx.libraryLoan.findUnique({
+      where: { id: loanId },
+    });
+
+    const copy = await tx.libraryBookCopy.findUnique({
+      where: { id: loan.bookCopyId },
+    });
+    let nextStatus = copy?.status ?? 'AVAILABLE';
+    if (condition) {
+      nextStatus = condition as typeof nextStatus;
+    } else if (nextStatus === 'BORROWED') {
+      nextStatus = 'AVAILABLE';
+    }
+    if (copy && nextStatus !== copy.status) {
+      await tx.libraryBookCopy.update({
+        where: { id: loan.bookCopyId },
+        data: { status: nextStatus },
+      });
+    }
+
+    await writeAuditLog(
+      {
+        actorId,
+        action: 'LIBRARY_LOAN_RETURNED',
+        entity: 'LibraryLoan',
+        entityId: loanId,
+        metadata: { bookCopyId: loan.bookCopyId, notes, condition: condition ?? null, copyStatus: nextStatus },
+        ipAddress,
+      },
+      tx
+    );
+
+    return updatedLoan;
+  });
+
+  return result;
+}
+
+export {
+  createBorrowRequest,
+  listBorrowRequests,
+  listMyBorrowRequests,
+  decideBorrowRequest,
+  listLoans,
+  listMyLoans,
+  returnLoan,
+};

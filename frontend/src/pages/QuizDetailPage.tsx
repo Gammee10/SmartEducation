@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api/client';
+import { getQuiz, getQuizResults, updateQuiz, addQuestion, startAttempt, submitAttempt } from '../api/quizzes';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import {
@@ -131,16 +131,16 @@ export default function QuizDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await api.get(`/quizzes/${quizId}`);
-      setQuiz(response.data.data.quiz);
-      setAttempts(response.data.data.attempts || []);
+      const { quiz: loadedQuiz, attempts: loadedAttempts } = await getQuiz(quizId as string);
+      setQuiz(loadedQuiz);
+      setAttempts(loadedAttempts || []);
       // Teacher/admin: the details endpoint returns no attempts - load them
       // from the dedicated results endpoint. Non-fatal on failure so a
       // results problem never blanks the whole page.
       if (!isStudent) {
         try {
-          const results = await api.get(`/quizzes/${quizId}/results`);
-          setAttempts(results.data.data.attempts || []);
+          const results = await getQuizResults(quizId as string);
+          setAttempts(results.attempts || []);
         } catch {
           // keep whatever attempts data we already have
         }
@@ -251,7 +251,7 @@ export default function QuizDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.put(`/quizzes/${quizId}`, {
+      await updateQuiz(quizId as string, {
         title: editForm.title,
         description: editForm.description,
         timeLimit,
@@ -293,7 +293,7 @@ export default function QuizDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/quizzes/${quizId}/questions`, {
+      await addQuestion(quizId as string, {
         prompt: questionDraft.prompt,
         type: questionDraft.type,
         points,
@@ -340,8 +340,7 @@ export default function QuizDetailPage() {
     setError('');
     setMessage('');
     try {
-      const response = await api.post(`/quizzes/${quizId}/attempt`);
-      const data = response.data.data;
+      const data = await startAttempt(quizId as string);
       setActiveAttempt(data.attempt);
       setTakingQuiz(true);
       setResult(null);
@@ -372,8 +371,7 @@ export default function QuizDetailPage() {
         .filter(([, optionIds]) => optionIds.length > 0)
         .map(([questionId, optionIds]) => ({ questionId, optionIds }));
 
-      const response = await api.post(`/attempts/${activeAttempt.id}/submit`, { answers });
-      const data = response.data.data;
+      const data = await submitAttempt(activeAttempt.id, answers);
       setResult({
         score: data.score,
         maxScore: data.maxScore,

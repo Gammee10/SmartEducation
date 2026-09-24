@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useEffect, useState, FormEvent, ChangeEvent } from 'react';
-import api from '../api/client';
+import { listUsers, createUser, archiveUser, resetUserPassword, importUsers } from '../api/users';
 import { useApi } from '../hooks/useApi';
 import {
   buttonPrimary,
@@ -41,12 +41,10 @@ export default function AdminUsersPage() {
     reload,
   } = useApi<AdminUser[]>(
     (signal) =>
-      api
-        .get('/users', {
-          params: { role: roleFilter || undefined, search: search || undefined, pageSize: 100 },
-          signal,
-        })
-        .then((res) => res.data.data.users),
+      listUsers(
+        { role: roleFilter || undefined, search: search || undefined, pageSize: 100 },
+        signal
+      ).then((res) => res.users),
     [roleFilter, search]
   );
   const users = loadedUsers ?? [];
@@ -82,7 +80,7 @@ export default function AdminUsersPage() {
     setError('');
     setMessage('');
     try {
-      await api.post('/users', {
+      await createUser({
         fullName: createForm.fullName,
         email: createForm.email,
         role: createForm.role,
@@ -109,7 +107,7 @@ export default function AdminUsersPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/users/${id}/archive`);
+      await archiveUser(id);
       setMessage('User archived');
       load();
     } catch (err: any) {
@@ -125,8 +123,8 @@ export default function AdminUsersPage() {
     setError('');
     setMessage('');
     try {
-      const res = await api.post(`/users/${u.id}/reset-password`);
-      setResetResult({ email: u.email, temporaryPassword: res.data.data.temporaryPassword });
+      const res = await resetUserPassword(u.id);
+      setResetResult({ email: u.email, temporaryPassword: res.temporaryPassword });
     } catch (err: any) {
       setError(getApiError(err, 'Failed to reset password'));
     } finally {
@@ -148,8 +146,8 @@ export default function AdminUsersPage() {
     setMessage('');
     setImportResult(null);
     try {
-      const res = await api.post('/users/import', { csv: csvText, filename: 'bulk-import.csv' });
-      setImportResult(res.data.data.import);
+      const result = await importUsers(csvText);
+      setImportResult(result);
       setCsvText('');
       load();
     } catch (err: any) {
