@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../api/client';
+import { listBooks, createBorrowRequest } from '../api/library';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { EmptyState, Icon, buttonPrimary, LoadingState, PageHeader, Banner, Spinner } from '../components/ui';
@@ -39,12 +39,12 @@ export default function LibraryCatalogPage() {
     setLoading(true);
     setError('');
     try {
-      const params: Record<string, unknown> = { page, pageSize: 20 };
-      if (search) params.search = search;
-      if (category) params.category = category;
-      const response = await api.get('/library/books', { params, signal });
-      setBooks(response.data.data);
-      setPagination(response.data.pagination);
+      const { books: list, pagination: pageInfo } = await listBooks(
+        { page, pageSize: 20, search: search || undefined, category: category || undefined },
+        signal
+      );
+      setBooks(list);
+      if (pageInfo) setPagination(pageInfo);
     } catch (err: any) {
       // Ignore aborted requests - a newer search superseded this one
       if (err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError') return;
@@ -68,7 +68,7 @@ export default function LibraryCatalogPage() {
     setMessage('');
     setError('');
     try {
-      await api.post('/library/requests', { bookCopyId });
+      await createBorrowRequest(bookCopyId);
       setMessage('Borrow request submitted successfully');
       fetchBooks(pagination.page);
     } catch (err: any) {

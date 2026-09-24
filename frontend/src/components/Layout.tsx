@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
-import api from '../api/client';
+import { getUnreadCount } from '../api/notifications';
 import { useAuth } from '../context/AuthContext';
 import { subscribeNotificationsChanged } from '../utils/notificationBus';
 import ThemeToggleButton from './ThemeToggleButton';
@@ -287,11 +287,10 @@ export default function Layout() {
   };
 
   const refreshUnread = useCallback((signal?: AbortSignal) => {
-    api
-      .get('/notifications/unread-count', { signal })
-      .then((res) => {
+    getUnreadCount(signal)
+      .then((count) => {
         failuresRef.current = 0;
-        setUnreadCount(res.data.data.count);
+        setUnreadCount(count);
       })
       .catch((err: any) => {
         // Aborted superseded polls are not failures.

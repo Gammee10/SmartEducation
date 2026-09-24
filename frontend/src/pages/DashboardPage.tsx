@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/client';
+import { getAdminDashboard, getTeacherDashboard, getStudentDashboard } from '../api/dashboards';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
@@ -245,7 +245,7 @@ function AdminDashboard() {
   // M17: page loads go through useApi - server messages survive, retry
   // re-fetches in place instead of wiping state with location.reload().
   const { data, loading, error, reload } = useApi<AdminDashboardData>((signal) =>
-    api.get('/dashboard/admin', { signal }).then((res) => res.data.data)
+    getAdminDashboard(signal)
   );
 
   if (error) return <ErrorState message={error} onRetry={reload} />;
@@ -306,7 +306,7 @@ function AdminDashboard() {
 
 function TeacherDashboard() {
   const { data, loading, error, reload } = useApi<TeacherDashboardData>((signal) =>
-    api.get('/dashboard/teacher', { signal }).then((res) => res.data.data)
+    getTeacherDashboard(signal)
   );
 
   if (error) return <ErrorState message={error} onRetry={reload} />;
@@ -395,7 +395,7 @@ function TeacherDashboard() {
 
 function StudentDashboard() {
   const { data, loading, error, reload } = useApi<StudentDashboardData>((signal) =>
-    api.get('/dashboard/student', { signal }).then((res) => res.data.data)
+    getStudentDashboard(signal)
   );
 
   if (error) return <ErrorState message={error} onRetry={reload} />;

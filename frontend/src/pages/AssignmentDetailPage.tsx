@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api/client';
+import { getAssignment, submitAssignment, gradeSubmission } from '../api/assignments';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import SafeLink from '../components/SafeLink';
@@ -38,9 +38,9 @@ export default function AssignmentDetailPage() {
     setLoading(true);
     setError('');
     try {
-      const response = await api.get(`/assignments/${assignmentId}`);
-      setAssignment(response.data.data.assignment);
-      setSubmissions(response.data.data.submissions);
+      const { assignment: loaded, submissions: loadedSubmissions } = await getAssignment(assignmentId as string);
+      setAssignment(loaded);
+      setSubmissions(loadedSubmissions);
     } catch (err: any) {
       setError(getApiError(err, 'Failed to load assignment'));
     } finally {
@@ -72,7 +72,7 @@ export default function AssignmentDetailPage() {
       formData.append('content', content);
       if (file) formData.append('file', file);
       // Uploads of large documents need more than the default 15s timeout
-      await api.post(`/assignments/${assignmentId}/submit`, formData, { timeout: 120000 });
+      await submitAssignment(assignmentId as string, formData, { timeout: 120000 });
       setMessage('Assignment submitted successfully');
       setContent('');
       setFile(null);
@@ -102,7 +102,7 @@ export default function AssignmentDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/submissions/${submissionId}/grade`, {
+      await gradeSubmission(submissionId, {
         score,
         feedback: gradeFeedbacks[submissionId] || '',
       });

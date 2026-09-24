@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../api/client';
+import { getCourse, listContent, uploadContent, archiveContent } from '../api/courses';
+import { listCourseAssignments, createAssignment } from '../api/assignments';
+import { listCourseQuizzes, createQuiz } from '../api/quizzes';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import SafeLink from '../components/SafeLink';
@@ -181,33 +183,30 @@ export default function CourseDetailPage() {
     setError('');
     try {
       // Load the course first - it drives the whole page.
-      const courseRes = await api.get(`/courses/${id}`);
-      setCourse(courseRes.data.data.course);
+      const loadedCourse = await getCourse(id as string);
+      setCourse(loadedCourse);
 
       // Load each section independently so a single failed request only
       // affects its own section instead of blanking the entire page.
       setSectionErrors({});
-      api
-        .get(`/courses/${id}/content`, { params: { pageSize: 100 } })
-        .then((res) => setContent(res.data.data))
+      listContent(id as string, { pageSize: 100 })
+        .then((res) => setContent(res.items))
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
             content: getApiError(err, 'Failed to load content'),
           }))
         );
-      api
-        .get(`/courses/${id}/assignments`, { params: { pageSize: 100 } })
-        .then((res) => setAssignments(res.data.data))
+      listCourseAssignments(id as string, { pageSize: 100 })
+        .then((res) => setAssignments(res.assignments))
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
             assignments: getApiError(err, 'Failed to load assignments'),
           }))
         );
-      api
-        .get(`/courses/${id}/quizzes`, { params: { pageSize: 100 } })
-        .then((res) => setQuizzes(res.data.data))
+      listCourseQuizzes(id as string, { pageSize: 100 })
+        .then((res) => setQuizzes(res.quizzes))
         .catch((err: any) =>
           setSectionErrors((prev) => ({
             ...prev,
@@ -230,7 +229,7 @@ export default function CourseDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/courses/${id}/content`, form);
+      await uploadContent(id as string, form);
       setMessage('Content uploaded successfully');
       setShowUpload(false);
       setForm(emptyForm);
@@ -247,7 +246,7 @@ export default function CourseDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/courses/content/${contentId}/archive`);
+      await archiveContent(contentId);
       setMessage('Content archived');
       fetchData();
     } catch (err: any) {
@@ -269,11 +268,11 @@ export default function CourseDetailPage() {
     setError('');
     setMessage('');
     try {
-      await api.post(`/courses/${id}/assignments`, {
+      await createAssignment(id as string, {
         title: assignmentForm.title,
         instructions: assignmentForm.instructions,
         maxScore,
-        dueDate: assignmentForm.dueDate || null,
+        dueDate: assignmentForm.dueDate || undefined,
         status: assignmentForm.status,
       });
       setMessage('Assignment created successfully');
@@ -304,7 +303,7 @@ export default function CourseDetailPage() {
     setError('');
     setQuizMessage('');
     try {
-      await api.post(`/courses/${id}/quizzes`, {
+      await createQuiz(id as string, {
         title: quizForm.title,
         description: quizForm.description,
         timeLimit,

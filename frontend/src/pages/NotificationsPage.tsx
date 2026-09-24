@@ -1,6 +1,6 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useState, useEffect } from 'react';
-import api from '../api/client';
+import { listNotifications, markRead as markNotificationRead, markAllRead } from '../api/notifications';
 import { useApi } from '../hooks/useApi';
 import { notifyNotificationsChanged } from '../utils/notificationBus';
 import { getApiError } from '../utils/apiError';
@@ -33,10 +33,7 @@ export default function NotificationsPage() {
     loading,
     error: loadError,
   } = useApi<AppNotification[]>(
-    (signal) =>
-      api
-        .get('/notifications', { params: { unreadOnly: unreadOnly || undefined, pageSize: 50 }, signal })
-        .then((res) => res.data.data.notifications),
+    (signal) => listNotifications({ unreadOnly, pageSize: 50 }, signal).then((res) => res.notifications),
     [unreadOnly]
   );
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -55,7 +52,7 @@ export default function NotificationsPage() {
     setError('');
     setMarkingId(id);
     try {
-      await api.put(`/notifications/${id}/read`);
+      await markNotificationRead(id);
       // Update locally for instant feedback; drop the item entirely when
       // the "unread only" filter is active.
       setNotifications((prev) =>
@@ -74,7 +71,7 @@ export default function NotificationsPage() {
     setError('');
     setMarkingAll(true);
     try {
-      await api.put('/notifications/read-all');
+      await markAllRead();
       setNotifications((prev) => (unreadOnly ? [] : prev.map((n) => ({ ...n, isRead: true }))));
       // M19: refresh the Layout bell badge immediately.
       notifyNotificationsChanged();

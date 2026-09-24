@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../api/client';
+import { getStudentSummary } from '../api/dashboards';
+import { listStudentAttendance } from '../api/attendance';
 import {
   Card,
   CardHeader,
@@ -48,17 +49,15 @@ export default function StudentProfilePage() {
 
   useEffect(() => {
     if (!studentId) return;
-    api
-      .get(`/students/${studentId}/summary`)
-      .then((res) => setSummary(res.data.data))
+    getStudentSummary(studentId)
+      .then(setSummary)
       .catch((err) => setError(getApiError(err, 'Failed to load profile')));
     // Track attendance loading/errors separately so a transient failure is
     // not silently rendered as "No attendance records yet."
     setAttendanceLoading(true);
     setAttendanceError('');
-    api
-      .get(`/students/${studentId}/attendance`)
-      .then((res) => setAttendance(res.data.data))
+    listStudentAttendance(studentId)
+      .then(setAttendance)
       .catch((err) =>
         setAttendanceError(getApiError(err, 'Failed to load attendance history'))
       )

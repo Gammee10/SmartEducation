@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/client';
+import { listCourses, createCourse } from '../api/courses';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useApi } from '../hooks/useApi';
@@ -70,9 +70,7 @@ export default function CoursesPage() {
     loading,
     error: loadError,
     reload,
-  } = useApi<Course[]>((signal) =>
-    api.get('/courses', { params: { pageSize: 100 }, signal }).then((response) => response.data.data)
-  );
+  } = useApi<Course[]>((signal) => listCourses({ pageSize: 100 }, signal).then((res) => res.courses));
   const courses = useMemo(() => loadedCourses ?? [], [loadedCourses]);
   const [error, setError] = useState('');
   const displayError = error || loadError;
@@ -99,7 +97,7 @@ export default function CoursesPage() {
     setError('');
     setMessage('');
     try {
-      await api.post('/courses', form);
+      await createCourse(form);
       setMessage('Course created successfully');
       setShowCreate(false);
       setForm(emptyForm);
