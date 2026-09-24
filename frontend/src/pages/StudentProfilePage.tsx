@@ -9,6 +9,7 @@ import {
   ErrorState,
   Icon,
   LoadingState,
+  getInitials,
 } from '../components/ui';
 import { AnimatedNumber, ProgressRing } from '../components/motion';
 import type { StudentSummary, StudentAttendanceView, AttendanceStatus } from '../types';
@@ -22,16 +23,6 @@ const STATUS_META: Record<AttendanceStatus, { bar: string; pill: string }> = {
 };
 
 const ALL_STATUSES: AttendanceStatus[] = ['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'];
-
-function getInitials(name?: string): string {
-  if (!name) return '?';
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
 
 type ProfileTab = 'courses' | 'attempts' | 'attendance';
 

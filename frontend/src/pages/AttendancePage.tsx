@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { listCourseAttendance, upsertAttendance, correctAttendance } from '../api/attendance';
 import { useAuth } from '../context/AuthContext';
-import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner } from '../components/ui';
+import { buttonPrimary, buttonSecondary, inputStyles, LoadingState, PageHeader, Banner, EmptyState, Spinner, getInitials } from '../components/ui';
 import type { CourseAttendanceView, AttendanceStatus } from '../types';
 import { getApiError } from '../utils/apiError';
 
@@ -14,16 +14,6 @@ const statusStyles: Record<AttendanceStatus, string> = {
   LATE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400',
   EXCUSED: 'bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-400',
 };
-
-function getInitials(fullName?: string): string {
-  if (!fullName) return '?';
-  return fullName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);

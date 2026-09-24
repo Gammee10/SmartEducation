@@ -14,6 +14,7 @@ import {
   labelStyles,
   LoadingState,
   Banner,
+  getInitials,
 } from '../components/ui';
 import type { Course, ContentItem, Assignment, Quiz } from '../types';
 import { getApiError } from '../utils/apiError';
@@ -140,15 +141,6 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString();
 }
 
-function getInitials(name?: string): string {
-  if (!name) return '?';
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
 export default function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isTeacher, isAdmin } = useAuth();
