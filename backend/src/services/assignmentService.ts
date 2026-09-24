@@ -1,9 +1,11 @@
 // Assignment service - assignment CRUD, submissions, and grading.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
 import { uploadFile, deleteFile } from './fileStorageService';
+import { assertValidDate } from '../shared/validation';
 import { getCourse as getCourseWithAccess, isAdminRole, adminOverrideMeta } from './courseService';
 
 
@@ -29,14 +31,6 @@ const userInfoSelect = { id: true, fullName: true, email: true };
 // ---------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------
-
-function assertValidDate(value: string | Date, field = 'Due date'): Date {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new ValidationError(`${field} is not a valid date`);
-  }
-  return date;
-}
 
 function assertStatusCode(status: string | undefined): AssignmentStatus {
   if (status !== undefined && !ASSIGNMENT_STATUSES.includes(status as AssignmentStatus)) {
@@ -64,7 +58,7 @@ async function listCourseAssignments({ courseId, role, userId, status, page = 1,
   // Enforce course access (teacher owner, enrolled student, or admin)
   await getCourseWithAccess({ courseId, role, userId });
 
-  const where: Record<string, unknown> = { courseId };
+  const where: Prisma.AssignmentWhereInput = { courseId };
   if (status) {
     // H8: students must never enumerate non-published titles via ?status=.
     // Invalid values are rejected with 422 (never a raw Prisma 500).
@@ -207,7 +201,7 @@ async function createAssignment({ actorId, courseId, data, ipAddress }: CreateAs
   const status = assertStatusCode(data.status);
   let dueDate: Date | null = null;
   if (data.dueDate !== undefined && data.dueDate !== null && data.dueDate !== '') {
-    dueDate = assertValidDate(data.dueDate);
+    dueDate = assertValidDate(data.dueDate, 'Due date');
   }
 
   const teacher = await prisma.teacher.findUnique({ where: { userId: actorId } });
@@ -311,7 +305,7 @@ async function updateAssignment({ actorId, actorRole, assignmentId, data, ipAddr
     if (data.dueDate === null || data.dueDate === '') {
       updateData.dueDate = null;
     } else {
-      updateData.dueDate = assertValidDate(data.dueDate);
+      updateData.dueDate = assertValidDate(data.dueDate, 'Due date');
     }
   }
 
@@ -565,7 +559,7 @@ async function gradeSubmission({ actorId, actorRole, submissionId, data, ipAddre
   }
 
   // Grading, audit, and notification happen in one transaction.
-  const graded = await prisma.$transaction(async (tx: any) => {
+  const graded = await prisma.$transaction(async (tx) => {
     const updated = await tx.assignmentSubmission.update({
       where: { id: submissionId },
       data: {

@@ -1,6 +1,8 @@
 // Notification service - in-app notifications (Member 6).
 // Shared write path used by other modules (assignments, quizzes, announcements).
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
+import type { NotifyWriter } from '../shared/tx';
 import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors';
 
 type NotificationType = 'ASSIGNMENT' | 'GRADE' | 'QUIZ_RESULT' | 'ANNOUNCEMENT' | 'EVENT' | 'GENERAL';
@@ -29,7 +31,7 @@ interface CreateNotificationParams {
  */
 async function createNotification(
   { userId, title, message, type = 'GENERAL', metadata = null }: CreateNotificationParams,
-  client: any = prisma
+  client: NotifyWriter = prisma
 ) {
   return client.notification.create({
     data: {
@@ -37,7 +39,9 @@ async function createNotification(
       title,
       message,
       type,
-      metadata: metadata || undefined,
+      // Metadata is an arbitrary JSON object from callers; the public
+      // interface stays Record<string, unknown> and is narrowed here.
+      metadata: (metadata || undefined) as Prisma.InputJsonValue | undefined,
     },
   });
 }
@@ -55,7 +59,7 @@ async function notifyUsers(
     type?: NotificationType;
     metadata?: Record<string, unknown> | null;
   },
-  client: any = prisma
+  client: NotifyWriter = prisma
 ) {
   const { userIds, title, message, type = 'GENERAL', metadata = null } = params;
   if (!Array.isArray(userIds) || userIds.length === 0) return { count: 0 };
@@ -66,7 +70,7 @@ async function notifyUsers(
       title,
       message,
       type,
-      metadata: metadata || undefined,
+      metadata: (metadata || undefined) as Prisma.InputJsonValue | undefined,
     })),
   });
 }
@@ -86,7 +90,7 @@ async function listNotifications(opts: {
   pageSize?: number;
 }) {
   const { userId, unreadOnly, page = 1, pageSize = 20 } = opts;
-  const where: Record<string, unknown> = { userId };
+  const where: Prisma.NotificationWhereInput = { userId };
   if (unreadOnly) where.isRead = false;
 
   const [notifications, total] = await Promise.all([

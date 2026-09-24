@@ -1,15 +1,17 @@
 // Course service - course CRUD, enrollment, and content management.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { assertHttpUrl, assertOptionalHttpUrl } from '../utils/url';
 import { writeAuditLog } from './auditService';
+import { isAdminRole, adminOverrideMeta } from '../shared/accessPolicy';
 
 
 
 type CourseStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
 type ContentTypeEnum = 'VIDEO' | 'DOCUMENT' | 'PDF' | 'IMAGE' | 'LINK' | 'OTHER';
-type CourseWhereInput = Record<string, unknown>;
-type ContentItemWhereInput = Record<string, unknown>;
+type CourseWhereInput = Prisma.CourseWhereInput;
+type ContentItemWhereInput = Prisma.ContentItemWhereInput;
 
 // Known enum values - validated on write so bad inputs produce a 422 instead
 // of a raw Prisma validation error (500).
@@ -36,13 +38,9 @@ function assertContentType(type: string | undefined): ContentTypeEnum {
 // Ownership checks below skip the teacher match when actorRole is ADMIN, and
 // every override is tagged in the audit metadata (ADMIN_OVERRIDE... via
 // adminOverride fields) with the owner for traceability.
-function isAdminRole(role: unknown): boolean {
-  return role === 'ADMIN';
-}
-
-function adminOverrideMeta(actorRole: unknown, ownerTeacherId: unknown): Record<string, unknown> {
-  return isAdminRole(actorRole) ? { adminOverride: true, ownerTeacherId: ownerTeacherId ?? null } : {};
-}
+// isAdminRole/adminOverrideMeta are owned by shared/accessPolicy and
+// re-exported here as a deprecated shim for one stage (see REFACTORING_PLAN
+// Stage 1); new code imports from '../shared/accessPolicy' directly.
 
 // ---------------------------------------------------------------
 // Courses
@@ -63,7 +61,7 @@ async function listCourses({ role, userId, status, page = 1, pageSize = 20 }: Li
     if (!COURSE_STATUSES.includes(status as CourseStatus)) {
       throw new ValidationError('Invalid course status');
     }
-    where.status = status;
+    where.status = status as CourseStatus;
   }
 
   if (role === 'TEACHER') {

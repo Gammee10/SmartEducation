@@ -1,5 +1,7 @@
 // Timetable service - slot CRUD with conflict detection.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
+import type { TxClient } from '../shared/tx';
 import { NotFoundError, ValidationError, ConflictError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 type DayOfWeek = 'MONDAY'|'TUESDAY'|'WEDNESDAY'|'THURSDAY'|'FRIDAY';
@@ -38,7 +40,7 @@ function roomKey(room: string | null | undefined): string | null {
 // insert (the old comment claiming the tx alone closes the race was wrong).
 // Postgres advisory locks (scoped to the tx) serialize writers per room-day
 // and per teacher-day before the check re-runs on the tx client.
-async function acquireSlotLocks(tx: any, day: DayOfWeek, key: string | null, teacherId: string | null): Promise<void> {
+async function acquireSlotLocks(tx: TxClient, day: DayOfWeek, key: string | null, teacherId: string | null): Promise<void> {
   if (key) {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${'timetable:room:' + day + ':' + key}))`;
   }
@@ -48,7 +50,7 @@ async function acquireSlotLocks(tx: any, day: DayOfWeek, key: string | null, tea
 }
 export async function listTimetableSlots(opts: { role: string; userId: string; dayOfWeek?: string }): Promise<any> {
   const { role, userId, dayOfWeek } = opts;
-  const where: Record<string, unknown> = {};
+  const where: Prisma.TimetableSlotWhereInput = {};
   if (dayOfWeek) where.dayOfWeek = assertDay(dayOfWeek);
   if (role === 'TEACHER') {
     const teacher = await prisma.teacher.findUnique({ where: { userId } });
@@ -85,7 +87,7 @@ export async function createTimetableSlot(opts: { actorId: string; data: any; ip
   }
   const room = normalizeRoom(data.room);
 
-  const slot = await prisma.$transaction(async (tx: any) => {
+  const slot = await prisma.$transaction(async (tx) => {
     // H3: serialize concurrent writers for this room-day/teacher-day, then
     // re-check conflicts on the tx client.
     await acquireSlotLocks(tx, day, roomKey(room), teacherId);
@@ -122,7 +124,7 @@ export async function updateTimetableSlot(opts: { actorId: string; slotId: strin
   }
   assertTimeRange(start, end);
 
-  const slot = await prisma.$transaction(async (tx: any) => {
+  const slot = await prisma.$transaction(async (tx) => {
     // H3: serialize concurrent writers for this room-day/teacher-day, then
     // re-check conflicts on the tx client.
     await acquireSlotLocks(tx, day, roomKey(room), teacherId || null);
@@ -146,7 +148,7 @@ export async function deleteTimetableSlot(opts: { actorId: string; slotId: strin
   const existing = await prisma.timetableSlot.findUnique({ where: { id: slotId } });
   if (!existing) throw new NotFoundError('Timetable slot not found');
 
-  await prisma.$transaction(async (tx: any) => {
+  await prisma.$transaction(async (tx) => {
     await tx.timetableSlot.delete({ where: { id: slotId } });
     await writeAuditLog(
       { actorId, action: 'TIMETABLE_SLOT_DELETED', entity: 'TimetableSlot', entityId: slotId, metadata: { courseId: existing.courseId, dayOfWeek: existing.dayOfWeek, startTime: existing.startTime }, ipAddress },
@@ -159,7 +161,7 @@ export async function deleteTimetableSlot(opts: { actorId: string; slotId: strin
 // Accepts a prisma/tx client so the check runs inside the creating
 // transaction after the advisory locks are held (H3). Room comparison is
 // case/whitespace-insensitive via roomKey.
-async function checkConflicts(tx: any, day: DayOfWeek, startTime: string, endTime: string, room: string | null, teacherId: string | null, excludeId: string | null): Promise<void> {
+async function checkConflicts(tx: TxClient, day: DayOfWeek, startTime: string, endTime: string, room: string | null, teacherId: string | null, excludeId: string | null): Promise<void> {
   const s = toMin(startTime);
   const e = toMin(endTime);
   const key = roomKey(room);

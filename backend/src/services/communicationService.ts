@@ -1,5 +1,8 @@
 // Communication service - announcements and events with audience targeting.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
+import type { TxClient } from '../shared/tx';
+import { assertValidDate } from '../shared/validation';
 import { NotFoundError, ForbiddenError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { notifyUsers } from './notificationService';
@@ -29,7 +32,7 @@ function audienceMatches(audience: string, role: string): boolean {
 // publish); chunking only bounds each write.
 const FANOUT_CHUNK = 500;
 
-function audienceWhere(audience: AudienceScope): Record<string, unknown> {
+function audienceWhere(audience: AudienceScope): Prisma.UserWhereInput {
   return {
     status: 'ACTIVE',
     ...(audience === 'TEACHERS'
@@ -41,8 +44,8 @@ function audienceWhere(audience: AudienceScope): Record<string, unknown> {
 }
 
 async function fanOutChunked(
-  tx: any,
-  where: Record<string, unknown>,
+  tx: TxClient,
+  where: Prisma.UserWhereInput,
   payload: { title: string; message: string; type: 'ANNOUNCEMENT' | 'EVENT'; metadata: Record<string, unknown> }
 ): Promise<number> {
   let notified = 0;
@@ -84,7 +87,7 @@ async function createAnnouncement(opts: {
 
   // Create + fan-out + audit in one transaction: a notify failure must not
   // leave a published announcement that nobody was notified about.
-  const announcement = await prisma.$transaction(async (tx: any) => {
+  const announcement = await prisma.$transaction(async (tx) => {
     const created = await tx.announcement.create({
       data: { title, body, audience, publishedById: actorId },
       include: {
@@ -178,14 +181,6 @@ async function deleteAnnouncement(opts: {
 // Events
 // ---------------------------------------------------------------
 
-function assertValidDate(value: unknown, field: string): Date {
-  const date = new Date(value as string);
-  if (!value || Number.isNaN(date.getTime())) {
-    throw new ValidationError(`${field} is not a valid date`);
-  }
-  return date;
-}
-
 async function createEvent(opts: {
   actorId: string;
   actorRole: string;
@@ -215,7 +210,7 @@ async function createEvent(opts: {
   }
   const audience = assertAudience(data.audience);
 
-  const event = await prisma.$transaction(async (tx: any) => {
+  const event = await prisma.$transaction(async (tx) => {
     const created = await tx.event.create({
       data: {
         title,
@@ -265,7 +260,7 @@ async function listEvents(opts: { role: string; page?: number; pageSize?: number
         : ['ALL', 'TEACHERS', 'STUDENTS'];
 
   // Default to upcoming events; ?upcoming=false lists everything.
-  const where: Record<string, unknown> = { audience: { in: audiences } };
+  const where: Prisma.EventWhereInput = { audience: { in: audiences } };
   if (upcoming !== false) {
     where.startsAt = { gte: new Date() };
   }

@@ -1,5 +1,6 @@
 // Attendance service - attendance marking, corrections, and history.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 
@@ -15,6 +16,9 @@ function assertAttendanceStatus(status: string | undefined): AttendanceStatus {
   return (status || 'PRESENT') as AttendanceStatus;
 }
 
+// Day-normalizing date assert. Intentionally NOT the shared
+// `shared/validation.assertValidDate`: attendance is queried by calendar day,
+// so every date is truncated to UTC midnight before compare/store.
 function assertValidDate(value: string | Date, field = 'Date'): Date {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -82,7 +86,7 @@ export async function listCourseAttendance({
     await assertStudentEnrolled(student.id, courseId);
   }
 
-  const where: Record<string, unknown> = { courseId };
+  const where: Prisma.AttendanceWhereInput = { courseId };
   if (date) where.date = assertValidDate(date);
 
   // Privacy: staff get the roster with contact details (needed for marking);
@@ -190,7 +194,7 @@ export async function upsertAttendance({
 
   await assertTeacherOwnsCourse(actorId, first.courseId);
 
-  const processed = await prisma.$transaction(async (tx: any) => {
+  const processed = await prisma.$transaction(async (tx) => {
     // Batch validation reads (one query per table instead of 3 per record)
     const studentIds = [...new Set(records.map((r) => r.studentId))];
     // Dedupe by timestamp (a Set of Date objects would never collapse).
@@ -215,8 +219,8 @@ export async function upsertAttendance({
     // grouped by (status, comment) into one updateMany each; unchanged rows
     // skip the write entirely. Updates refresh markedById/markedAt (the old
     // path left the original marker on corrections).
-    const toCreate: Array<Record<string, unknown>> = [];
-    const updateGroups = new Map<string, { status: string; comment: string | null; ids: string[] }>();
+    const toCreate: Prisma.AttendanceCreateManyInput[] = [];
+    const updateGroups = new Map<string, { status: AttendanceStatus; comment: string | null; ids: string[] }>();
     const untouched: any[] = [];
     for (const rec of records) {
       const recordDate = assertValidDate(rec.date, 'Date');
@@ -242,7 +246,7 @@ export async function upsertAttendance({
         untouched.push(existing);
       } else {
         const key = `${status}|${nextComment ?? ''}`;
-        const group: { status: string; comment: string | null; ids: string[] } = updateGroups.get(key) || {
+        const group: { status: AttendanceStatus; comment: string | null; ids: string[] } = updateGroups.get(key) || {
           status,
           comment: nextComment,
           ids: [],
@@ -376,7 +380,7 @@ export async function listStudentAttendance(opts: {
     if (!shared) throw new ForbiddenError('You do not teach this student');
   }
 
-  const where: Record<string, unknown> = { studentId };
+  const where: Prisma.AttendanceWhereInput = { studentId };
   if (courseId) {
     if (role === 'TEACHER') await assertTeacherOwnsCourse(userId, courseId);
     where.courseId = courseId;

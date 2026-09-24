@@ -1,5 +1,6 @@
 // Quiz service - quiz CRUD, questions, attempts, auto-grading, and results.
 import prisma from '../prisma/client';
+import { Prisma } from '@prisma/client';
 import { NotFoundError, ForbiddenError, ConflictError, ValidationError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { createNotification } from './notificationService';
@@ -180,7 +181,7 @@ async function listCourseQuizzes({ courseId, role, userId, page = 1, pageSize = 
   // Enforce course access (teacher owner, enrolled student, or admin)
   await getCourseWithAccess({ courseId, role, userId });
 
-  const where: Record<string, unknown> = { courseId };
+  const where: Prisma.QuizWhereInput = { courseId };
   if (role === 'STUDENT') {
     where.status = 'PUBLISHED';
   } else {
@@ -942,7 +943,7 @@ async function submitAttempt({ actorId, attemptId, answers, ipAddress }: SubmitA
   // teachers can discount them; they are excluded from dashboard averages
   // (which aggregate SUBMITTED attempts only).
   // Save answers, update attempt, audit, and notify in one transaction
-  const result = await prisma.$transaction(async (tx: any) => {
+  const result = await prisma.$transaction(async (tx) => {
     // Atomically claim the attempt so concurrent submits (double-click,
     // auto-submit racing manual submit) cannot double-grade. If the attempt
     // was already submitted, roll everything back with a conflict.

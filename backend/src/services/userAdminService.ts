@@ -2,6 +2,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '../prisma/client';
+import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '../utils/errors';
 import { writeAuditLog } from './auditService';
 import { sanitizeUser, assertPasswordBytes } from './authService';
@@ -64,9 +65,9 @@ async function listUsers(opts: {
     throw new ValidationError('Invalid status filter');
   }
 
-  const where: Record<string, unknown> = {};
-  if (role) where.role = role;
-  if (status) where.status = status;
+  const where: Prisma.UserWhereInput = {};
+  if (role) where.role = role as UserRole;
+  if (status) where.status = status as UserStatus;
   if (search) {
     where.OR = [
       { fullName: { contains: search, mode: 'insensitive' } },
@@ -126,9 +127,9 @@ async function createUser(opts: {
   // code; the unique constraint is the authoritative guard.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      user = await prisma.$transaction(async (tx: any) => {
+      user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
-        data: { email, fullName, role, phone: data.phone || null, passwordHash },
+        data: { email, fullName, role: role as UserRole, phone: data.phone || null, passwordHash },
       });
       if (role === 'STUDENT') {
         if (!data.gradeLevel) throw new ValidationError('gradeLevel is required for students');
@@ -250,13 +251,13 @@ async function updateUser(opts: {
     }
   }
 
-  const user = await prisma.$transaction(async (tx: any) => {
+  const user = await prisma.$transaction(async (tx) => {
     const updated = await tx.user.update({
       where: { id: userId },
       data: {
         ...(data.fullName !== undefined ? { fullName: data.fullName.trim() } : {}),
         ...(data.phone !== undefined ? { phone: data.phone } : {}),
-        ...(data.status !== undefined ? { status: data.status } : {}),
+        ...(data.status !== undefined ? { status: data.status as UserStatus } : {}),
         // Any status transition (archive/reactivate/suspend) revokes all
         // existing sessions (C2): a token stolen before archival must not
         // spring back to life when the account is reactivated.
@@ -513,9 +514,9 @@ async function importUsersCsv(opts: {
     let lastCodeCollision: any = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        await prisma.$transaction(async (tx: any) => {
+        await prisma.$transaction(async (tx) => {
           const created = await tx.user.create({
-            data: { email, fullName, role, phone, passwordHash },
+            data: { email, fullName, role: role as UserRole, phone, passwordHash },
           });
           if (role === 'STUDENT') {
             if (!gradeLevel) throw new ValidationError('gradeLevel is required for students');
@@ -587,7 +588,7 @@ async function importUsersCsv(opts: {
       }
     }
 
-  await prisma.$transaction(async (tx: any) => {
+  await prisma.$transaction(async (tx) => {
     await tx.importBatch.update({
       where: { id: batch.id },
       data: { status: status(), successCount, errorCount: errors.length },

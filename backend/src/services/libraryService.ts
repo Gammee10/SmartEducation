@@ -482,8 +482,8 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
         },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await writeAuditLog(
+        {
           actorId,
           action: 'LIBRARY_BORROW_APPROVED',
           entity: 'LibraryBorrowRequest',
@@ -491,7 +491,8 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
           metadata: { loanId: loan.id, dueDate },
           ipAddress,
         },
-      });
+        tx
+      );
 
       return { request: updatedRequest, loan };
     });
@@ -531,8 +532,8 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
         where: { id: requestId },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await writeAuditLog(
+        {
           actorId,
           action: 'LIBRARY_BORROW_REJECTED',
           entity: 'LibraryBorrowRequest',
@@ -540,7 +541,8 @@ async function decideBorrowRequest({ actorId, requestId, decision, reason, dueDa
           metadata: { reason },
           ipAddress,
         },
-      });
+        tx
+      );
 
       return { request: updatedRequest, loan: null };
     });
@@ -696,8 +698,8 @@ async function returnLoan({ actorId, loanId, notes, condition, ipAddress }: Retu
       });
     }
 
-    await tx.auditLog.create({
-      data: {
+    await writeAuditLog(
+      {
         actorId,
         action: 'LIBRARY_LOAN_RETURNED',
         entity: 'LibraryLoan',
@@ -705,7 +707,8 @@ async function returnLoan({ actorId, loanId, notes, condition, ipAddress }: Retu
         metadata: { bookCopyId: loan.bookCopyId, notes, condition: condition ?? null, copyStatus: nextStatus },
         ipAddress,
       },
-    });
+      tx
+    );
 
     return updatedLoan;
   });

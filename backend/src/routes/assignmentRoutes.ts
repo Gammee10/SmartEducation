@@ -10,26 +10,13 @@ import authenticate from '../middleware/auth';
 import { authenticatedLimiter, uploadLimiter } from '../middleware/rateLimit';
 import { requireRole, requireStudent } from '../middleware/rbac';
 import { ValidationError } from '../utils/errors';
+import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../shared/filePolicy';
 
 const router = Router();
 
 // Memory storage so uploads go straight to Cloudinary (no local disk).
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'application/zip',
-]);
+// Allowlist + size live in shared/filePolicy so the route gate and the
+// content-level magic-byte check (fileStorageService) cannot drift.
 
 const upload = multer({
   // M10: disk-backed uploads stream from temp files instead of buffering
@@ -48,7 +35,7 @@ const upload = multer({
   }),
   // 20MB - submissions are documents; smaller buffers also reduce the memory
   // cost of the upload path (content upload is URL-based).
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: MAX_FILE_SIZE },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
       cb(new ValidationError('File type not allowed. Please upload a document, image, or archive.'));
